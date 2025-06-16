@@ -1,11 +1,15 @@
 from collections.abc import Mapping
-from typing import Any, TypeVar, Union, cast
+from typing import TYPE_CHECKING, Any, TypeVar, Union, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 from ..models.priority import Priority
 from ..types import UNSET, Unset
+
+if TYPE_CHECKING:
+    from ..models.custom_properties import CustomProperties
+
 
 T = TypeVar("T", bound="Task")
 
@@ -22,8 +26,8 @@ class Task:
         type_ (str): The title of the type of the task.
         status (str): The status from the list of available statuses.
         description (str): A longer description of the task, which can include markdown formatting.
-        assignees (Union[Unset, list[str]]): The names or emails of the users that the task is assigned to. Either this
-            or assignee must be included, depending on whether the workspaces allows multiple assignees or not.
+        assignees (Union[None, Unset, list[str]]): The names or emails of the users that the task is assigned to. Either
+            this or assignee must be included, depending on whether the workspaces allows multiple assignees or not.
         assignee (Union[None, Unset, str]): The name or email of the user that the task is assigned to. Either this or
             assignees must be included, depending on whether the workspaces allows multiple assignees or not.
         tags (Union[Unset, list[str]]): Any tags that should be applied to the task, which can be used to filter and
@@ -39,6 +43,8 @@ class Task:
             is used to determine how long the task will take to complete.
         time_tracking (Union[Unset, str]): The time tracking, which is a string that indicates the amount of time spent
             on the task in hh:mm:ss format (or an empty string if no time has been tracked).
+        custom_properties (Union['CustomProperties', None, Unset]): The custom properties, which is a dict of custom
+            properties that are associated with the task.
     """
 
     id: str
@@ -49,7 +55,7 @@ class Task:
     type_: str
     status: str
     description: str
-    assignees: Union[Unset, list[str]] = UNSET
+    assignees: Union[None, Unset, list[str]] = UNSET
     assignee: Union[None, Unset, str] = UNSET
     tags: Union[Unset, list[str]] = UNSET
     priority: Union[None, Priority, Unset] = UNSET
@@ -57,9 +63,12 @@ class Task:
     due_at: Union[None, Unset, str] = UNSET
     size: Union[None, Unset, int, str] = UNSET
     time_tracking: Union[Unset, str] = UNSET
+    custom_properties: Union["CustomProperties", None, Unset] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        from ..models.custom_properties import CustomProperties
+
         id = self.id
 
         html_url = self.html_url
@@ -77,8 +86,13 @@ class Task:
 
         description = self.description
 
-        assignees: Union[Unset, list[str]] = UNSET
-        if not isinstance(self.assignees, Unset):
+        assignees: Union[None, Unset, list[str]]
+        if isinstance(self.assignees, Unset):
+            assignees = UNSET
+        elif isinstance(self.assignees, list):
+            assignees = self.assignees
+
+        else:
             assignees = self.assignees
 
         assignee: Union[None, Unset, str]
@@ -119,6 +133,14 @@ class Task:
 
         time_tracking = self.time_tracking
 
+        custom_properties: Union[None, Unset, dict[str, Any]]
+        if isinstance(self.custom_properties, Unset):
+            custom_properties = UNSET
+        elif isinstance(self.custom_properties, CustomProperties):
+            custom_properties = self.custom_properties.to_dict()
+        else:
+            custom_properties = self.custom_properties
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -149,11 +171,15 @@ class Task:
             field_dict["size"] = size
         if time_tracking is not UNSET:
             field_dict["timeTracking"] = time_tracking
+        if custom_properties is not UNSET:
+            field_dict["customProperties"] = custom_properties
 
         return field_dict
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+        from ..models.custom_properties import CustomProperties
+
         d = dict(src_dict)
         id = d.pop("id")
 
@@ -176,7 +202,22 @@ class Task:
 
         description = d.pop("description")
 
-        assignees = cast(list[str], d.pop("assignees", UNSET))
+        def _parse_assignees(data: object) -> Union[None, Unset, list[str]]:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            try:
+                if not isinstance(data, list):
+                    raise TypeError()
+                assignees_type_0 = cast(list[str], data)
+
+                return assignees_type_0
+            except:  # noqa: E722
+                pass
+            return cast(Union[None, Unset, list[str]], data)
+
+        assignees = _parse_assignees(d.pop("assignees", UNSET))
 
         def _parse_assignee(data: object) -> Union[None, Unset, str]:
             if data is None:
@@ -235,6 +276,25 @@ class Task:
 
         time_tracking = d.pop("timeTracking", UNSET)
 
+        def _parse_custom_properties(
+            data: object,
+        ) -> Union["CustomProperties", None, Unset]:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            try:
+                if not isinstance(data, dict):
+                    raise TypeError()
+                custom_properties_type_0 = CustomProperties.from_dict(data)
+
+                return custom_properties_type_0
+            except:  # noqa: E722
+                pass
+            return cast(Union["CustomProperties", None, Unset], data)
+
+        custom_properties = _parse_custom_properties(d.pop("customProperties", UNSET))
+
         task = cls(
             id=id,
             html_url=html_url,
@@ -252,6 +312,7 @@ class Task:
             due_at=due_at,
             size=size,
             time_tracking=time_tracking,
+            custom_properties=custom_properties,
         )
 
         task.additional_properties = d
