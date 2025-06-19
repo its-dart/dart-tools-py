@@ -1,16 +1,9 @@
 """Contains methods for accessing the API"""
-from .config import get_config
+
 from .comment import create_comment
-from .folder import retrieve_folder
+from .config import get_config
 from .dartboard import retrieve_dartboard
-from .task import create_task
-from .task import delete_task
-from .task import update_task
-from .task import retrieve_task
-from .task import list_tasks
+from .doc import create_doc, delete_doc, list_docs, retrieve_doc, update_doc
+from .folder import retrieve_folder
+from .task import create_task, delete_task, list_tasks, retrieve_task, update_task
 from .view import retrieve_view
-from .doc import create_doc
-from .doc import delete_doc
-from .doc import update_doc
-from .doc import list_docs
-from .doc import retrieve_doc

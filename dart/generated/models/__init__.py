@@ -4,6 +4,7 @@ from .comment import Comment
 from .comment_create import CommentCreate
 from .concise_doc import ConciseDoc
 from .concise_task import ConciseTask
+from .custom_properties import CustomProperties
 from .dartboard import Dartboard
 from .doc import Doc
 from .doc_create import DocCreate
@@ -18,6 +19,36 @@ from .task_create import TaskCreate
 from .task_update import TaskUpdate
 from .user import User
 from .user_space_configuration import UserSpaceConfiguration
+from .user_space_configuration_custom_property_checkbox_type_def import (
+    UserSpaceConfigurationCustomPropertyCheckboxTypeDef,
+)
+from .user_space_configuration_custom_property_dates_type_def import (
+    UserSpaceConfigurationCustomPropertyDatesTypeDef,
+)
+from .user_space_configuration_custom_property_multiselect_type_def import (
+    UserSpaceConfigurationCustomPropertyMultiselectTypeDef,
+)
+from .user_space_configuration_custom_property_number_type_def import (
+    UserSpaceConfigurationCustomPropertyNumberTypeDef,
+)
+from .user_space_configuration_custom_property_number_type_def_custom_property_number_format_type_def import (
+    UserSpaceConfigurationCustomPropertyNumberTypeDefCustomPropertyNumberFormatTypeDef,
+)
+from .user_space_configuration_custom_property_select_type_def import (
+    UserSpaceConfigurationCustomPropertySelectTypeDef,
+)
+from .user_space_configuration_custom_property_status_type_def import (
+    UserSpaceConfigurationCustomPropertyStatusTypeDef,
+)
+from .user_space_configuration_custom_property_text_type_def import (
+    UserSpaceConfigurationCustomPropertyTextTypeDef,
+)
+from .user_space_configuration_custom_property_time_tracking_type_def import (
+    UserSpaceConfigurationCustomPropertyTimeTrackingTypeDef,
+)
+from .user_space_configuration_custom_property_user_type_def import (
+    UserSpaceConfigurationCustomPropertyUserTypeDef,
+)
 from .view import View
 from .wrapped_comment import WrappedComment
 from .wrapped_comment_create import WrappedCommentCreate
@@ -36,6 +67,7 @@ __all__ = (
     "CommentCreate",
     "ConciseDoc",
     "ConciseTask",
+    "CustomProperties",
     "Dartboard",
     "Doc",
     "DocCreate",
@@ -50,6 +82,16 @@ __all__ = (
     "TaskUpdate",
     "User",
     "UserSpaceConfiguration",
+    "UserSpaceConfigurationCustomPropertyCheckboxTypeDef",
+    "UserSpaceConfigurationCustomPropertyDatesTypeDef",
+    "UserSpaceConfigurationCustomPropertyMultiselectTypeDef",
+    "UserSpaceConfigurationCustomPropertyNumberTypeDef",
+    "UserSpaceConfigurationCustomPropertyNumberTypeDefCustomPropertyNumberFormatTypeDef",
+    "UserSpaceConfigurationCustomPropertySelectTypeDef",
+    "UserSpaceConfigurationCustomPropertyStatusTypeDef",
+    "UserSpaceConfigurationCustomPropertyTextTypeDef",
+    "UserSpaceConfigurationCustomPropertyTimeTrackingTypeDef",
+    "UserSpaceConfigurationCustomPropertyUserTypeDef",
     "View",
     "WrappedComment",
     "WrappedCommentCreate",
