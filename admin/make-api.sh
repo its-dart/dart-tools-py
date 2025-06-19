@@ -5,8 +5,8 @@ set -e
 
 rm -rf dart/generated
 uv run openapi-python-client generate --url https://app.itsdart.com/api/v0/public/schema/ --overwrite --meta none
-mv dart-public-api-client/dart_public_api_client dart/generated
-rm -rf dart-public-api-client
+mv dart_public_api_client dart/generated
+rm -rf dart_public_api_client
 
 # Optimize API import paths
 api_dir="dart/generated/api"

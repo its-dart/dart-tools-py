@@ -26,7 +26,7 @@ def webhook() -> Response:
 
     # Verify the signature of the event
     signature = request.headers.get("Dart-Signature")
-    if not is_signature_correct(payload, signature):
+    if not signature or not is_signature_correct(payload, signature):
         print("Webhook signature verification failed")
         return jsonify(success=False)
 
