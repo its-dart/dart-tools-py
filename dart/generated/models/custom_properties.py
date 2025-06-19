@@ -85,17 +85,17 @@ class CustomProperties:
                 try:
                     if not isinstance(data, list):
                         raise TypeError()
-                    additional_property_type_3_type_0 = cast(list[str], data)
+                    additional_property_type_3 = cast(list[str], data)
 
-                    return additional_property_type_3_type_0
+                    return additional_property_type_3
                 except:  # noqa: E722
                     pass
                 try:
                     if not isinstance(data, list):
                         raise TypeError()
-                    additional_property_type_9_type_0 = cast(list[str], data)
+                    additional_property_type_9 = cast(list[str], data)
 
-                    return additional_property_type_9_type_0
+                    return additional_property_type_9
                 except:  # noqa: E722
                     pass
                 return cast(
