@@ -24,6 +24,7 @@ def _get_kwargs(
     is_completed: Union[Unset, bool] = UNSET,
     limit: Union[Unset, int] = UNSET,
     offset: Union[Unset, int] = UNSET,
+    parent_id: Union[Unset, str] = UNSET,
     priority: Union[Unset, str] = UNSET,
     size: Union[Unset, int] = UNSET,
     start_at_after: Union[Unset, datetime.date] = UNSET,
@@ -67,6 +68,8 @@ def _get_kwargs(
     params["limit"] = limit
 
     params["offset"] = offset
+
+    params["parent_id"] = parent_id
 
     params["priority"] = priority
 
@@ -146,6 +149,7 @@ def sync_detailed(
     is_completed: Union[Unset, bool] = UNSET,
     limit: Union[Unset, int] = UNSET,
     offset: Union[Unset, int] = UNSET,
+    parent_id: Union[Unset, str] = UNSET,
     priority: Union[Unset, str] = UNSET,
     size: Union[Unset, int] = UNSET,
     start_at_after: Union[Unset, datetime.date] = UNSET,
@@ -174,6 +178,7 @@ def sync_detailed(
         is_completed (Union[Unset, bool]):
         limit (Union[Unset, int]):
         offset (Union[Unset, int]):
+        parent_id (Union[Unset, str]):
         priority (Union[Unset, str]):
         size (Union[Unset, int]):
         start_at_after (Union[Unset, datetime.date]):
@@ -207,6 +212,7 @@ def sync_detailed(
         is_completed=is_completed,
         limit=limit,
         offset=offset,
+        parent_id=parent_id,
         priority=priority,
         size=size,
         start_at_after=start_at_after,
@@ -242,6 +248,7 @@ def sync(
     is_completed: Union[Unset, bool] = UNSET,
     limit: Union[Unset, int] = UNSET,
     offset: Union[Unset, int] = UNSET,
+    parent_id: Union[Unset, str] = UNSET,
     priority: Union[Unset, str] = UNSET,
     size: Union[Unset, int] = UNSET,
     start_at_after: Union[Unset, datetime.date] = UNSET,
@@ -270,6 +277,7 @@ def sync(
         is_completed (Union[Unset, bool]):
         limit (Union[Unset, int]):
         offset (Union[Unset, int]):
+        parent_id (Union[Unset, str]):
         priority (Union[Unset, str]):
         size (Union[Unset, int]):
         start_at_after (Union[Unset, datetime.date]):
@@ -304,6 +312,7 @@ def sync(
         is_completed=is_completed,
         limit=limit,
         offset=offset,
+        parent_id=parent_id,
         priority=priority,
         size=size,
         start_at_after=start_at_after,
@@ -333,6 +342,7 @@ async def asyncio_detailed(
     is_completed: Union[Unset, bool] = UNSET,
     limit: Union[Unset, int] = UNSET,
     offset: Union[Unset, int] = UNSET,
+    parent_id: Union[Unset, str] = UNSET,
     priority: Union[Unset, str] = UNSET,
     size: Union[Unset, int] = UNSET,
     start_at_after: Union[Unset, datetime.date] = UNSET,
@@ -361,6 +371,7 @@ async def asyncio_detailed(
         is_completed (Union[Unset, bool]):
         limit (Union[Unset, int]):
         offset (Union[Unset, int]):
+        parent_id (Union[Unset, str]):
         priority (Union[Unset, str]):
         size (Union[Unset, int]):
         start_at_after (Union[Unset, datetime.date]):
@@ -394,6 +405,7 @@ async def asyncio_detailed(
         is_completed=is_completed,
         limit=limit,
         offset=offset,
+        parent_id=parent_id,
         priority=priority,
         size=size,
         start_at_after=start_at_after,
@@ -427,6 +439,7 @@ async def asyncio(
     is_completed: Union[Unset, bool] = UNSET,
     limit: Union[Unset, int] = UNSET,
     offset: Union[Unset, int] = UNSET,
+    parent_id: Union[Unset, str] = UNSET,
     priority: Union[Unset, str] = UNSET,
     size: Union[Unset, int] = UNSET,
     start_at_after: Union[Unset, datetime.date] = UNSET,
@@ -455,6 +468,7 @@ async def asyncio(
         is_completed (Union[Unset, bool]):
         limit (Union[Unset, int]):
         offset (Union[Unset, int]):
+        parent_id (Union[Unset, str]):
         priority (Union[Unset, str]):
         size (Union[Unset, int]):
         start_at_after (Union[Unset, datetime.date]):
@@ -490,6 +504,7 @@ async def asyncio(
             is_completed=is_completed,
             limit=limit,
             offset=offset,
+            parent_id=parent_id,
             priority=priority,
             size=size,
             start_at_after=start_at_after,
