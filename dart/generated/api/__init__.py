@@ -1,6 +1,6 @@
 """Contains methods for accessing the API"""
 
-from .comment import create_comment
+from .comment import create_comment, list_comments
 from .config import get_config
 from .dartboard import retrieve_dartboard
 from .doc import create_doc, delete_doc, list_docs, retrieve_doc, update_doc
