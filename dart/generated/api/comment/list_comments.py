@@ -6,6 +6,7 @@ import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
+from ...models.list_comments_o_item import ListCommentsOItem
 from ...models.paginated_comment_list import PaginatedCommentList
 from ...types import UNSET, Response, Unset
 
@@ -16,12 +17,13 @@ def _get_kwargs(
     author_id: Union[Unset, str] = UNSET,
     ids: Union[Unset, str] = UNSET,
     limit: Union[Unset, int] = UNSET,
+    o: Union[Unset, list[ListCommentsOItem]] = UNSET,
     offset: Union[Unset, int] = UNSET,
     parent_id: Union[None, Unset, str] = UNSET,
     published_at_after: Union[Unset, datetime.datetime] = UNSET,
     published_at_before: Union[Unset, datetime.datetime] = UNSET,
     task: Union[Unset, str] = UNSET,
-    task_id: Union[Unset, str] = UNSET,
+    task_id: str,
     text: Union[Unset, str] = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
@@ -33,6 +35,15 @@ def _get_kwargs(
     params["ids"] = ids
 
     params["limit"] = limit
+
+    json_o: Union[Unset, list[str]] = UNSET
+    if not isinstance(o, Unset):
+        json_o = []
+        for o_item_data in o:
+            o_item = o_item_data.value
+            json_o.append(o_item)
+
+    params["o"] = json_o
 
     params["offset"] = offset
 
@@ -101,28 +112,31 @@ def sync_detailed(
     author_id: Union[Unset, str] = UNSET,
     ids: Union[Unset, str] = UNSET,
     limit: Union[Unset, int] = UNSET,
+    o: Union[Unset, list[ListCommentsOItem]] = UNSET,
     offset: Union[Unset, int] = UNSET,
     parent_id: Union[None, Unset, str] = UNSET,
     published_at_after: Union[Unset, datetime.datetime] = UNSET,
     published_at_before: Union[Unset, datetime.datetime] = UNSET,
     task: Union[Unset, str] = UNSET,
-    task_id: Union[Unset, str] = UNSET,
+    task_id: str,
     text: Union[Unset, str] = UNSET,
 ) -> Response[PaginatedCommentList]:
     """List all comments that the user has access to. This will return a list of comments, including the
-    text, associated task ID, and others. Comments are ordered hierarchically by default.
+    text, associated task ID, and others. Comments are ordered by thread and then by when they were
+    written.
 
     Args:
         author (Union[Unset, str]):
         author_id (Union[Unset, str]):
         ids (Union[Unset, str]):
         limit (Union[Unset, int]):
+        o (Union[Unset, list[ListCommentsOItem]]):
         offset (Union[Unset, int]):
         parent_id (Union[None, Unset, str]):
         published_at_after (Union[Unset, datetime.datetime]):
         published_at_before (Union[Unset, datetime.datetime]):
         task (Union[Unset, str]):
-        task_id (Union[Unset, str]):
+        task_id (str):
         text (Union[Unset, str]):
 
     Raises:
@@ -138,6 +152,7 @@ def sync_detailed(
         author_id=author_id,
         ids=ids,
         limit=limit,
+        o=o,
         offset=offset,
         parent_id=parent_id,
         published_at_after=published_at_after,
@@ -161,28 +176,31 @@ def sync(
     author_id: Union[Unset, str] = UNSET,
     ids: Union[Unset, str] = UNSET,
     limit: Union[Unset, int] = UNSET,
+    o: Union[Unset, list[ListCommentsOItem]] = UNSET,
     offset: Union[Unset, int] = UNSET,
     parent_id: Union[None, Unset, str] = UNSET,
     published_at_after: Union[Unset, datetime.datetime] = UNSET,
     published_at_before: Union[Unset, datetime.datetime] = UNSET,
     task: Union[Unset, str] = UNSET,
-    task_id: Union[Unset, str] = UNSET,
+    task_id: str,
     text: Union[Unset, str] = UNSET,
 ) -> Optional[PaginatedCommentList]:
     """List all comments that the user has access to. This will return a list of comments, including the
-    text, associated task ID, and others. Comments are ordered hierarchically by default.
+    text, associated task ID, and others. Comments are ordered by thread and then by when they were
+    written.
 
     Args:
         author (Union[Unset, str]):
         author_id (Union[Unset, str]):
         ids (Union[Unset, str]):
         limit (Union[Unset, int]):
+        o (Union[Unset, list[ListCommentsOItem]]):
         offset (Union[Unset, int]):
         parent_id (Union[None, Unset, str]):
         published_at_after (Union[Unset, datetime.datetime]):
         published_at_before (Union[Unset, datetime.datetime]):
         task (Union[Unset, str]):
-        task_id (Union[Unset, str]):
+        task_id (str):
         text (Union[Unset, str]):
 
     Raises:
@@ -199,6 +217,7 @@ def sync(
         author_id=author_id,
         ids=ids,
         limit=limit,
+        o=o,
         offset=offset,
         parent_id=parent_id,
         published_at_after=published_at_after,
@@ -216,28 +235,31 @@ async def asyncio_detailed(
     author_id: Union[Unset, str] = UNSET,
     ids: Union[Unset, str] = UNSET,
     limit: Union[Unset, int] = UNSET,
+    o: Union[Unset, list[ListCommentsOItem]] = UNSET,
     offset: Union[Unset, int] = UNSET,
     parent_id: Union[None, Unset, str] = UNSET,
     published_at_after: Union[Unset, datetime.datetime] = UNSET,
     published_at_before: Union[Unset, datetime.datetime] = UNSET,
     task: Union[Unset, str] = UNSET,
-    task_id: Union[Unset, str] = UNSET,
+    task_id: str,
     text: Union[Unset, str] = UNSET,
 ) -> Response[PaginatedCommentList]:
     """List all comments that the user has access to. This will return a list of comments, including the
-    text, associated task ID, and others. Comments are ordered hierarchically by default.
+    text, associated task ID, and others. Comments are ordered by thread and then by when they were
+    written.
 
     Args:
         author (Union[Unset, str]):
         author_id (Union[Unset, str]):
         ids (Union[Unset, str]):
         limit (Union[Unset, int]):
+        o (Union[Unset, list[ListCommentsOItem]]):
         offset (Union[Unset, int]):
         parent_id (Union[None, Unset, str]):
         published_at_after (Union[Unset, datetime.datetime]):
         published_at_before (Union[Unset, datetime.datetime]):
         task (Union[Unset, str]):
-        task_id (Union[Unset, str]):
+        task_id (str):
         text (Union[Unset, str]):
 
     Raises:
@@ -253,6 +275,7 @@ async def asyncio_detailed(
         author_id=author_id,
         ids=ids,
         limit=limit,
+        o=o,
         offset=offset,
         parent_id=parent_id,
         published_at_after=published_at_after,
@@ -274,28 +297,31 @@ async def asyncio(
     author_id: Union[Unset, str] = UNSET,
     ids: Union[Unset, str] = UNSET,
     limit: Union[Unset, int] = UNSET,
+    o: Union[Unset, list[ListCommentsOItem]] = UNSET,
     offset: Union[Unset, int] = UNSET,
     parent_id: Union[None, Unset, str] = UNSET,
     published_at_after: Union[Unset, datetime.datetime] = UNSET,
     published_at_before: Union[Unset, datetime.datetime] = UNSET,
     task: Union[Unset, str] = UNSET,
-    task_id: Union[Unset, str] = UNSET,
+    task_id: str,
     text: Union[Unset, str] = UNSET,
 ) -> Optional[PaginatedCommentList]:
     """List all comments that the user has access to. This will return a list of comments, including the
-    text, associated task ID, and others. Comments are ordered hierarchically by default.
+    text, associated task ID, and others. Comments are ordered by thread and then by when they were
+    written.
 
     Args:
         author (Union[Unset, str]):
         author_id (Union[Unset, str]):
         ids (Union[Unset, str]):
         limit (Union[Unset, int]):
+        o (Union[Unset, list[ListCommentsOItem]]):
         offset (Union[Unset, int]):
         parent_id (Union[None, Unset, str]):
         published_at_after (Union[Unset, datetime.datetime]):
         published_at_before (Union[Unset, datetime.datetime]):
         task (Union[Unset, str]):
-        task_id (Union[Unset, str]):
+        task_id (str):
         text (Union[Unset, str]):
 
     Raises:
@@ -313,6 +339,7 @@ async def asyncio(
             author_id=author_id,
             ids=ids,
             limit=limit,
+            o=o,
             offset=offset,
             parent_id=parent_id,
             published_at_after=published_at_after,
