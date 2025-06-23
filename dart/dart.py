@@ -36,6 +36,7 @@ from .generated.models import (
     Doc,
     DocCreate,
     DocUpdate,
+    PaginatedCommentList,
     PaginatedConciseDocList,
     PaginatedConciseTaskList,
     Priority,
@@ -332,6 +333,11 @@ class Dart:
     @_handle_request_errors
     def create_comment(self, body: WrappedCommentCreate) -> WrappedComment:
         response = api.create_comment.sync_detailed(client=self._public_api, body=body)
+        return _get_response_parsed(response)
+
+    @_handle_request_errors
+    def list_comments(self, **kwargs) -> PaginatedCommentList:
+        response = api.list_comments.sync_detailed(client=self._public_api, **kwargs)
         return _get_response_parsed(response)
 
     @_handle_request_errors

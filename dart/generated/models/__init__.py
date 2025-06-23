@@ -10,7 +10,9 @@ from .doc import Doc
 from .doc_create import DocCreate
 from .doc_update import DocUpdate
 from .folder import Folder
+from .list_comments_o_item import ListCommentsOItem
 from .list_docs_o_item import ListDocsOItem
+from .paginated_comment_list import PaginatedCommentList
 from .paginated_concise_doc_list import PaginatedConciseDocList
 from .paginated_concise_task_list import PaginatedConciseTaskList
 from .priority import Priority
@@ -73,7 +75,9 @@ __all__ = (
     "DocCreate",
     "DocUpdate",
     "Folder",
+    "ListCommentsOItem",
     "ListDocsOItem",
+    "PaginatedCommentList",
     "PaginatedConciseDocList",
     "PaginatedConciseTaskList",
     "Priority",
