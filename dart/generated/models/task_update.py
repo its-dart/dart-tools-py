@@ -9,6 +9,7 @@ from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
     from ..models.custom_properties import CustomProperties
+    from ..models.task_relationships import TaskRelationships
 
 
 T = TypeVar("T", bound="TaskUpdate")
@@ -42,6 +43,7 @@ class TaskUpdate:
             is used to determine how long the task will take to complete.
         custom_properties (Union['CustomProperties', None, Unset]): The custom properties, which is a dict of custom
             properties that are associated with the task.
+        task_relationships (Union['TaskRelationships', None, Unset]): The relationships associated with the task.
     """
 
     id: str
@@ -59,10 +61,12 @@ class TaskUpdate:
     due_at: Union[None, Unset, str] = UNSET
     size: Union[None, Unset, int, str] = UNSET
     custom_properties: Union["CustomProperties", None, Unset] = UNSET
+    task_relationships: Union["TaskRelationships", None, Unset] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         from ..models.custom_properties import CustomProperties
+        from ..models.task_relationships import TaskRelationships
 
         id = self.id
 
@@ -135,6 +139,14 @@ class TaskUpdate:
         else:
             custom_properties = self.custom_properties
 
+        task_relationships: Union[None, Unset, dict[str, Any]]
+        if isinstance(self.task_relationships, Unset):
+            task_relationships = UNSET
+        elif isinstance(self.task_relationships, TaskRelationships):
+            task_relationships = self.task_relationships.to_dict()
+        else:
+            task_relationships = self.task_relationships
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -170,12 +182,15 @@ class TaskUpdate:
             field_dict["size"] = size
         if custom_properties is not UNSET:
             field_dict["customProperties"] = custom_properties
+        if task_relationships is not UNSET:
+            field_dict["taskRelationships"] = task_relationships
 
         return field_dict
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         from ..models.custom_properties import CustomProperties
+        from ..models.task_relationships import TaskRelationships
 
         d = dict(src_dict)
         id = d.pop("id")
@@ -290,6 +305,25 @@ class TaskUpdate:
 
         custom_properties = _parse_custom_properties(d.pop("customProperties", UNSET))
 
+        def _parse_task_relationships(
+            data: object,
+        ) -> Union["TaskRelationships", None, Unset]:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            try:
+                if not isinstance(data, dict):
+                    raise TypeError()
+                task_relationships_type_0 = TaskRelationships.from_dict(data)
+
+                return task_relationships_type_0
+            except:  # noqa: E722
+                pass
+            return cast(Union["TaskRelationships", None, Unset], data)
+
+        task_relationships = _parse_task_relationships(d.pop("taskRelationships", UNSET))
+
         task_update = cls(
             id=id,
             title=title,
@@ -306,6 +340,7 @@ class TaskUpdate:
             due_at=due_at,
             size=size,
             custom_properties=custom_properties,
+            task_relationships=task_relationships,
         )
 
         task_update.additional_properties = d

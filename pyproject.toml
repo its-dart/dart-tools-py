@@ -1,6 +1,6 @@
 [project]
 name = "dart-tools"
-version = "0.7.5"
+version = "0.7.6"
 description = "The Dart CLI and Python Library"
 readme = "README.md"
 requires-python = ">=3.9"
