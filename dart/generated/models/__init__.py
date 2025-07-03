@@ -18,6 +18,7 @@ from .paginated_concise_task_list import PaginatedConciseTaskList
 from .priority import Priority
 from .task import Task
 from .task_create import TaskCreate
+from .task_relationships import TaskRelationships
 from .task_update import TaskUpdate
 from .user import User
 from .user_space_configuration import UserSpaceConfiguration
@@ -83,6 +84,7 @@ __all__ = (
     "Priority",
     "Task",
     "TaskCreate",
+    "TaskRelationships",
     "TaskUpdate",
     "User",
     "UserSpaceConfiguration",
