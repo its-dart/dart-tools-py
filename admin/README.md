@@ -11,7 +11,7 @@
 ## Install local version
 
 1. Run `uv sync` as needed
-2. Install with `uv pip install .`
+2. Run with `uv run dart [args ...]`
 
 ## Test with a different Python version
 

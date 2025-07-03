@@ -101,6 +101,7 @@ _PRIORITY_MAP: dict[int, str] = {
     3: Priority.LOW,
 }
 _SIZES = {1, 2, 3, 5, 8}
+_DEFAULT_DARTBOARD = "General/Active"
 
 _VERSION = version(_APP)
 _AUTH_TOKEN_ENVVAR = os.environ.get(_AUTH_TOKEN_ENVVAR_KEY)
@@ -504,6 +505,10 @@ def login(token: str | None = None) -> bool:
     config = _Config()
     dart = Dart(config=config)
 
+    if dart.is_logged_in():
+        _log("Already logged in.")
+        return True
+
     _log("Log in to Dart")
     if token is None:
         if not _is_cli:
@@ -541,7 +546,9 @@ def begin_task() -> bool:
     dart = Dart()
     config = dart.get_config()
     user = config.user
-    filtered_tasks = dart.list_tasks(assignee=user.email, is_completed=False).results
+    print(config.dartboards)
+    dartboard_maybe = {"dartboard": _DEFAULT_DARTBOARD} if _DEFAULT_DARTBOARD in config.dartboards else {}
+    filtered_tasks = dart.list_tasks(assignee=user.email, is_completed=False, **dartboard_maybe).results
 
     if not filtered_tasks:
         _dart_exit("No active, incomplete tasks found.")
