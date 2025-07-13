@@ -7,7 +7,7 @@ if [ -f .env ]; then
     export $(grep -v '^#' .env | xargs)
 fi
 
-DART_API_SCHEMA_URL="${DART_HOST:-https://app.itsdart.com}/api/v0/public/schema/"
+DART_API_SCHEMA_URL="${DART_HOST:-https://app.dartai.com}/api/v0/public/schema/"
 GENERATED_PATH=$(pwd | sed 's:/admin$::')/dart/generated
 
 uv run openapi-python-client generate --url $DART_API_SCHEMA_URL --output-path $GENERATED_PATH --overwrite --meta none

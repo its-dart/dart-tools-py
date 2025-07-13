@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# README: https://help.itsdart.com/articles/9024895-webhooks
+# README: https://help.dartai.com/articles/9024895-webhooks
 
 
 import json

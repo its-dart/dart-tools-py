@@ -1,6 +1,6 @@
 const DART_TOKEN = process.env.DART_TOKEN;
 
-const DART_ROOT_URL = "https://app.itsdart.com/api/v0";
+const DART_ROOT_URL = "https://app.dartai.com/api/v0";
 const DART_REPLICATE_SPACE_URL = `${DART_ROOT_URL}/spaces/replicate`;
 const DART_CREATE_TRANSACTION_URL = `${DART_ROOT_URL}/transactions/create`;
 

@@ -7,7 +7,7 @@ requires-python = ">=3.9"
 license = {file = "LICENSE"}
 keywords = ["dart", "cli", "projectmanagement", "taskmanagement"]
 authors = [
-  { name="Dart", email="software@itsdart.com" }
+  { name="Dart", email="software@dartai.com" }
 ]
 classifiers=[
     "Development Status :: 4 - Beta",
@@ -48,9 +48,9 @@ dev = [
 ]
 
 [project.urls]
-"Homepage" = "https://www.itsdart.com/?nr=1"
-"Web App" = "https://app.itsdart.com/"
-"Help Center" = "https://help.itsdart.com/"
+"Homepage" = "https://www.dartai.com/?nr=1"
+"Web App" = "https://app.dartai.com/"
+"Help Center" = "https://help.dartai.com/"
 "Bugs and Features" = "https://github.com/its-dart/dart-tools-py/issues"
 "Library Source" = "https://github.com/its-dart/dart-tools-py/"
 

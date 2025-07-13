@@ -20,6 +20,7 @@ from .task import Task
 from .task_create import TaskCreate
 from .task_relationships import TaskRelationships
 from .task_update import TaskUpdate
+from .time_tracking_entry import TimeTrackingEntry
 from .user import User
 from .user_space_configuration import UserSpaceConfiguration
 from .user_space_configuration_custom_property_checkbox_type_def import (
@@ -86,6 +87,7 @@ __all__ = (
     "TaskCreate",
     "TaskRelationships",
     "TaskUpdate",
+    "TimeTrackingEntry",
     "User",
     "UserSpaceConfiguration",
     "UserSpaceConfigurationCustomPropertyCheckboxTypeDef",

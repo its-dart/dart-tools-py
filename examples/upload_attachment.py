@@ -10,7 +10,7 @@ import requests
 
 _DART_TOKEN = os.environ.get("DART_TOKEN")
 
-_BASE_URL = "https://app.itsdart.com"
+_BASE_URL = "https://app.dartai.com"
 _HEADERS = {
     "Content-Type": "application/json",
     "Authorization": "Bearer " + _DART_TOKEN,

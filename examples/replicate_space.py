@@ -13,7 +13,7 @@ from dart import (
 )
 
 # The DART_TOKEN environment variable must be set to the value from
-# https://app.itsdart.com/?settings=account at this point
+# https://app.dartai.com/?settings=account at this point
 is_logged_in(should_raise=True)
 
 

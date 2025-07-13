@@ -7,7 +7,7 @@
   </p>
 </div>
 
-[Dart](https://itsdart.com?nr=1) is Project Management powered by AI.
+[Dart](https://dartai.com?nr=1) is Project Management powered by AI.
 
 `dart-tools` is the Dart CLI and Python Library. It enables direct integration with Dart through a terminal CLI or through Python.
 
@@ -64,7 +64,7 @@ This command will mark the referenced task 'Done'. Here `[ID]` is meant to be re
 
 ## Using the Python Library
 
-First, set up authentication. Run `dart login` in the terminal for an interactive process. Alternatively, copy your authentication token from [your Dart profile](https://app.itsdart.com/?settings=account) and save that as the `DART_TOKEN` environment variable.
+First, set up authentication. Run `dart login` in the terminal for an interactive process. Alternatively, copy your authentication token from [your Dart profile](https://app.dartai.com/?settings=account) and save that as the `DART_TOKEN` environment variable.
 
 Then, you can run something like
 
@@ -123,13 +123,13 @@ By following these steps, you can use the `dart-tools` Python library within you
 
 ## Help and Resources
 
-- [Homepage](https://itsdart.com/?nr=1)
-- [Web App](https://app.itsdart.com/)
-- [Help Center](https://help.itsdart.com/)
-- [Bugs and Features](https://app.itsdart.com/p/r/JFyPnhL9En61)
+- [Homepage](https://dartai.com/?nr=1)
+- [Web App](https://app.dartai.com/)
+- [Help Center](https://help.dartai.com/)
+- [Bugs and Features](https://app.dartai.com/p/r/JFyPnhL9En61)
 - [Library Source](https://github.com/its-dart/dart-tools-py/)
 - [Chat on Discord](https://discord.gg/RExv8jEkSh)
-- Email us at [support@itsdart.com](mailto:support@itsdart.com)
+- Email us at [support@dartai.com](mailto:support@dartai.com)
 
 
 ## Contributing

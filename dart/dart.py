@@ -58,8 +58,8 @@ from .generated.types import UNSET, Response, Unset
 _APP = "dart-tools"
 _PROG = "dart"
 
-_PROD_HOST = "https://app.itsdart.com"
-_STAG_HOST = "https://stag.itsdart.com"
+_PROD_HOST = "https://app.dartai.com"
+_STAG_HOST = "https://stag.dartai.com"
 _DEV_HOST = "http://localhost:5173"
 _HOST_MAP = {"prod": _PROD_HOST, "stag": _STAG_HOST, "dev": _DEV_HOST}
 
@@ -466,7 +466,7 @@ def _auth_failure_exit() -> NoReturn:
 
 
 def _unknown_failure_exit() -> NoReturn:
-    _dart_exit("Unknown failure, email\n\n  support@itsdart.com\n\nfor help.")
+    _dart_exit("Unknown failure, email\n\n  support@dartai.com\n\nfor help.")
 
 
 def print_version() -> str:
