@@ -124,9 +124,15 @@ def replicate_space(
 def get_dartboards(space_id: str, include_special: bool = False) -> list[dict]:
     dart = DartOld()
 
-    response = dart.get(_LIST_DARTBOARDS_URL_FRAG, params={"space_duid": space_id})
+    response = dart.get(_LIST_DARTBOARDS_URL_FRAG, params={"space_duid": space_id, "limit": 100})
     response_json = response.json()
     dartboards = response_json["results"] if response_json is not None else []
+    while response_json.get("next") is not None:
+        response = dart.get(response_json["next"])
+        response_json = response.json()
+        if response_json is not None and "results" in response_json:
+            dartboards.extend(response_json["results"])
+
     if not include_special:
         dartboards = [e for e in dartboards if e["kind"] == "Custom"]
 
@@ -178,9 +184,15 @@ def update_dartboard(dartboard_id: str, *, title: Union[str, None] = None, color
 def get_folders(space_id: str, *, include_special: Union[bool, None] = False) -> list[dict]:
     dart = DartOld()
 
-    response = dart.get(_LIST_FOLDERS_URL_FRAG, params={"space_duid": space_id})
+    response = dart.get(_LIST_FOLDERS_URL_FRAG, params={"space_duid": space_id, "limit": 50})
     response_json = response.json()
     folders = response_json["results"] if response_json is not None else []
+    while response_json.get("next") is not None:
+        response = dart.get(response_json["next"])
+        response_json = response.json()
+        if response_json is not None and "results" in response_json:
+            folders.extend(response_json["results"])
+
     if not include_special:
         folders = [e for e in folders if e["kind"] == "Other"]
 
