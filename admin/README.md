@@ -33,7 +33,7 @@
 1. Bump the version in `pyproject.toml`
 2. Run `uv sync`
 3. Run `make deploy`
-4. Commit and push all local changes to GitHub
+4. Commit and push all local changes to GitHub, then open and merge a PR there
 
 ## Dependency updating
 
