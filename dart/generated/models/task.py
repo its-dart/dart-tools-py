@@ -9,7 +9,7 @@ from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
     from ..models.custom_properties import CustomProperties
-    from ..models.task_relationships import TaskRelationships
+    from ..models.task_relationships_type_0 import TaskRelationshipsType0
 
 
 T = TypeVar("T", bound="Task")
@@ -22,7 +22,9 @@ class Task:
         id (str): The universal, unique ID of the task.
         html_url (str): The URL that can be used to open the task in the Dart web UI.
         title (str): The title, which is a short description of what needs to be done.
-        parent_id (Union[None, str]): The universal, unique ID of the parent task. This can be null.
+        parent_id (Union[None, str]): The universal, unique ID of the parent task. This can be null. These tasks have a
+            parent-child relationship where the current task is the child and this task ID corresponds to the parent.
+            Subtasks inherit context from their parent and are typically smaller units of work.
         dartboard (str): The full title of the dartboard, which is a project or list of tasks.
         type_ (str): The title of the type of the task.
         status (str): The status from the list of available statuses.
@@ -46,7 +48,7 @@ class Task:
             on the task in hh:mm:ss format (or an empty string if no time has been tracked).
         custom_properties (Union['CustomProperties', None, Unset]): The custom properties, which is a dict of custom
             properties that are associated with the task.
-        task_relationships (Union['TaskRelationships', None, Unset]): The relationships associated with the task.
+        task_relationships (Union['TaskRelationshipsType0', None, Unset]): The relationships associated with the task.
     """
 
     id: str
@@ -66,12 +68,12 @@ class Task:
     size: Union[None, Unset, int, str] = UNSET
     time_tracking: Union[Unset, str] = UNSET
     custom_properties: Union["CustomProperties", None, Unset] = UNSET
-    task_relationships: Union["TaskRelationships", None, Unset] = UNSET
+    task_relationships: Union["TaskRelationshipsType0", None, Unset] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         from ..models.custom_properties import CustomProperties
-        from ..models.task_relationships import TaskRelationships
+        from ..models.task_relationships_type_0 import TaskRelationshipsType0
 
         id = self.id
 
@@ -148,7 +150,7 @@ class Task:
         task_relationships: Union[None, Unset, dict[str, Any]]
         if isinstance(self.task_relationships, Unset):
             task_relationships = UNSET
-        elif isinstance(self.task_relationships, TaskRelationships):
+        elif isinstance(self.task_relationships, TaskRelationshipsType0):
             task_relationships = self.task_relationships.to_dict()
         else:
             task_relationships = self.task_relationships
@@ -193,7 +195,7 @@ class Task:
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         from ..models.custom_properties import CustomProperties
-        from ..models.task_relationships import TaskRelationships
+        from ..models.task_relationships_type_0 import TaskRelationshipsType0
 
         d = dict(src_dict)
         id = d.pop("id")
@@ -312,7 +314,7 @@ class Task:
 
         def _parse_task_relationships(
             data: object,
-        ) -> Union["TaskRelationships", None, Unset]:
+        ) -> Union["TaskRelationshipsType0", None, Unset]:
             if data is None:
                 return data
             if isinstance(data, Unset):
@@ -320,12 +322,12 @@ class Task:
             try:
                 if not isinstance(data, dict):
                     raise TypeError()
-                task_relationships_type_0 = TaskRelationships.from_dict(data)
+                componentsschemas_task_relationships_type_0 = TaskRelationshipsType0.from_dict(data)
 
-                return task_relationships_type_0
+                return componentsschemas_task_relationships_type_0
             except:  # noqa: E722
                 pass
-            return cast(Union["TaskRelationships", None, Unset], data)
+            return cast(Union["TaskRelationshipsType0", None, Unset], data)
 
         task_relationships = _parse_task_relationships(d.pop("taskRelationships", UNSET))
 

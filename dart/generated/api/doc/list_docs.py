@@ -101,8 +101,8 @@ def sync_detailed(
     text: Union[Unset, str] = UNSET,
     title: Union[Unset, str] = UNSET,
 ) -> Response[PaginatedConciseDocList]:
-    """List all docs that the user has access to. This will return a list of docs, including the title,
-    folder, text and others.
+    """List docs with filtering and search capabilities. Filter by folder, title, text content, or use
+    full-text search. Sort by creation/update date or title. Supports pagination.
 
     Args:
         folder (Union[Unset, str]):
@@ -158,8 +158,8 @@ def sync(
     text: Union[Unset, str] = UNSET,
     title: Union[Unset, str] = UNSET,
 ) -> Optional[PaginatedConciseDocList]:
-    """List all docs that the user has access to. This will return a list of docs, including the title,
-    folder, text and others.
+    """List docs with filtering and search capabilities. Filter by folder, title, text content, or use
+    full-text search. Sort by creation/update date or title. Supports pagination.
 
     Args:
         folder (Union[Unset, str]):
@@ -210,8 +210,8 @@ async def asyncio_detailed(
     text: Union[Unset, str] = UNSET,
     title: Union[Unset, str] = UNSET,
 ) -> Response[PaginatedConciseDocList]:
-    """List all docs that the user has access to. This will return a list of docs, including the title,
-    folder, text and others.
+    """List docs with filtering and search capabilities. Filter by folder, title, text content, or use
+    full-text search. Sort by creation/update date or title. Supports pagination.
 
     Args:
         folder (Union[Unset, str]):
@@ -265,8 +265,8 @@ async def asyncio(
     text: Union[Unset, str] = UNSET,
     title: Union[Unset, str] = UNSET,
 ) -> Optional[PaginatedConciseDocList]:
-    """List all docs that the user has access to. This will return a list of docs, including the title,
-    folder, text and others.
+    """List docs with filtering and search capabilities. Filter by folder, title, text content, or use
+    full-text search. Sort by creation/update date or title. Supports pagination.
 
     Args:
         folder (Union[Unset, str]):

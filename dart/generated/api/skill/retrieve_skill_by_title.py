@@ -5,18 +5,24 @@ import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
-from ...models.wrapped_view import WrappedView
-from ...types import Response
+from ...models.wrapped_skill import WrappedSkill
+from ...types import UNSET, Response
 
 
 def _get_kwargs(
-    id: str,
+    *,
+    title: str,
 ) -> dict[str, Any]:
+    params: dict[str, Any] = {}
+
+    params["title"] = title
+
+    params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
+
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": "/views/{id}".format(
-            id=id,
-        ),
+        "url": "/skills/by-title",
+        "params": params,
     }
 
     return _kwargs
@@ -24,14 +30,11 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Optional[Union[Any, WrappedView]]:
+) -> Optional[Union[Any, WrappedSkill]]:
     if response.status_code == 200:
-        response_200 = WrappedView.from_dict(response.json())
+        response_200 = WrappedSkill.from_dict(response.json())
 
         return response_200
-    if response.status_code == 400:
-        response_400 = cast(Any, None)
-        return response_400
     if response.status_code == 404:
         response_404 = cast(Any, None)
         return response_404
@@ -43,7 +46,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Response[Union[Any, WrappedView]]:
+) -> Response[Union[Any, WrappedSkill]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -53,28 +56,28 @@ def _build_response(
 
 
 def sync_detailed(
-    id: str,
     *,
     client: Union[AuthenticatedClient, Client],
-) -> Response[Union[Any, WrappedView]]:
-    """Retrieve an existing view
+    title: str,
+) -> Response[Union[Any, WrappedSkill]]:
+    """Retrieve a skill by title
 
-     Retrieve an existing view. This will return the view's information, including the title,
-    description, and others.
+     Retrieve a skill by its title. Skills are user-defined instructions or templates for performing
+    specific task types in the workspace. Returns the skill's title and instructions if found.
 
     Args:
-        id (str):
+        title (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, WrappedView]]
+        Response[Union[Any, WrappedSkill]]
     """
 
     kwargs = _get_kwargs(
-        id=id,
+        title=title,
     )
 
     response = client.get_httpx_client().request(
@@ -85,55 +88,55 @@ def sync_detailed(
 
 
 def sync(
-    id: str,
     *,
     client: Union[AuthenticatedClient, Client],
-) -> Optional[Union[Any, WrappedView]]:
-    """Retrieve an existing view
+    title: str,
+) -> Optional[Union[Any, WrappedSkill]]:
+    """Retrieve a skill by title
 
-     Retrieve an existing view. This will return the view's information, including the title,
-    description, and others.
+     Retrieve a skill by its title. Skills are user-defined instructions or templates for performing
+    specific task types in the workspace. Returns the skill's title and instructions if found.
 
     Args:
-        id (str):
+        title (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, WrappedView]
+        Union[Any, WrappedSkill]
     """
 
     return sync_detailed(
-        id=id,
         client=client,
+        title=title,
     ).parsed
 
 
 async def asyncio_detailed(
-    id: str,
     *,
     client: Union[AuthenticatedClient, Client],
-) -> Response[Union[Any, WrappedView]]:
-    """Retrieve an existing view
+    title: str,
+) -> Response[Union[Any, WrappedSkill]]:
+    """Retrieve a skill by title
 
-     Retrieve an existing view. This will return the view's information, including the title,
-    description, and others.
+     Retrieve a skill by its title. Skills are user-defined instructions or templates for performing
+    specific task types in the workspace. Returns the skill's title and instructions if found.
 
     Args:
-        id (str):
+        title (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, WrappedView]]
+        Response[Union[Any, WrappedSkill]]
     """
 
     kwargs = _get_kwargs(
-        id=id,
+        title=title,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -142,29 +145,29 @@ async def asyncio_detailed(
 
 
 async def asyncio(
-    id: str,
     *,
     client: Union[AuthenticatedClient, Client],
-) -> Optional[Union[Any, WrappedView]]:
-    """Retrieve an existing view
+    title: str,
+) -> Optional[Union[Any, WrappedSkill]]:
+    """Retrieve a skill by title
 
-     Retrieve an existing view. This will return the view's information, including the title,
-    description, and others.
+     Retrieve a skill by its title. Skills are user-defined instructions or templates for performing
+    specific task types in the workspace. Returns the skill's title and instructions if found.
 
     Args:
-        id (str):
+        title (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, WrappedView]
+        Union[Any, WrappedSkill]
     """
 
     return (
         await asyncio_detailed(
-            id=id,
             client=client,
+            title=title,
         )
     ).parsed

@@ -36,6 +36,8 @@ def _get_kwargs(
     title: Union[Unset, str] = UNSET,
     type_: Union[Unset, str] = UNSET,
     type_id: Union[Unset, str] = UNSET,
+    view: Union[Unset, str] = UNSET,
+    view_id: Union[Unset, str] = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
 
@@ -99,6 +101,10 @@ def _get_kwargs(
 
     params["type_id"] = type_id
 
+    params["view"] = view
+
+    params["view_id"] = view_id
+
     params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
 
     _kwargs: dict[str, Any] = {
@@ -161,9 +167,11 @@ def sync_detailed(
     title: Union[Unset, str] = UNSET,
     type_: Union[Unset, str] = UNSET,
     type_id: Union[Unset, str] = UNSET,
+    view: Union[Unset, str] = UNSET,
+    view_id: Union[Unset, str] = UNSET,
 ) -> Response[PaginatedConciseTaskList]:
-    """List all tasks that the user has access to. This will return a list of tasks, including the title,
-    dartboard, status, description and others.
+    """List tasks with powerful filtering options. Filter by dartboard, status, assignee, tags, priority,
+    dates, completion state, view, and more. Supports pagination with limit/offset.
 
     Args:
         assignee (Union[Unset, str]):
@@ -190,6 +198,8 @@ def sync_detailed(
         title (Union[Unset, str]):
         type_ (Union[Unset, str]):
         type_id (Union[Unset, str]):
+        view (Union[Unset, str]):
+        view_id (Union[Unset, str]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -224,6 +234,8 @@ def sync_detailed(
         title=title,
         type_=type_,
         type_id=type_id,
+        view=view,
+        view_id=view_id,
     )
 
     response = client.get_httpx_client().request(
@@ -260,9 +272,11 @@ def sync(
     title: Union[Unset, str] = UNSET,
     type_: Union[Unset, str] = UNSET,
     type_id: Union[Unset, str] = UNSET,
+    view: Union[Unset, str] = UNSET,
+    view_id: Union[Unset, str] = UNSET,
 ) -> Optional[PaginatedConciseTaskList]:
-    """List all tasks that the user has access to. This will return a list of tasks, including the title,
-    dartboard, status, description and others.
+    """List tasks with powerful filtering options. Filter by dartboard, status, assignee, tags, priority,
+    dates, completion state, view, and more. Supports pagination with limit/offset.
 
     Args:
         assignee (Union[Unset, str]):
@@ -289,6 +303,8 @@ def sync(
         title (Union[Unset, str]):
         type_ (Union[Unset, str]):
         type_id (Union[Unset, str]):
+        view (Union[Unset, str]):
+        view_id (Union[Unset, str]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -324,6 +340,8 @@ def sync(
         title=title,
         type_=type_,
         type_id=type_id,
+        view=view,
+        view_id=view_id,
     ).parsed
 
 
@@ -354,9 +372,11 @@ async def asyncio_detailed(
     title: Union[Unset, str] = UNSET,
     type_: Union[Unset, str] = UNSET,
     type_id: Union[Unset, str] = UNSET,
+    view: Union[Unset, str] = UNSET,
+    view_id: Union[Unset, str] = UNSET,
 ) -> Response[PaginatedConciseTaskList]:
-    """List all tasks that the user has access to. This will return a list of tasks, including the title,
-    dartboard, status, description and others.
+    """List tasks with powerful filtering options. Filter by dartboard, status, assignee, tags, priority,
+    dates, completion state, view, and more. Supports pagination with limit/offset.
 
     Args:
         assignee (Union[Unset, str]):
@@ -383,6 +403,8 @@ async def asyncio_detailed(
         title (Union[Unset, str]):
         type_ (Union[Unset, str]):
         type_id (Union[Unset, str]):
+        view (Union[Unset, str]):
+        view_id (Union[Unset, str]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -417,6 +439,8 @@ async def asyncio_detailed(
         title=title,
         type_=type_,
         type_id=type_id,
+        view=view,
+        view_id=view_id,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -451,9 +475,11 @@ async def asyncio(
     title: Union[Unset, str] = UNSET,
     type_: Union[Unset, str] = UNSET,
     type_id: Union[Unset, str] = UNSET,
+    view: Union[Unset, str] = UNSET,
+    view_id: Union[Unset, str] = UNSET,
 ) -> Optional[PaginatedConciseTaskList]:
-    """List all tasks that the user has access to. This will return a list of tasks, including the title,
-    dartboard, status, description and others.
+    """List tasks with powerful filtering options. Filter by dartboard, status, assignee, tags, priority,
+    dates, completion state, view, and more. Supports pagination with limit/offset.
 
     Args:
         assignee (Union[Unset, str]):
@@ -480,6 +506,8 @@ async def asyncio(
         title (Union[Unset, str]):
         type_ (Union[Unset, str]):
         type_id (Union[Unset, str]):
+        view (Union[Unset, str]):
+        view_id (Union[Unset, str]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -516,5 +544,7 @@ async def asyncio(
             title=title,
             type_=type_,
             type_id=type_id,
+            view=view,
+            view_id=view_id,
         )
     ).parsed

@@ -1,22 +1,28 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union, cast
+from typing import Any, Optional, Union
 
 import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
-from ...models.wrapped_view import WrappedView
-from ...types import Response
+from ...models.wrapped_help_center_articles import WrappedHelpCenterArticles
+from ...types import UNSET, Response, Unset
 
 
 def _get_kwargs(
-    id: str,
+    *,
+    query: Union[Unset, str] = UNSET,
 ) -> dict[str, Any]:
+    params: dict[str, Any] = {}
+
+    params["query"] = query
+
+    params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
+
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": "/views/{id}".format(
-            id=id,
-        ),
+        "url": "/help-center-articles/list",
+        "params": params,
     }
 
     return _kwargs
@@ -24,17 +30,11 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Optional[Union[Any, WrappedView]]:
+) -> Optional[WrappedHelpCenterArticles]:
     if response.status_code == 200:
-        response_200 = WrappedView.from_dict(response.json())
+        response_200 = WrappedHelpCenterArticles.from_dict(response.json())
 
         return response_200
-    if response.status_code == 400:
-        response_400 = cast(Any, None)
-        return response_400
-    if response.status_code == 404:
-        response_404 = cast(Any, None)
-        return response_404
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
     else:
@@ -43,7 +43,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Response[Union[Any, WrappedView]]:
+) -> Response[WrappedHelpCenterArticles]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -53,28 +53,27 @@ def _build_response(
 
 
 def sync_detailed(
-    id: str,
     *,
     client: Union[AuthenticatedClient, Client],
-) -> Response[Union[Any, WrappedView]]:
-    """Retrieve an existing view
+    query: Union[Unset, str] = UNSET,
+) -> Response[WrappedHelpCenterArticles]:
+    """List help center articles by query
 
-     Retrieve an existing view. This will return the view's information, including the title,
-    description, and others.
+     Search for up to two help center articles by their semantic similarity to a short (1-5 word) query.
 
     Args:
-        id (str):
+        query (Union[Unset, str]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, WrappedView]]
+        Response[WrappedHelpCenterArticles]
     """
 
     kwargs = _get_kwargs(
-        id=id,
+        query=query,
     )
 
     response = client.get_httpx_client().request(
@@ -85,55 +84,53 @@ def sync_detailed(
 
 
 def sync(
-    id: str,
     *,
     client: Union[AuthenticatedClient, Client],
-) -> Optional[Union[Any, WrappedView]]:
-    """Retrieve an existing view
+    query: Union[Unset, str] = UNSET,
+) -> Optional[WrappedHelpCenterArticles]:
+    """List help center articles by query
 
-     Retrieve an existing view. This will return the view's information, including the title,
-    description, and others.
+     Search for up to two help center articles by their semantic similarity to a short (1-5 word) query.
 
     Args:
-        id (str):
+        query (Union[Unset, str]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, WrappedView]
+        WrappedHelpCenterArticles
     """
 
     return sync_detailed(
-        id=id,
         client=client,
+        query=query,
     ).parsed
 
 
 async def asyncio_detailed(
-    id: str,
     *,
     client: Union[AuthenticatedClient, Client],
-) -> Response[Union[Any, WrappedView]]:
-    """Retrieve an existing view
+    query: Union[Unset, str] = UNSET,
+) -> Response[WrappedHelpCenterArticles]:
+    """List help center articles by query
 
-     Retrieve an existing view. This will return the view's information, including the title,
-    description, and others.
+     Search for up to two help center articles by their semantic similarity to a short (1-5 word) query.
 
     Args:
-        id (str):
+        query (Union[Unset, str]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, WrappedView]]
+        Response[WrappedHelpCenterArticles]
     """
 
     kwargs = _get_kwargs(
-        id=id,
+        query=query,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -142,29 +139,28 @@ async def asyncio_detailed(
 
 
 async def asyncio(
-    id: str,
     *,
     client: Union[AuthenticatedClient, Client],
-) -> Optional[Union[Any, WrappedView]]:
-    """Retrieve an existing view
+    query: Union[Unset, str] = UNSET,
+) -> Optional[WrappedHelpCenterArticles]:
+    """List help center articles by query
 
-     Retrieve an existing view. This will return the view's information, including the title,
-    description, and others.
+     Search for up to two help center articles by their semantic similarity to a short (1-5 word) query.
 
     Args:
-        id (str):
+        query (Union[Unset, str]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, WrappedView]
+        WrappedHelpCenterArticles
     """
 
     return (
         await asyncio_detailed(
-            id=id,
             client=client,
+            query=query,
         )
     ).parsed

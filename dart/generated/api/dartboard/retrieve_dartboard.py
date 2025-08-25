@@ -59,8 +59,8 @@ def sync_detailed(
 ) -> Response[Union[Any, WrappedDartboard]]:
     """Retrieve an existing dartboard
 
-     Retrieve an existing dartboard. This will return the dartboard's information, including the title,
-    description, all tasks within it, and others.
+     Retrieve an existing dartboard. This will return the dartboard's information, including the title
+    and description.
 
     Args:
         id (str):
@@ -91,8 +91,8 @@ def sync(
 ) -> Optional[Union[Any, WrappedDartboard]]:
     """Retrieve an existing dartboard
 
-     Retrieve an existing dartboard. This will return the dartboard's information, including the title,
-    description, all tasks within it, and others.
+     Retrieve an existing dartboard. This will return the dartboard's information, including the title
+    and description.
 
     Args:
         id (str):
@@ -118,8 +118,8 @@ async def asyncio_detailed(
 ) -> Response[Union[Any, WrappedDartboard]]:
     """Retrieve an existing dartboard
 
-     Retrieve an existing dartboard. This will return the dartboard's information, including the title,
-    description, all tasks within it, and others.
+     Retrieve an existing dartboard. This will return the dartboard's information, including the title
+    and description.
 
     Args:
         id (str):
@@ -148,8 +148,8 @@ async def asyncio(
 ) -> Optional[Union[Any, WrappedDartboard]]:
     """Retrieve an existing dartboard
 
-     Retrieve an existing dartboard. This will return the dartboard's information, including the title,
-    description, all tasks within it, and others.
+     Retrieve an existing dartboard. This will return the dartboard's information, including the title
+    and description.
 
     Args:
         id (str):

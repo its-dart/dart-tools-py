@@ -54,6 +54,7 @@ class UserSpaceConfiguration:
         tags (list[str]):
         priorities (list[str]):
         sizes (Union[list[Union[int, str]], str]):
+        skills (list[str]):
         custom_properties (list[Union['UserSpaceConfigurationCustomPropertyCheckboxTypeDef',
             'UserSpaceConfigurationCustomPropertyDatesTypeDef', 'UserSpaceConfigurationCustomPropertyMultiselectTypeDef',
             'UserSpaceConfigurationCustomPropertyNumberTypeDef', 'UserSpaceConfigurationCustomPropertySelectTypeDef',
@@ -71,6 +72,7 @@ class UserSpaceConfiguration:
     tags: list[str]
     priorities: list[str]
     sizes: Union[list[Union[int, str]], str]
+    skills: list[str]
     custom_properties: list[
         Union[
             "UserSpaceConfigurationCustomPropertyCheckboxTypeDef",
@@ -144,6 +146,8 @@ class UserSpaceConfiguration:
         else:
             sizes = self.sizes
 
+        skills = self.skills
+
         custom_properties = []
         for custom_properties_item_data in self.custom_properties:
             custom_properties_item: dict[str, Any]
@@ -206,6 +210,7 @@ class UserSpaceConfiguration:
                 "tags": tags,
                 "priorities": priorities,
                 "sizes": sizes,
+                "skills": skills,
                 "customProperties": custom_properties,
             }
         )
@@ -288,6 +293,8 @@ class UserSpaceConfiguration:
             return cast(Union[list[Union[int, str]], str], data)
 
         sizes = _parse_sizes(d.pop("sizes"))
+
+        skills = cast(list[str], d.pop("skills"))
 
         custom_properties = []
         _custom_properties = d.pop("customProperties")
@@ -395,6 +402,7 @@ class UserSpaceConfiguration:
             tags=tags,
             priorities=priorities,
             sizes=sizes,
+            skills=skills,
             custom_properties=custom_properties,
         )
 
