@@ -57,9 +57,9 @@ def sync_detailed(
 ) -> Response[WrappedTask]:
     """Create a new task
 
-     Record a new task that the user intends to do. This will save the task in Dart for later access,
-    search, etc. By default the created task will be assigned to the user, with a status of to-do, with
-    no parent, in the Active dartboard. More information can be included in the description.
+     Record a new task that the user intends to do. By default the task will be assigned to the current
+    user, have an unstarted status, have no parent, and be in the default dartboard. More information
+    can be included in the description.
 
     Args:
         body (WrappedTaskCreate):
@@ -90,9 +90,9 @@ def sync(
 ) -> Optional[WrappedTask]:
     """Create a new task
 
-     Record a new task that the user intends to do. This will save the task in Dart for later access,
-    search, etc. By default the created task will be assigned to the user, with a status of to-do, with
-    no parent, in the Active dartboard. More information can be included in the description.
+     Record a new task that the user intends to do. By default the task will be assigned to the current
+    user, have an unstarted status, have no parent, and be in the default dartboard. More information
+    can be included in the description.
 
     Args:
         body (WrappedTaskCreate):
@@ -118,9 +118,9 @@ async def asyncio_detailed(
 ) -> Response[WrappedTask]:
     """Create a new task
 
-     Record a new task that the user intends to do. This will save the task in Dart for later access,
-    search, etc. By default the created task will be assigned to the user, with a status of to-do, with
-    no parent, in the Active dartboard. More information can be included in the description.
+     Record a new task that the user intends to do. By default the task will be assigned to the current
+    user, have an unstarted status, have no parent, and be in the default dartboard. More information
+    can be included in the description.
 
     Args:
         body (WrappedTaskCreate):
@@ -149,9 +149,9 @@ async def asyncio(
 ) -> Optional[WrappedTask]:
     """Create a new task
 
-     Record a new task that the user intends to do. This will save the task in Dart for later access,
-    search, etc. By default the created task will be assigned to the user, with a status of to-do, with
-    no parent, in the Active dartboard. More information can be included in the description.
+     Record a new task that the user intends to do. By default the task will be assigned to the current
+    user, have an unstarted status, have no parent, and be in the default dartboard. More information
+    can be included in the description.
 
     Args:
         body (WrappedTaskCreate):

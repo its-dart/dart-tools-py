@@ -1,57 +1,52 @@
 from collections.abc import Mapping
-from typing import Any, TypeVar, Union
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-from ..types import UNSET, Unset
+if TYPE_CHECKING:
+    from ..models.skill import Skill
 
-T = TypeVar("T", bound="User")
+
+T = TypeVar("T", bound="WrappedSkill")
 
 
 @_attrs_define
-class User:
+class WrappedSkill:
     """
     Attributes:
-        name (str):
-        email (Union[Unset, str]):
+        item (Skill):
     """
 
-    name: str
-    email: Union[Unset, str] = UNSET
+    item: "Skill"
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        name = self.name
-
-        email = self.email
+        item = self.item.to_dict()
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
             {
-                "name": name,
+                "item": item,
             }
         )
-        if email is not UNSET:
-            field_dict["email"] = email
 
         return field_dict
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+        from ..models.skill import Skill
+
         d = dict(src_dict)
-        name = d.pop("name")
+        item = Skill.from_dict(d.pop("item"))
 
-        email = d.pop("email", UNSET)
-
-        user = cls(
-            name=name,
-            email=email,
+        wrapped_skill = cls(
+            item=item,
         )
 
-        user.additional_properties = d
-        return user
+        wrapped_skill.additional_properties = d
+        return wrapped_skill
 
     @property
     def additional_keys(self) -> list[str]:

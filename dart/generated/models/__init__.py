@@ -16,9 +16,10 @@ from .paginated_comment_list import PaginatedCommentList
 from .paginated_concise_doc_list import PaginatedConciseDocList
 from .paginated_concise_task_list import PaginatedConciseTaskList
 from .priority import Priority
+from .skill import Skill
 from .task import Task
 from .task_create import TaskCreate
-from .task_relationships import TaskRelationships
+from .task_relationships_type_0 import TaskRelationshipsType0
 from .task_update import TaskUpdate
 from .time_tracking_entry import TimeTrackingEntry
 from .user import User
@@ -61,6 +62,8 @@ from .wrapped_doc import WrappedDoc
 from .wrapped_doc_create import WrappedDocCreate
 from .wrapped_doc_update import WrappedDocUpdate
 from .wrapped_folder import WrappedFolder
+from .wrapped_help_center_articles import WrappedHelpCenterArticles
+from .wrapped_skill import WrappedSkill
 from .wrapped_task import WrappedTask
 from .wrapped_task_create import WrappedTaskCreate
 from .wrapped_task_update import WrappedTaskUpdate
@@ -83,9 +86,10 @@ __all__ = (
     "PaginatedConciseDocList",
     "PaginatedConciseTaskList",
     "Priority",
+    "Skill",
     "Task",
     "TaskCreate",
-    "TaskRelationships",
+    "TaskRelationshipsType0",
     "TaskUpdate",
     "TimeTrackingEntry",
     "User",
@@ -108,6 +112,8 @@ __all__ = (
     "WrappedDocCreate",
     "WrappedDocUpdate",
     "WrappedFolder",
+    "WrappedHelpCenterArticles",
+    "WrappedSkill",
     "WrappedTask",
     "WrappedTaskCreate",
     "WrappedTaskUpdate",

@@ -19,7 +19,7 @@ def _get_kwargs(
     limit: Union[Unset, int] = UNSET,
     o: Union[Unset, list[ListCommentsOItem]] = UNSET,
     offset: Union[Unset, int] = UNSET,
-    parent_id: Union[None, Unset, str] = UNSET,
+    parent_id: Union[Unset, str] = UNSET,
     published_at_after: Union[Unset, datetime.datetime] = UNSET,
     published_at_before: Union[Unset, datetime.datetime] = UNSET,
     task: Union[Unset, str] = UNSET,
@@ -47,12 +47,7 @@ def _get_kwargs(
 
     params["offset"] = offset
 
-    json_parent_id: Union[None, Unset, str]
-    if isinstance(parent_id, Unset):
-        json_parent_id = UNSET
-    else:
-        json_parent_id = parent_id
-    params["parent_id"] = json_parent_id
+    params["parent_id"] = parent_id
 
     json_published_at_after: Union[Unset, str] = UNSET
     if not isinstance(published_at_after, Unset):
@@ -114,16 +109,15 @@ def sync_detailed(
     limit: Union[Unset, int] = UNSET,
     o: Union[Unset, list[ListCommentsOItem]] = UNSET,
     offset: Union[Unset, int] = UNSET,
-    parent_id: Union[None, Unset, str] = UNSET,
+    parent_id: Union[Unset, str] = UNSET,
     published_at_after: Union[Unset, datetime.datetime] = UNSET,
     published_at_before: Union[Unset, datetime.datetime] = UNSET,
     task: Union[Unset, str] = UNSET,
     task_id: str,
     text: Union[Unset, str] = UNSET,
 ) -> Response[PaginatedCommentList]:
-    """List all comments that the user has access to. This will return a list of comments, including the
-    text, associated task ID, and others. Comments are ordered by thread and then by when they were
-    written.
+    """List comments for a task with filtering options. Filter by author, text content, or date range. Sort
+    by date or hierarchical thread order. Task ID required. Supports pagination.
 
     Args:
         author (Union[Unset, str]):
@@ -132,7 +126,7 @@ def sync_detailed(
         limit (Union[Unset, int]):
         o (Union[Unset, list[ListCommentsOItem]]):
         offset (Union[Unset, int]):
-        parent_id (Union[None, Unset, str]):
+        parent_id (Union[Unset, str]):
         published_at_after (Union[Unset, datetime.datetime]):
         published_at_before (Union[Unset, datetime.datetime]):
         task (Union[Unset, str]):
@@ -178,16 +172,15 @@ def sync(
     limit: Union[Unset, int] = UNSET,
     o: Union[Unset, list[ListCommentsOItem]] = UNSET,
     offset: Union[Unset, int] = UNSET,
-    parent_id: Union[None, Unset, str] = UNSET,
+    parent_id: Union[Unset, str] = UNSET,
     published_at_after: Union[Unset, datetime.datetime] = UNSET,
     published_at_before: Union[Unset, datetime.datetime] = UNSET,
     task: Union[Unset, str] = UNSET,
     task_id: str,
     text: Union[Unset, str] = UNSET,
 ) -> Optional[PaginatedCommentList]:
-    """List all comments that the user has access to. This will return a list of comments, including the
-    text, associated task ID, and others. Comments are ordered by thread and then by when they were
-    written.
+    """List comments for a task with filtering options. Filter by author, text content, or date range. Sort
+    by date or hierarchical thread order. Task ID required. Supports pagination.
 
     Args:
         author (Union[Unset, str]):
@@ -196,7 +189,7 @@ def sync(
         limit (Union[Unset, int]):
         o (Union[Unset, list[ListCommentsOItem]]):
         offset (Union[Unset, int]):
-        parent_id (Union[None, Unset, str]):
+        parent_id (Union[Unset, str]):
         published_at_after (Union[Unset, datetime.datetime]):
         published_at_before (Union[Unset, datetime.datetime]):
         task (Union[Unset, str]):
@@ -237,16 +230,15 @@ async def asyncio_detailed(
     limit: Union[Unset, int] = UNSET,
     o: Union[Unset, list[ListCommentsOItem]] = UNSET,
     offset: Union[Unset, int] = UNSET,
-    parent_id: Union[None, Unset, str] = UNSET,
+    parent_id: Union[Unset, str] = UNSET,
     published_at_after: Union[Unset, datetime.datetime] = UNSET,
     published_at_before: Union[Unset, datetime.datetime] = UNSET,
     task: Union[Unset, str] = UNSET,
     task_id: str,
     text: Union[Unset, str] = UNSET,
 ) -> Response[PaginatedCommentList]:
-    """List all comments that the user has access to. This will return a list of comments, including the
-    text, associated task ID, and others. Comments are ordered by thread and then by when they were
-    written.
+    """List comments for a task with filtering options. Filter by author, text content, or date range. Sort
+    by date or hierarchical thread order. Task ID required. Supports pagination.
 
     Args:
         author (Union[Unset, str]):
@@ -255,7 +247,7 @@ async def asyncio_detailed(
         limit (Union[Unset, int]):
         o (Union[Unset, list[ListCommentsOItem]]):
         offset (Union[Unset, int]):
-        parent_id (Union[None, Unset, str]):
+        parent_id (Union[Unset, str]):
         published_at_after (Union[Unset, datetime.datetime]):
         published_at_before (Union[Unset, datetime.datetime]):
         task (Union[Unset, str]):
@@ -299,16 +291,15 @@ async def asyncio(
     limit: Union[Unset, int] = UNSET,
     o: Union[Unset, list[ListCommentsOItem]] = UNSET,
     offset: Union[Unset, int] = UNSET,
-    parent_id: Union[None, Unset, str] = UNSET,
+    parent_id: Union[Unset, str] = UNSET,
     published_at_after: Union[Unset, datetime.datetime] = UNSET,
     published_at_before: Union[Unset, datetime.datetime] = UNSET,
     task: Union[Unset, str] = UNSET,
     task_id: str,
     text: Union[Unset, str] = UNSET,
 ) -> Optional[PaginatedCommentList]:
-    """List all comments that the user has access to. This will return a list of comments, including the
-    text, associated task ID, and others. Comments are ordered by thread and then by when they were
-    written.
+    """List comments for a task with filtering options. Filter by author, text content, or date range. Sort
+    by date or hierarchical thread order. Task ID required. Supports pagination.
 
     Args:
         author (Union[Unset, str]):
@@ -317,7 +308,7 @@ async def asyncio(
         limit (Union[Unset, int]):
         o (Union[Unset, list[ListCommentsOItem]]):
         offset (Union[Unset, int]):
-        parent_id (Union[None, Unset, str]):
+        parent_id (Union[Unset, str]):
         published_at_after (Union[Unset, datetime.datetime]):
         published_at_before (Union[Unset, datetime.datetime]):
         task (Union[Unset, str]):

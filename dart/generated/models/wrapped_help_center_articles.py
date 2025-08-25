@@ -1,45 +1,30 @@
 from collections.abc import Mapping
-from typing import Any, TypeVar
+from typing import Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-T = TypeVar("T", bound="Dartboard")
+T = TypeVar("T", bound="WrappedHelpCenterArticles")
 
 
 @_attrs_define
-class Dartboard:
+class WrappedHelpCenterArticles:
     """
     Attributes:
-        id (str): The universal, unique ID of the dartboard.
-        html_url (str): The URL that can be used to open the dartboard in the Dart web UI.
-        title (str): The title, which is a short description of the dartboard.
-        description (str): The description, which is a longer description of the dartboard.
+        items (list[str]):
     """
 
-    id: str
-    html_url: str
-    title: str
-    description: str
+    items: list[str]
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        id = self.id
-
-        html_url = self.html_url
-
-        title = self.title
-
-        description = self.description
+        items = self.items
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
             {
-                "id": id,
-                "htmlUrl": html_url,
-                "title": title,
-                "description": description,
+                "items": items,
             }
         )
 
@@ -48,23 +33,14 @@ class Dartboard:
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         d = dict(src_dict)
-        id = d.pop("id")
+        items = cast(list[str], d.pop("items"))
 
-        html_url = d.pop("htmlUrl")
-
-        title = d.pop("title")
-
-        description = d.pop("description")
-
-        dartboard = cls(
-            id=id,
-            html_url=html_url,
-            title=title,
-            description=description,
+        wrapped_help_center_articles = cls(
+            items=items,
         )
 
-        dartboard.additional_properties = d
-        return dartboard
+        wrapped_help_center_articles.additional_properties = d
+        return wrapped_help_center_articles
 
     @property
     def additional_keys(self) -> list[str]:

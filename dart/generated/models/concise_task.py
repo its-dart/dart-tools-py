@@ -22,7 +22,9 @@ class ConciseTask:
         id (str): The universal, unique ID of the task.
         html_url (str): The URL that can be used to open the task in the Dart web UI.
         title (str): The title, which is a short description of what needs to be done.
-        parent_id (Union[None, str]): The universal, unique ID of the parent task. This can be null.
+        parent_id (Union[None, str]): The universal, unique ID of the parent task. This can be null. These tasks have a
+            parent-child relationship where the current task is the child and this task ID corresponds to the parent.
+            Subtasks inherit context from their parent and are typically smaller units of work.
         dartboard (str): The full title of the dartboard, which is a project or list of tasks.
         type_ (str): The title of the type of the task.
         status (str): The status from the list of available statuses.
