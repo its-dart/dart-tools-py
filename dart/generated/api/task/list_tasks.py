@@ -17,8 +17,9 @@ def _get_kwargs(
     dartboard: Union[Unset, str] = UNSET,
     dartboard_id: Union[Unset, str] = UNSET,
     description: Union[Unset, str] = UNSET,
-    due_at_after: Union[Unset, datetime.date] = UNSET,
-    due_at_before: Union[Unset, datetime.date] = UNSET,
+    due_at: Union[Unset, datetime.datetime] = UNSET,
+    due_at_after: Union[Unset, datetime.datetime] = UNSET,
+    due_at_before: Union[Unset, datetime.datetime] = UNSET,
     ids: Union[Unset, str] = UNSET,
     in_trash: Union[Unset, bool] = UNSET,
     is_completed: Union[Unset, bool] = UNSET,
@@ -27,8 +28,9 @@ def _get_kwargs(
     parent_id: Union[Unset, str] = UNSET,
     priority: Union[Unset, str] = UNSET,
     size: Union[Unset, int] = UNSET,
-    start_at_after: Union[Unset, datetime.date] = UNSET,
-    start_at_before: Union[Unset, datetime.date] = UNSET,
+    start_at: Union[Unset, datetime.datetime] = UNSET,
+    start_at_after: Union[Unset, datetime.datetime] = UNSET,
+    start_at_before: Union[Unset, datetime.datetime] = UNSET,
     status: Union[Unset, str] = UNSET,
     status_id: Union[Unset, str] = UNSET,
     tag: Union[Unset, str] = UNSET,
@@ -50,6 +52,11 @@ def _get_kwargs(
     params["dartboard_id"] = dartboard_id
 
     params["description"] = description
+
+    json_due_at: Union[Unset, str] = UNSET
+    if not isinstance(due_at, Unset):
+        json_due_at = due_at.isoformat()
+    params["due_at"] = json_due_at
 
     json_due_at_after: Union[Unset, str] = UNSET
     if not isinstance(due_at_after, Unset):
@@ -76,6 +83,11 @@ def _get_kwargs(
     params["priority"] = priority
 
     params["size"] = size
+
+    json_start_at: Union[Unset, str] = UNSET
+    if not isinstance(start_at, Unset):
+        json_start_at = start_at.isoformat()
+    params["start_at"] = json_start_at
 
     json_start_at_after: Union[Unset, str] = UNSET
     if not isinstance(start_at_after, Unset):
@@ -148,8 +160,9 @@ def sync_detailed(
     dartboard: Union[Unset, str] = UNSET,
     dartboard_id: Union[Unset, str] = UNSET,
     description: Union[Unset, str] = UNSET,
-    due_at_after: Union[Unset, datetime.date] = UNSET,
-    due_at_before: Union[Unset, datetime.date] = UNSET,
+    due_at: Union[Unset, datetime.datetime] = UNSET,
+    due_at_after: Union[Unset, datetime.datetime] = UNSET,
+    due_at_before: Union[Unset, datetime.datetime] = UNSET,
     ids: Union[Unset, str] = UNSET,
     in_trash: Union[Unset, bool] = UNSET,
     is_completed: Union[Unset, bool] = UNSET,
@@ -158,8 +171,9 @@ def sync_detailed(
     parent_id: Union[Unset, str] = UNSET,
     priority: Union[Unset, str] = UNSET,
     size: Union[Unset, int] = UNSET,
-    start_at_after: Union[Unset, datetime.date] = UNSET,
-    start_at_before: Union[Unset, datetime.date] = UNSET,
+    start_at: Union[Unset, datetime.datetime] = UNSET,
+    start_at_after: Union[Unset, datetime.datetime] = UNSET,
+    start_at_before: Union[Unset, datetime.datetime] = UNSET,
     status: Union[Unset, str] = UNSET,
     status_id: Union[Unset, str] = UNSET,
     tag: Union[Unset, str] = UNSET,
@@ -179,8 +193,9 @@ def sync_detailed(
         dartboard (Union[Unset, str]):
         dartboard_id (Union[Unset, str]):
         description (Union[Unset, str]):
-        due_at_after (Union[Unset, datetime.date]):
-        due_at_before (Union[Unset, datetime.date]):
+        due_at (Union[Unset, datetime.datetime]):
+        due_at_after (Union[Unset, datetime.datetime]):
+        due_at_before (Union[Unset, datetime.datetime]):
         ids (Union[Unset, str]):
         in_trash (Union[Unset, bool]):
         is_completed (Union[Unset, bool]):
@@ -189,8 +204,9 @@ def sync_detailed(
         parent_id (Union[Unset, str]):
         priority (Union[Unset, str]):
         size (Union[Unset, int]):
-        start_at_after (Union[Unset, datetime.date]):
-        start_at_before (Union[Unset, datetime.date]):
+        start_at (Union[Unset, datetime.datetime]):
+        start_at_after (Union[Unset, datetime.datetime]):
+        start_at_before (Union[Unset, datetime.datetime]):
         status (Union[Unset, str]):
         status_id (Union[Unset, str]):
         tag (Union[Unset, str]):
@@ -215,6 +231,7 @@ def sync_detailed(
         dartboard=dartboard,
         dartboard_id=dartboard_id,
         description=description,
+        due_at=due_at,
         due_at_after=due_at_after,
         due_at_before=due_at_before,
         ids=ids,
@@ -225,6 +242,7 @@ def sync_detailed(
         parent_id=parent_id,
         priority=priority,
         size=size,
+        start_at=start_at,
         start_at_after=start_at_after,
         start_at_before=start_at_before,
         status=status,
@@ -253,8 +271,9 @@ def sync(
     dartboard: Union[Unset, str] = UNSET,
     dartboard_id: Union[Unset, str] = UNSET,
     description: Union[Unset, str] = UNSET,
-    due_at_after: Union[Unset, datetime.date] = UNSET,
-    due_at_before: Union[Unset, datetime.date] = UNSET,
+    due_at: Union[Unset, datetime.datetime] = UNSET,
+    due_at_after: Union[Unset, datetime.datetime] = UNSET,
+    due_at_before: Union[Unset, datetime.datetime] = UNSET,
     ids: Union[Unset, str] = UNSET,
     in_trash: Union[Unset, bool] = UNSET,
     is_completed: Union[Unset, bool] = UNSET,
@@ -263,8 +282,9 @@ def sync(
     parent_id: Union[Unset, str] = UNSET,
     priority: Union[Unset, str] = UNSET,
     size: Union[Unset, int] = UNSET,
-    start_at_after: Union[Unset, datetime.date] = UNSET,
-    start_at_before: Union[Unset, datetime.date] = UNSET,
+    start_at: Union[Unset, datetime.datetime] = UNSET,
+    start_at_after: Union[Unset, datetime.datetime] = UNSET,
+    start_at_before: Union[Unset, datetime.datetime] = UNSET,
     status: Union[Unset, str] = UNSET,
     status_id: Union[Unset, str] = UNSET,
     tag: Union[Unset, str] = UNSET,
@@ -284,8 +304,9 @@ def sync(
         dartboard (Union[Unset, str]):
         dartboard_id (Union[Unset, str]):
         description (Union[Unset, str]):
-        due_at_after (Union[Unset, datetime.date]):
-        due_at_before (Union[Unset, datetime.date]):
+        due_at (Union[Unset, datetime.datetime]):
+        due_at_after (Union[Unset, datetime.datetime]):
+        due_at_before (Union[Unset, datetime.datetime]):
         ids (Union[Unset, str]):
         in_trash (Union[Unset, bool]):
         is_completed (Union[Unset, bool]):
@@ -294,8 +315,9 @@ def sync(
         parent_id (Union[Unset, str]):
         priority (Union[Unset, str]):
         size (Union[Unset, int]):
-        start_at_after (Union[Unset, datetime.date]):
-        start_at_before (Union[Unset, datetime.date]):
+        start_at (Union[Unset, datetime.datetime]):
+        start_at_after (Union[Unset, datetime.datetime]):
+        start_at_before (Union[Unset, datetime.datetime]):
         status (Union[Unset, str]):
         status_id (Union[Unset, str]):
         tag (Union[Unset, str]):
@@ -321,6 +343,7 @@ def sync(
         dartboard=dartboard,
         dartboard_id=dartboard_id,
         description=description,
+        due_at=due_at,
         due_at_after=due_at_after,
         due_at_before=due_at_before,
         ids=ids,
@@ -331,6 +354,7 @@ def sync(
         parent_id=parent_id,
         priority=priority,
         size=size,
+        start_at=start_at,
         start_at_after=start_at_after,
         start_at_before=start_at_before,
         status=status,
@@ -353,8 +377,9 @@ async def asyncio_detailed(
     dartboard: Union[Unset, str] = UNSET,
     dartboard_id: Union[Unset, str] = UNSET,
     description: Union[Unset, str] = UNSET,
-    due_at_after: Union[Unset, datetime.date] = UNSET,
-    due_at_before: Union[Unset, datetime.date] = UNSET,
+    due_at: Union[Unset, datetime.datetime] = UNSET,
+    due_at_after: Union[Unset, datetime.datetime] = UNSET,
+    due_at_before: Union[Unset, datetime.datetime] = UNSET,
     ids: Union[Unset, str] = UNSET,
     in_trash: Union[Unset, bool] = UNSET,
     is_completed: Union[Unset, bool] = UNSET,
@@ -363,8 +388,9 @@ async def asyncio_detailed(
     parent_id: Union[Unset, str] = UNSET,
     priority: Union[Unset, str] = UNSET,
     size: Union[Unset, int] = UNSET,
-    start_at_after: Union[Unset, datetime.date] = UNSET,
-    start_at_before: Union[Unset, datetime.date] = UNSET,
+    start_at: Union[Unset, datetime.datetime] = UNSET,
+    start_at_after: Union[Unset, datetime.datetime] = UNSET,
+    start_at_before: Union[Unset, datetime.datetime] = UNSET,
     status: Union[Unset, str] = UNSET,
     status_id: Union[Unset, str] = UNSET,
     tag: Union[Unset, str] = UNSET,
@@ -384,8 +410,9 @@ async def asyncio_detailed(
         dartboard (Union[Unset, str]):
         dartboard_id (Union[Unset, str]):
         description (Union[Unset, str]):
-        due_at_after (Union[Unset, datetime.date]):
-        due_at_before (Union[Unset, datetime.date]):
+        due_at (Union[Unset, datetime.datetime]):
+        due_at_after (Union[Unset, datetime.datetime]):
+        due_at_before (Union[Unset, datetime.datetime]):
         ids (Union[Unset, str]):
         in_trash (Union[Unset, bool]):
         is_completed (Union[Unset, bool]):
@@ -394,8 +421,9 @@ async def asyncio_detailed(
         parent_id (Union[Unset, str]):
         priority (Union[Unset, str]):
         size (Union[Unset, int]):
-        start_at_after (Union[Unset, datetime.date]):
-        start_at_before (Union[Unset, datetime.date]):
+        start_at (Union[Unset, datetime.datetime]):
+        start_at_after (Union[Unset, datetime.datetime]):
+        start_at_before (Union[Unset, datetime.datetime]):
         status (Union[Unset, str]):
         status_id (Union[Unset, str]):
         tag (Union[Unset, str]):
@@ -420,6 +448,7 @@ async def asyncio_detailed(
         dartboard=dartboard,
         dartboard_id=dartboard_id,
         description=description,
+        due_at=due_at,
         due_at_after=due_at_after,
         due_at_before=due_at_before,
         ids=ids,
@@ -430,6 +459,7 @@ async def asyncio_detailed(
         parent_id=parent_id,
         priority=priority,
         size=size,
+        start_at=start_at,
         start_at_after=start_at_after,
         start_at_before=start_at_before,
         status=status,
@@ -456,8 +486,9 @@ async def asyncio(
     dartboard: Union[Unset, str] = UNSET,
     dartboard_id: Union[Unset, str] = UNSET,
     description: Union[Unset, str] = UNSET,
-    due_at_after: Union[Unset, datetime.date] = UNSET,
-    due_at_before: Union[Unset, datetime.date] = UNSET,
+    due_at: Union[Unset, datetime.datetime] = UNSET,
+    due_at_after: Union[Unset, datetime.datetime] = UNSET,
+    due_at_before: Union[Unset, datetime.datetime] = UNSET,
     ids: Union[Unset, str] = UNSET,
     in_trash: Union[Unset, bool] = UNSET,
     is_completed: Union[Unset, bool] = UNSET,
@@ -466,8 +497,9 @@ async def asyncio(
     parent_id: Union[Unset, str] = UNSET,
     priority: Union[Unset, str] = UNSET,
     size: Union[Unset, int] = UNSET,
-    start_at_after: Union[Unset, datetime.date] = UNSET,
-    start_at_before: Union[Unset, datetime.date] = UNSET,
+    start_at: Union[Unset, datetime.datetime] = UNSET,
+    start_at_after: Union[Unset, datetime.datetime] = UNSET,
+    start_at_before: Union[Unset, datetime.datetime] = UNSET,
     status: Union[Unset, str] = UNSET,
     status_id: Union[Unset, str] = UNSET,
     tag: Union[Unset, str] = UNSET,
@@ -487,8 +519,9 @@ async def asyncio(
         dartboard (Union[Unset, str]):
         dartboard_id (Union[Unset, str]):
         description (Union[Unset, str]):
-        due_at_after (Union[Unset, datetime.date]):
-        due_at_before (Union[Unset, datetime.date]):
+        due_at (Union[Unset, datetime.datetime]):
+        due_at_after (Union[Unset, datetime.datetime]):
+        due_at_before (Union[Unset, datetime.datetime]):
         ids (Union[Unset, str]):
         in_trash (Union[Unset, bool]):
         is_completed (Union[Unset, bool]):
@@ -497,8 +530,9 @@ async def asyncio(
         parent_id (Union[Unset, str]):
         priority (Union[Unset, str]):
         size (Union[Unset, int]):
-        start_at_after (Union[Unset, datetime.date]):
-        start_at_before (Union[Unset, datetime.date]):
+        start_at (Union[Unset, datetime.datetime]):
+        start_at_after (Union[Unset, datetime.datetime]):
+        start_at_before (Union[Unset, datetime.datetime]):
         status (Union[Unset, str]):
         status_id (Union[Unset, str]):
         tag (Union[Unset, str]):
@@ -525,6 +559,7 @@ async def asyncio(
             dartboard=dartboard,
             dartboard_id=dartboard_id,
             description=description,
+            due_at=due_at,
             due_at_after=due_at_after,
             due_at_before=due_at_before,
             ids=ids,
@@ -535,6 +570,7 @@ async def asyncio(
             parent_id=parent_id,
             priority=priority,
             size=size,
+            start_at=start_at,
             start_at_after=start_at_after,
             start_at_before=start_at_before,
             status=status,

@@ -120,7 +120,7 @@ _HELP_TEXT_TO_COMMAND = {
     _CREATE_DOC_CMD: _get_help_text(api.create_doc.sync_detailed),
     _UPDATE_DOC_CMD: _get_help_text(api.update_doc.sync_detailed),
     _DELETE_DOC_CMD: _get_help_text(api.delete_doc.sync_detailed),
-    _CREATE_COMMENT_CMD: _get_help_text(api.create_comment.sync_detailed),
+    _CREATE_COMMENT_CMD: _get_help_text(api.add_task_comment.sync_detailed),
 }
 
 _is_cli = False
@@ -313,7 +313,7 @@ class Dart:
 
     @_handle_request_errors
     def retrieve_task(self, id: str) -> WrappedTask:
-        response = api.retrieve_task.sync_detailed(id, client=self._public_api)
+        response = api.get_task.sync_detailed(id, client=self._public_api)
         return _get_response_parsed(response, not_found_message=f"Task with ID {id} not found.")
 
     @_handle_request_errors
@@ -333,7 +333,7 @@ class Dart:
 
     @_handle_request_errors
     def create_comment(self, body: WrappedCommentCreate) -> WrappedComment:
-        response = api.create_comment.sync_detailed(client=self._public_api, body=body)
+        response = api.add_task_comment.sync_detailed(client=self._public_api, body=body)
         return _get_response_parsed(response)
 
     @_handle_request_errors
@@ -348,7 +348,7 @@ class Dart:
 
     @_handle_request_errors
     def retrieve_doc(self, id: str) -> WrappedDoc:
-        response = api.retrieve_doc.sync_detailed(id, client=self._public_api)
+        response = api.get_doc.sync_detailed(id, client=self._public_api)
         return _get_response_parsed(response, not_found_message=f"Doc with ID {id} not found.")
 
     @_handle_request_errors

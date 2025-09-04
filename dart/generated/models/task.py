@@ -8,6 +8,7 @@ from ..models.priority import Priority
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
+    from ..models.attachment import Attachment
     from ..models.custom_properties import CustomProperties
     from ..models.task_relationships_type_0 import TaskRelationshipsType0
 
@@ -29,6 +30,8 @@ class Task:
         type_ (str): The title of the type of the task.
         status (str): The status from the list of available statuses.
         description (str): A longer description of the task, which can include markdown formatting.
+        attachments (list['Attachment']): The attachments, which is a list of attachments that are associated with the
+            task.
         assignees (Union[None, Unset, list[str]]): The names or emails of the users that the task is assigned to. Either
             this or assignee must be included, depending on whether the workspaces allows multiple assignees or not.
         assignee (Union[None, Unset, str]): The name or email of the user that the task is assigned to. Either this or
@@ -59,6 +62,7 @@ class Task:
     type_: str
     status: str
     description: str
+    attachments: list["Attachment"]
     assignees: Union[None, Unset, list[str]] = UNSET
     assignee: Union[None, Unset, str] = UNSET
     tags: Union[Unset, list[str]] = UNSET
@@ -91,6 +95,11 @@ class Task:
         status = self.status
 
         description = self.description
+
+        attachments = []
+        for attachments_item_data in self.attachments:
+            attachments_item = attachments_item_data.to_dict()
+            attachments.append(attachments_item)
 
         assignees: Union[None, Unset, list[str]]
         if isinstance(self.assignees, Unset):
@@ -167,6 +176,7 @@ class Task:
                 "type": type_,
                 "status": status,
                 "description": description,
+                "attachments": attachments,
             }
         )
         if assignees is not UNSET:
@@ -194,6 +204,7 @@ class Task:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+        from ..models.attachment import Attachment
         from ..models.custom_properties import CustomProperties
         from ..models.task_relationships_type_0 import TaskRelationshipsType0
 
@@ -218,6 +229,13 @@ class Task:
         status = d.pop("status")
 
         description = d.pop("description")
+
+        attachments = []
+        _attachments = d.pop("attachments")
+        for attachments_item_data in _attachments:
+            attachments_item = Attachment.from_dict(attachments_item_data)
+
+            attachments.append(attachments_item)
 
         def _parse_assignees(data: object) -> Union[None, Unset, list[str]]:
             if data is None:
@@ -340,6 +358,7 @@ class Task:
             type_=type_,
             status=status,
             description=description,
+            attachments=attachments,
             assignees=assignees,
             assignee=assignee,
             tags=tags,
