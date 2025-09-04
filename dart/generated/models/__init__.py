@@ -1,5 +1,6 @@
 """Contains all the data models used in inputs/outputs"""
 
+from .attachment import Attachment
 from .comment import Comment
 from .comment_create import CommentCreate
 from .concise_doc import ConciseDoc
@@ -70,6 +71,7 @@ from .wrapped_task_update import WrappedTaskUpdate
 from .wrapped_view import WrappedView
 
 __all__ = (
+    "Attachment",
     "Comment",
     "CommentCreate",
     "ConciseDoc",

@@ -20,6 +20,7 @@ def _get_kwargs(
     o: Union[Unset, list[ListCommentsOItem]] = UNSET,
     offset: Union[Unset, int] = UNSET,
     parent_id: Union[Unset, str] = UNSET,
+    published_at: Union[Unset, datetime.datetime] = UNSET,
     published_at_after: Union[Unset, datetime.datetime] = UNSET,
     published_at_before: Union[Unset, datetime.datetime] = UNSET,
     task: Union[Unset, str] = UNSET,
@@ -48,6 +49,11 @@ def _get_kwargs(
     params["offset"] = offset
 
     params["parent_id"] = parent_id
+
+    json_published_at: Union[Unset, str] = UNSET
+    if not isinstance(published_at, Unset):
+        json_published_at = published_at.isoformat()
+    params["published_at"] = json_published_at
 
     json_published_at_after: Union[Unset, str] = UNSET
     if not isinstance(published_at_after, Unset):
@@ -110,6 +116,7 @@ def sync_detailed(
     o: Union[Unset, list[ListCommentsOItem]] = UNSET,
     offset: Union[Unset, int] = UNSET,
     parent_id: Union[Unset, str] = UNSET,
+    published_at: Union[Unset, datetime.datetime] = UNSET,
     published_at_after: Union[Unset, datetime.datetime] = UNSET,
     published_at_before: Union[Unset, datetime.datetime] = UNSET,
     task: Union[Unset, str] = UNSET,
@@ -127,6 +134,7 @@ def sync_detailed(
         o (Union[Unset, list[ListCommentsOItem]]):
         offset (Union[Unset, int]):
         parent_id (Union[Unset, str]):
+        published_at (Union[Unset, datetime.datetime]):
         published_at_after (Union[Unset, datetime.datetime]):
         published_at_before (Union[Unset, datetime.datetime]):
         task (Union[Unset, str]):
@@ -149,6 +157,7 @@ def sync_detailed(
         o=o,
         offset=offset,
         parent_id=parent_id,
+        published_at=published_at,
         published_at_after=published_at_after,
         published_at_before=published_at_before,
         task=task,
@@ -173,6 +182,7 @@ def sync(
     o: Union[Unset, list[ListCommentsOItem]] = UNSET,
     offset: Union[Unset, int] = UNSET,
     parent_id: Union[Unset, str] = UNSET,
+    published_at: Union[Unset, datetime.datetime] = UNSET,
     published_at_after: Union[Unset, datetime.datetime] = UNSET,
     published_at_before: Union[Unset, datetime.datetime] = UNSET,
     task: Union[Unset, str] = UNSET,
@@ -190,6 +200,7 @@ def sync(
         o (Union[Unset, list[ListCommentsOItem]]):
         offset (Union[Unset, int]):
         parent_id (Union[Unset, str]):
+        published_at (Union[Unset, datetime.datetime]):
         published_at_after (Union[Unset, datetime.datetime]):
         published_at_before (Union[Unset, datetime.datetime]):
         task (Union[Unset, str]):
@@ -213,6 +224,7 @@ def sync(
         o=o,
         offset=offset,
         parent_id=parent_id,
+        published_at=published_at,
         published_at_after=published_at_after,
         published_at_before=published_at_before,
         task=task,
@@ -231,6 +243,7 @@ async def asyncio_detailed(
     o: Union[Unset, list[ListCommentsOItem]] = UNSET,
     offset: Union[Unset, int] = UNSET,
     parent_id: Union[Unset, str] = UNSET,
+    published_at: Union[Unset, datetime.datetime] = UNSET,
     published_at_after: Union[Unset, datetime.datetime] = UNSET,
     published_at_before: Union[Unset, datetime.datetime] = UNSET,
     task: Union[Unset, str] = UNSET,
@@ -248,6 +261,7 @@ async def asyncio_detailed(
         o (Union[Unset, list[ListCommentsOItem]]):
         offset (Union[Unset, int]):
         parent_id (Union[Unset, str]):
+        published_at (Union[Unset, datetime.datetime]):
         published_at_after (Union[Unset, datetime.datetime]):
         published_at_before (Union[Unset, datetime.datetime]):
         task (Union[Unset, str]):
@@ -270,6 +284,7 @@ async def asyncio_detailed(
         o=o,
         offset=offset,
         parent_id=parent_id,
+        published_at=published_at,
         published_at_after=published_at_after,
         published_at_before=published_at_before,
         task=task,
@@ -292,6 +307,7 @@ async def asyncio(
     o: Union[Unset, list[ListCommentsOItem]] = UNSET,
     offset: Union[Unset, int] = UNSET,
     parent_id: Union[Unset, str] = UNSET,
+    published_at: Union[Unset, datetime.datetime] = UNSET,
     published_at_after: Union[Unset, datetime.datetime] = UNSET,
     published_at_before: Union[Unset, datetime.datetime] = UNSET,
     task: Union[Unset, str] = UNSET,
@@ -309,6 +325,7 @@ async def asyncio(
         o (Union[Unset, list[ListCommentsOItem]]):
         offset (Union[Unset, int]):
         parent_id (Union[Unset, str]):
+        published_at (Union[Unset, datetime.datetime]):
         published_at_after (Union[Unset, datetime.datetime]):
         published_at_before (Union[Unset, datetime.datetime]):
         task (Union[Unset, str]):
@@ -333,6 +350,7 @@ async def asyncio(
             o=o,
             offset=offset,
             parent_id=parent_id,
+            published_at=published_at,
             published_at_after=published_at_after,
             published_at_before=published_at_before,
             task=task,
