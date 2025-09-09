@@ -1,5 +1,6 @@
 """Contains methods for accessing the API"""
 
+from .attachment import add_task_attachment_from_url
 from .comment import add_task_comment, list_comments
 from .config import get_config
 from .dartboard import get_dartboard
