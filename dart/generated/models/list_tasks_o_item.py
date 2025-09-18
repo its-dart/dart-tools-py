@@ -1,14 +1,14 @@
 from enum import Enum
 
 
-class ListDocsOItem(str, Enum):
+class ListTasksOItem(str, Enum):
     CREATED_AT = "created_at"
-    FOLDER_ORDER = "folder__order"
+    DARTBOARD_ORDER = "dartboard__order"
     ORDER = "order"
     TITLE = "title"
     UPDATED_AT = "updated_at"
     VALUE_0 = "-created_at"
-    VALUE_1 = "-folder__order"
+    VALUE_1 = "-dartboard__order"
     VALUE_2 = "-order"
     VALUE_3 = "-title"
     VALUE_4 = "-updated_at"

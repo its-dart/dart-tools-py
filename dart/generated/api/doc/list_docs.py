@@ -12,11 +12,13 @@ from ...types import UNSET, Response, Unset
 
 def _get_kwargs(
     *,
+    editor: Union[Unset, str] = UNSET,
     folder: Union[Unset, str] = UNSET,
     folder_id: Union[Unset, str] = UNSET,
     ids: Union[Unset, str] = UNSET,
     in_trash: Union[Unset, bool] = UNSET,
     limit: Union[Unset, int] = UNSET,
+    no_defaults: Union[Unset, bool] = False,
     o: Union[Unset, list[ListDocsOItem]] = UNSET,
     offset: Union[Unset, int] = UNSET,
     s: Union[Unset, str] = UNSET,
@@ -24,6 +26,8 @@ def _get_kwargs(
     title: Union[Unset, str] = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
+
+    params["editor"] = editor
 
     params["folder"] = folder
 
@@ -34,6 +38,8 @@ def _get_kwargs(
     params["in_trash"] = in_trash
 
     params["limit"] = limit
+
+    params["no_defaults"] = no_defaults
 
     json_o: Union[Unset, list[str]] = UNSET
     if not isinstance(o, Unset):
@@ -90,11 +96,13 @@ def _build_response(
 def sync_detailed(
     *,
     client: Union[AuthenticatedClient, Client],
+    editor: Union[Unset, str] = UNSET,
     folder: Union[Unset, str] = UNSET,
     folder_id: Union[Unset, str] = UNSET,
     ids: Union[Unset, str] = UNSET,
     in_trash: Union[Unset, bool] = UNSET,
     limit: Union[Unset, int] = UNSET,
+    no_defaults: Union[Unset, bool] = False,
     o: Union[Unset, list[ListDocsOItem]] = UNSET,
     offset: Union[Unset, int] = UNSET,
     s: Union[Unset, str] = UNSET,
@@ -105,11 +113,13 @@ def sync_detailed(
     full-text search. Sort by creation/update date or title. Supports pagination.
 
     Args:
+        editor (Union[Unset, str]):
         folder (Union[Unset, str]):
         folder_id (Union[Unset, str]):
         ids (Union[Unset, str]):
         in_trash (Union[Unset, bool]):
         limit (Union[Unset, int]):
+        no_defaults (Union[Unset, bool]):  Default: False.
         o (Union[Unset, list[ListDocsOItem]]):
         offset (Union[Unset, int]):
         s (Union[Unset, str]):
@@ -125,11 +135,13 @@ def sync_detailed(
     """
 
     kwargs = _get_kwargs(
+        editor=editor,
         folder=folder,
         folder_id=folder_id,
         ids=ids,
         in_trash=in_trash,
         limit=limit,
+        no_defaults=no_defaults,
         o=o,
         offset=offset,
         s=s,
@@ -147,11 +159,13 @@ def sync_detailed(
 def sync(
     *,
     client: Union[AuthenticatedClient, Client],
+    editor: Union[Unset, str] = UNSET,
     folder: Union[Unset, str] = UNSET,
     folder_id: Union[Unset, str] = UNSET,
     ids: Union[Unset, str] = UNSET,
     in_trash: Union[Unset, bool] = UNSET,
     limit: Union[Unset, int] = UNSET,
+    no_defaults: Union[Unset, bool] = False,
     o: Union[Unset, list[ListDocsOItem]] = UNSET,
     offset: Union[Unset, int] = UNSET,
     s: Union[Unset, str] = UNSET,
@@ -162,11 +176,13 @@ def sync(
     full-text search. Sort by creation/update date or title. Supports pagination.
 
     Args:
+        editor (Union[Unset, str]):
         folder (Union[Unset, str]):
         folder_id (Union[Unset, str]):
         ids (Union[Unset, str]):
         in_trash (Union[Unset, bool]):
         limit (Union[Unset, int]):
+        no_defaults (Union[Unset, bool]):  Default: False.
         o (Union[Unset, list[ListDocsOItem]]):
         offset (Union[Unset, int]):
         s (Union[Unset, str]):
@@ -183,11 +199,13 @@ def sync(
 
     return sync_detailed(
         client=client,
+        editor=editor,
         folder=folder,
         folder_id=folder_id,
         ids=ids,
         in_trash=in_trash,
         limit=limit,
+        no_defaults=no_defaults,
         o=o,
         offset=offset,
         s=s,
@@ -199,11 +217,13 @@ def sync(
 async def asyncio_detailed(
     *,
     client: Union[AuthenticatedClient, Client],
+    editor: Union[Unset, str] = UNSET,
     folder: Union[Unset, str] = UNSET,
     folder_id: Union[Unset, str] = UNSET,
     ids: Union[Unset, str] = UNSET,
     in_trash: Union[Unset, bool] = UNSET,
     limit: Union[Unset, int] = UNSET,
+    no_defaults: Union[Unset, bool] = False,
     o: Union[Unset, list[ListDocsOItem]] = UNSET,
     offset: Union[Unset, int] = UNSET,
     s: Union[Unset, str] = UNSET,
@@ -214,11 +234,13 @@ async def asyncio_detailed(
     full-text search. Sort by creation/update date or title. Supports pagination.
 
     Args:
+        editor (Union[Unset, str]):
         folder (Union[Unset, str]):
         folder_id (Union[Unset, str]):
         ids (Union[Unset, str]):
         in_trash (Union[Unset, bool]):
         limit (Union[Unset, int]):
+        no_defaults (Union[Unset, bool]):  Default: False.
         o (Union[Unset, list[ListDocsOItem]]):
         offset (Union[Unset, int]):
         s (Union[Unset, str]):
@@ -234,11 +256,13 @@ async def asyncio_detailed(
     """
 
     kwargs = _get_kwargs(
+        editor=editor,
         folder=folder,
         folder_id=folder_id,
         ids=ids,
         in_trash=in_trash,
         limit=limit,
+        no_defaults=no_defaults,
         o=o,
         offset=offset,
         s=s,
@@ -254,11 +278,13 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: Union[AuthenticatedClient, Client],
+    editor: Union[Unset, str] = UNSET,
     folder: Union[Unset, str] = UNSET,
     folder_id: Union[Unset, str] = UNSET,
     ids: Union[Unset, str] = UNSET,
     in_trash: Union[Unset, bool] = UNSET,
     limit: Union[Unset, int] = UNSET,
+    no_defaults: Union[Unset, bool] = False,
     o: Union[Unset, list[ListDocsOItem]] = UNSET,
     offset: Union[Unset, int] = UNSET,
     s: Union[Unset, str] = UNSET,
@@ -269,11 +295,13 @@ async def asyncio(
     full-text search. Sort by creation/update date or title. Supports pagination.
 
     Args:
+        editor (Union[Unset, str]):
         folder (Union[Unset, str]):
         folder_id (Union[Unset, str]):
         ids (Union[Unset, str]):
         in_trash (Union[Unset, bool]):
         limit (Union[Unset, int]):
+        no_defaults (Union[Unset, bool]):  Default: False.
         o (Union[Unset, list[ListDocsOItem]]):
         offset (Union[Unset, int]):
         s (Union[Unset, str]):
@@ -291,11 +319,13 @@ async def asyncio(
     return (
         await asyncio_detailed(
             client=client,
+            editor=editor,
             folder=folder,
             folder_id=folder_id,
             ids=ids,
             in_trash=in_trash,
             limit=limit,
+            no_defaults=no_defaults,
             o=o,
             offset=offset,
             s=s,

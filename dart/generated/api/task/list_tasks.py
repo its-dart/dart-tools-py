@@ -6,6 +6,7 @@ import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
+from ...models.list_tasks_o_item import ListTasksOItem
 from ...models.paginated_concise_task_list import PaginatedConciseTaskList
 from ...types import UNSET, Response, Unset
 
@@ -24,6 +25,8 @@ def _get_kwargs(
     in_trash: Union[Unset, bool] = UNSET,
     is_completed: Union[Unset, bool] = UNSET,
     limit: Union[Unset, int] = UNSET,
+    no_defaults: Union[Unset, bool] = False,
+    o: Union[Unset, list[ListTasksOItem]] = UNSET,
     offset: Union[Unset, int] = UNSET,
     parent_id: Union[Unset, str] = UNSET,
     priority: Union[Unset, str] = UNSET,
@@ -75,6 +78,17 @@ def _get_kwargs(
     params["is_completed"] = is_completed
 
     params["limit"] = limit
+
+    params["no_defaults"] = no_defaults
+
+    json_o: Union[Unset, list[str]] = UNSET
+    if not isinstance(o, Unset):
+        json_o = []
+        for o_item_data in o:
+            o_item = o_item_data.value
+            json_o.append(o_item)
+
+    params["o"] = json_o
 
     params["offset"] = offset
 
@@ -167,6 +181,8 @@ def sync_detailed(
     in_trash: Union[Unset, bool] = UNSET,
     is_completed: Union[Unset, bool] = UNSET,
     limit: Union[Unset, int] = UNSET,
+    no_defaults: Union[Unset, bool] = False,
+    o: Union[Unset, list[ListTasksOItem]] = UNSET,
     offset: Union[Unset, int] = UNSET,
     parent_id: Union[Unset, str] = UNSET,
     priority: Union[Unset, str] = UNSET,
@@ -200,6 +216,8 @@ def sync_detailed(
         in_trash (Union[Unset, bool]):
         is_completed (Union[Unset, bool]):
         limit (Union[Unset, int]):
+        no_defaults (Union[Unset, bool]):  Default: False.
+        o (Union[Unset, list[ListTasksOItem]]):
         offset (Union[Unset, int]):
         parent_id (Union[Unset, str]):
         priority (Union[Unset, str]):
@@ -238,6 +256,8 @@ def sync_detailed(
         in_trash=in_trash,
         is_completed=is_completed,
         limit=limit,
+        no_defaults=no_defaults,
+        o=o,
         offset=offset,
         parent_id=parent_id,
         priority=priority,
@@ -278,6 +298,8 @@ def sync(
     in_trash: Union[Unset, bool] = UNSET,
     is_completed: Union[Unset, bool] = UNSET,
     limit: Union[Unset, int] = UNSET,
+    no_defaults: Union[Unset, bool] = False,
+    o: Union[Unset, list[ListTasksOItem]] = UNSET,
     offset: Union[Unset, int] = UNSET,
     parent_id: Union[Unset, str] = UNSET,
     priority: Union[Unset, str] = UNSET,
@@ -311,6 +333,8 @@ def sync(
         in_trash (Union[Unset, bool]):
         is_completed (Union[Unset, bool]):
         limit (Union[Unset, int]):
+        no_defaults (Union[Unset, bool]):  Default: False.
+        o (Union[Unset, list[ListTasksOItem]]):
         offset (Union[Unset, int]):
         parent_id (Union[Unset, str]):
         priority (Union[Unset, str]):
@@ -350,6 +374,8 @@ def sync(
         in_trash=in_trash,
         is_completed=is_completed,
         limit=limit,
+        no_defaults=no_defaults,
+        o=o,
         offset=offset,
         parent_id=parent_id,
         priority=priority,
@@ -384,6 +410,8 @@ async def asyncio_detailed(
     in_trash: Union[Unset, bool] = UNSET,
     is_completed: Union[Unset, bool] = UNSET,
     limit: Union[Unset, int] = UNSET,
+    no_defaults: Union[Unset, bool] = False,
+    o: Union[Unset, list[ListTasksOItem]] = UNSET,
     offset: Union[Unset, int] = UNSET,
     parent_id: Union[Unset, str] = UNSET,
     priority: Union[Unset, str] = UNSET,
@@ -417,6 +445,8 @@ async def asyncio_detailed(
         in_trash (Union[Unset, bool]):
         is_completed (Union[Unset, bool]):
         limit (Union[Unset, int]):
+        no_defaults (Union[Unset, bool]):  Default: False.
+        o (Union[Unset, list[ListTasksOItem]]):
         offset (Union[Unset, int]):
         parent_id (Union[Unset, str]):
         priority (Union[Unset, str]):
@@ -455,6 +485,8 @@ async def asyncio_detailed(
         in_trash=in_trash,
         is_completed=is_completed,
         limit=limit,
+        no_defaults=no_defaults,
+        o=o,
         offset=offset,
         parent_id=parent_id,
         priority=priority,
@@ -493,6 +525,8 @@ async def asyncio(
     in_trash: Union[Unset, bool] = UNSET,
     is_completed: Union[Unset, bool] = UNSET,
     limit: Union[Unset, int] = UNSET,
+    no_defaults: Union[Unset, bool] = False,
+    o: Union[Unset, list[ListTasksOItem]] = UNSET,
     offset: Union[Unset, int] = UNSET,
     parent_id: Union[Unset, str] = UNSET,
     priority: Union[Unset, str] = UNSET,
@@ -526,6 +560,8 @@ async def asyncio(
         in_trash (Union[Unset, bool]):
         is_completed (Union[Unset, bool]):
         limit (Union[Unset, int]):
+        no_defaults (Union[Unset, bool]):  Default: False.
+        o (Union[Unset, list[ListTasksOItem]]):
         offset (Union[Unset, int]):
         parent_id (Union[Unset, str]):
         priority (Union[Unset, str]):
@@ -566,6 +602,8 @@ async def asyncio(
             in_trash=in_trash,
             is_completed=is_completed,
             limit=limit,
+            no_defaults=no_defaults,
+            o=o,
             offset=offset,
             parent_id=parent_id,
             priority=priority,

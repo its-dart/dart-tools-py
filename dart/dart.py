@@ -60,7 +60,7 @@ _PROG = "dart"
 
 _PROD_HOST = "https://app.dartai.com"
 _STAG_HOST = "https://stag.dartai.com"
-_DEV_HOST = "http://localhost:5173"
+_DEV_HOST = "http://localhost:5100"
 _HOST_MAP = {"prod": _PROD_HOST, "stag": _STAG_HOST, "dev": _DEV_HOST}
 
 # Service commands

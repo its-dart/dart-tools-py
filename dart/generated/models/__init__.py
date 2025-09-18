@@ -14,6 +14,7 @@ from .doc_update import DocUpdate
 from .folder import Folder
 from .list_comments_o_item import ListCommentsOItem
 from .list_docs_o_item import ListDocsOItem
+from .list_tasks_o_item import ListTasksOItem
 from .paginated_comment_list import PaginatedCommentList
 from .paginated_concise_doc_list import PaginatedConciseDocList
 from .paginated_concise_task_list import PaginatedConciseTaskList
@@ -86,6 +87,7 @@ __all__ = (
     "Folder",
     "ListCommentsOItem",
     "ListDocsOItem",
+    "ListTasksOItem",
     "PaginatedCommentList",
     "PaginatedConciseDocList",
     "PaginatedConciseTaskList",
