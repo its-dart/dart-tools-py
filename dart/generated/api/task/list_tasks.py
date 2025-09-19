@@ -6,6 +6,7 @@ import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
+from ...models.list_tasks_o_item import ListTasksOItem
 from ...models.paginated_concise_task_list import PaginatedConciseTaskList
 from ...types import UNSET, Response, Unset
 
@@ -14,6 +15,11 @@ def _get_kwargs(
     *,
     assignee: Union[Unset, str] = UNSET,
     assignee_id: Union[Unset, str] = UNSET,
+    created_at: Union[Unset, datetime.datetime] = UNSET,
+    created_at_after: Union[Unset, datetime.datetime] = UNSET,
+    created_at_before: Union[Unset, datetime.datetime] = UNSET,
+    created_by: Union[Unset, str] = UNSET,
+    created_by_id: Union[Unset, str] = UNSET,
     dartboard: Union[Unset, str] = UNSET,
     dartboard_id: Union[Unset, str] = UNSET,
     description: Union[Unset, str] = UNSET,
@@ -24,6 +30,8 @@ def _get_kwargs(
     in_trash: Union[Unset, bool] = UNSET,
     is_completed: Union[Unset, bool] = UNSET,
     limit: Union[Unset, int] = UNSET,
+    no_defaults: Union[Unset, bool] = False,
+    o: Union[Unset, list[ListTasksOItem]] = UNSET,
     offset: Union[Unset, int] = UNSET,
     parent_id: Union[Unset, str] = UNSET,
     priority: Union[Unset, str] = UNSET,
@@ -38,6 +46,11 @@ def _get_kwargs(
     title: Union[Unset, str] = UNSET,
     type_: Union[Unset, str] = UNSET,
     type_id: Union[Unset, str] = UNSET,
+    updated_at: Union[Unset, datetime.datetime] = UNSET,
+    updated_at_after: Union[Unset, datetime.datetime] = UNSET,
+    updated_at_before: Union[Unset, datetime.datetime] = UNSET,
+    updated_by: Union[Unset, str] = UNSET,
+    updated_by_id: Union[Unset, str] = UNSET,
     view: Union[Unset, str] = UNSET,
     view_id: Union[Unset, str] = UNSET,
 ) -> dict[str, Any]:
@@ -46,6 +59,25 @@ def _get_kwargs(
     params["assignee"] = assignee
 
     params["assignee_id"] = assignee_id
+
+    json_created_at: Union[Unset, str] = UNSET
+    if not isinstance(created_at, Unset):
+        json_created_at = created_at.isoformat()
+    params["created_at"] = json_created_at
+
+    json_created_at_after: Union[Unset, str] = UNSET
+    if not isinstance(created_at_after, Unset):
+        json_created_at_after = created_at_after.isoformat()
+    params["created_at_after"] = json_created_at_after
+
+    json_created_at_before: Union[Unset, str] = UNSET
+    if not isinstance(created_at_before, Unset):
+        json_created_at_before = created_at_before.isoformat()
+    params["created_at_before"] = json_created_at_before
+
+    params["created_by"] = created_by
+
+    params["created_by_id"] = created_by_id
 
     params["dartboard"] = dartboard
 
@@ -75,6 +107,17 @@ def _get_kwargs(
     params["is_completed"] = is_completed
 
     params["limit"] = limit
+
+    params["no_defaults"] = no_defaults
+
+    json_o: Union[Unset, list[str]] = UNSET
+    if not isinstance(o, Unset):
+        json_o = []
+        for o_item_data in o:
+            o_item = o_item_data.value
+            json_o.append(o_item)
+
+    params["o"] = json_o
 
     params["offset"] = offset
 
@@ -112,6 +155,25 @@ def _get_kwargs(
     params["type"] = type_
 
     params["type_id"] = type_id
+
+    json_updated_at: Union[Unset, str] = UNSET
+    if not isinstance(updated_at, Unset):
+        json_updated_at = updated_at.isoformat()
+    params["updated_at"] = json_updated_at
+
+    json_updated_at_after: Union[Unset, str] = UNSET
+    if not isinstance(updated_at_after, Unset):
+        json_updated_at_after = updated_at_after.isoformat()
+    params["updated_at_after"] = json_updated_at_after
+
+    json_updated_at_before: Union[Unset, str] = UNSET
+    if not isinstance(updated_at_before, Unset):
+        json_updated_at_before = updated_at_before.isoformat()
+    params["updated_at_before"] = json_updated_at_before
+
+    params["updated_by"] = updated_by
+
+    params["updated_by_id"] = updated_by_id
 
     params["view"] = view
 
@@ -157,6 +219,11 @@ def sync_detailed(
     client: Union[AuthenticatedClient, Client],
     assignee: Union[Unset, str] = UNSET,
     assignee_id: Union[Unset, str] = UNSET,
+    created_at: Union[Unset, datetime.datetime] = UNSET,
+    created_at_after: Union[Unset, datetime.datetime] = UNSET,
+    created_at_before: Union[Unset, datetime.datetime] = UNSET,
+    created_by: Union[Unset, str] = UNSET,
+    created_by_id: Union[Unset, str] = UNSET,
     dartboard: Union[Unset, str] = UNSET,
     dartboard_id: Union[Unset, str] = UNSET,
     description: Union[Unset, str] = UNSET,
@@ -167,6 +234,8 @@ def sync_detailed(
     in_trash: Union[Unset, bool] = UNSET,
     is_completed: Union[Unset, bool] = UNSET,
     limit: Union[Unset, int] = UNSET,
+    no_defaults: Union[Unset, bool] = False,
+    o: Union[Unset, list[ListTasksOItem]] = UNSET,
     offset: Union[Unset, int] = UNSET,
     parent_id: Union[Unset, str] = UNSET,
     priority: Union[Unset, str] = UNSET,
@@ -181,6 +250,11 @@ def sync_detailed(
     title: Union[Unset, str] = UNSET,
     type_: Union[Unset, str] = UNSET,
     type_id: Union[Unset, str] = UNSET,
+    updated_at: Union[Unset, datetime.datetime] = UNSET,
+    updated_at_after: Union[Unset, datetime.datetime] = UNSET,
+    updated_at_before: Union[Unset, datetime.datetime] = UNSET,
+    updated_by: Union[Unset, str] = UNSET,
+    updated_by_id: Union[Unset, str] = UNSET,
     view: Union[Unset, str] = UNSET,
     view_id: Union[Unset, str] = UNSET,
 ) -> Response[PaginatedConciseTaskList]:
@@ -190,6 +264,11 @@ def sync_detailed(
     Args:
         assignee (Union[Unset, str]):
         assignee_id (Union[Unset, str]):
+        created_at (Union[Unset, datetime.datetime]):
+        created_at_after (Union[Unset, datetime.datetime]):
+        created_at_before (Union[Unset, datetime.datetime]):
+        created_by (Union[Unset, str]):
+        created_by_id (Union[Unset, str]):
         dartboard (Union[Unset, str]):
         dartboard_id (Union[Unset, str]):
         description (Union[Unset, str]):
@@ -200,6 +279,8 @@ def sync_detailed(
         in_trash (Union[Unset, bool]):
         is_completed (Union[Unset, bool]):
         limit (Union[Unset, int]):
+        no_defaults (Union[Unset, bool]):  Default: False.
+        o (Union[Unset, list[ListTasksOItem]]):
         offset (Union[Unset, int]):
         parent_id (Union[Unset, str]):
         priority (Union[Unset, str]):
@@ -214,6 +295,11 @@ def sync_detailed(
         title (Union[Unset, str]):
         type_ (Union[Unset, str]):
         type_id (Union[Unset, str]):
+        updated_at (Union[Unset, datetime.datetime]):
+        updated_at_after (Union[Unset, datetime.datetime]):
+        updated_at_before (Union[Unset, datetime.datetime]):
+        updated_by (Union[Unset, str]):
+        updated_by_id (Union[Unset, str]):
         view (Union[Unset, str]):
         view_id (Union[Unset, str]):
 
@@ -228,6 +314,11 @@ def sync_detailed(
     kwargs = _get_kwargs(
         assignee=assignee,
         assignee_id=assignee_id,
+        created_at=created_at,
+        created_at_after=created_at_after,
+        created_at_before=created_at_before,
+        created_by=created_by,
+        created_by_id=created_by_id,
         dartboard=dartboard,
         dartboard_id=dartboard_id,
         description=description,
@@ -238,6 +329,8 @@ def sync_detailed(
         in_trash=in_trash,
         is_completed=is_completed,
         limit=limit,
+        no_defaults=no_defaults,
+        o=o,
         offset=offset,
         parent_id=parent_id,
         priority=priority,
@@ -252,6 +345,11 @@ def sync_detailed(
         title=title,
         type_=type_,
         type_id=type_id,
+        updated_at=updated_at,
+        updated_at_after=updated_at_after,
+        updated_at_before=updated_at_before,
+        updated_by=updated_by,
+        updated_by_id=updated_by_id,
         view=view,
         view_id=view_id,
     )
@@ -268,6 +366,11 @@ def sync(
     client: Union[AuthenticatedClient, Client],
     assignee: Union[Unset, str] = UNSET,
     assignee_id: Union[Unset, str] = UNSET,
+    created_at: Union[Unset, datetime.datetime] = UNSET,
+    created_at_after: Union[Unset, datetime.datetime] = UNSET,
+    created_at_before: Union[Unset, datetime.datetime] = UNSET,
+    created_by: Union[Unset, str] = UNSET,
+    created_by_id: Union[Unset, str] = UNSET,
     dartboard: Union[Unset, str] = UNSET,
     dartboard_id: Union[Unset, str] = UNSET,
     description: Union[Unset, str] = UNSET,
@@ -278,6 +381,8 @@ def sync(
     in_trash: Union[Unset, bool] = UNSET,
     is_completed: Union[Unset, bool] = UNSET,
     limit: Union[Unset, int] = UNSET,
+    no_defaults: Union[Unset, bool] = False,
+    o: Union[Unset, list[ListTasksOItem]] = UNSET,
     offset: Union[Unset, int] = UNSET,
     parent_id: Union[Unset, str] = UNSET,
     priority: Union[Unset, str] = UNSET,
@@ -292,6 +397,11 @@ def sync(
     title: Union[Unset, str] = UNSET,
     type_: Union[Unset, str] = UNSET,
     type_id: Union[Unset, str] = UNSET,
+    updated_at: Union[Unset, datetime.datetime] = UNSET,
+    updated_at_after: Union[Unset, datetime.datetime] = UNSET,
+    updated_at_before: Union[Unset, datetime.datetime] = UNSET,
+    updated_by: Union[Unset, str] = UNSET,
+    updated_by_id: Union[Unset, str] = UNSET,
     view: Union[Unset, str] = UNSET,
     view_id: Union[Unset, str] = UNSET,
 ) -> Optional[PaginatedConciseTaskList]:
@@ -301,6 +411,11 @@ def sync(
     Args:
         assignee (Union[Unset, str]):
         assignee_id (Union[Unset, str]):
+        created_at (Union[Unset, datetime.datetime]):
+        created_at_after (Union[Unset, datetime.datetime]):
+        created_at_before (Union[Unset, datetime.datetime]):
+        created_by (Union[Unset, str]):
+        created_by_id (Union[Unset, str]):
         dartboard (Union[Unset, str]):
         dartboard_id (Union[Unset, str]):
         description (Union[Unset, str]):
@@ -311,6 +426,8 @@ def sync(
         in_trash (Union[Unset, bool]):
         is_completed (Union[Unset, bool]):
         limit (Union[Unset, int]):
+        no_defaults (Union[Unset, bool]):  Default: False.
+        o (Union[Unset, list[ListTasksOItem]]):
         offset (Union[Unset, int]):
         parent_id (Union[Unset, str]):
         priority (Union[Unset, str]):
@@ -325,6 +442,11 @@ def sync(
         title (Union[Unset, str]):
         type_ (Union[Unset, str]):
         type_id (Union[Unset, str]):
+        updated_at (Union[Unset, datetime.datetime]):
+        updated_at_after (Union[Unset, datetime.datetime]):
+        updated_at_before (Union[Unset, datetime.datetime]):
+        updated_by (Union[Unset, str]):
+        updated_by_id (Union[Unset, str]):
         view (Union[Unset, str]):
         view_id (Union[Unset, str]):
 
@@ -340,6 +462,11 @@ def sync(
         client=client,
         assignee=assignee,
         assignee_id=assignee_id,
+        created_at=created_at,
+        created_at_after=created_at_after,
+        created_at_before=created_at_before,
+        created_by=created_by,
+        created_by_id=created_by_id,
         dartboard=dartboard,
         dartboard_id=dartboard_id,
         description=description,
@@ -350,6 +477,8 @@ def sync(
         in_trash=in_trash,
         is_completed=is_completed,
         limit=limit,
+        no_defaults=no_defaults,
+        o=o,
         offset=offset,
         parent_id=parent_id,
         priority=priority,
@@ -364,6 +493,11 @@ def sync(
         title=title,
         type_=type_,
         type_id=type_id,
+        updated_at=updated_at,
+        updated_at_after=updated_at_after,
+        updated_at_before=updated_at_before,
+        updated_by=updated_by,
+        updated_by_id=updated_by_id,
         view=view,
         view_id=view_id,
     ).parsed
@@ -374,6 +508,11 @@ async def asyncio_detailed(
     client: Union[AuthenticatedClient, Client],
     assignee: Union[Unset, str] = UNSET,
     assignee_id: Union[Unset, str] = UNSET,
+    created_at: Union[Unset, datetime.datetime] = UNSET,
+    created_at_after: Union[Unset, datetime.datetime] = UNSET,
+    created_at_before: Union[Unset, datetime.datetime] = UNSET,
+    created_by: Union[Unset, str] = UNSET,
+    created_by_id: Union[Unset, str] = UNSET,
     dartboard: Union[Unset, str] = UNSET,
     dartboard_id: Union[Unset, str] = UNSET,
     description: Union[Unset, str] = UNSET,
@@ -384,6 +523,8 @@ async def asyncio_detailed(
     in_trash: Union[Unset, bool] = UNSET,
     is_completed: Union[Unset, bool] = UNSET,
     limit: Union[Unset, int] = UNSET,
+    no_defaults: Union[Unset, bool] = False,
+    o: Union[Unset, list[ListTasksOItem]] = UNSET,
     offset: Union[Unset, int] = UNSET,
     parent_id: Union[Unset, str] = UNSET,
     priority: Union[Unset, str] = UNSET,
@@ -398,6 +539,11 @@ async def asyncio_detailed(
     title: Union[Unset, str] = UNSET,
     type_: Union[Unset, str] = UNSET,
     type_id: Union[Unset, str] = UNSET,
+    updated_at: Union[Unset, datetime.datetime] = UNSET,
+    updated_at_after: Union[Unset, datetime.datetime] = UNSET,
+    updated_at_before: Union[Unset, datetime.datetime] = UNSET,
+    updated_by: Union[Unset, str] = UNSET,
+    updated_by_id: Union[Unset, str] = UNSET,
     view: Union[Unset, str] = UNSET,
     view_id: Union[Unset, str] = UNSET,
 ) -> Response[PaginatedConciseTaskList]:
@@ -407,6 +553,11 @@ async def asyncio_detailed(
     Args:
         assignee (Union[Unset, str]):
         assignee_id (Union[Unset, str]):
+        created_at (Union[Unset, datetime.datetime]):
+        created_at_after (Union[Unset, datetime.datetime]):
+        created_at_before (Union[Unset, datetime.datetime]):
+        created_by (Union[Unset, str]):
+        created_by_id (Union[Unset, str]):
         dartboard (Union[Unset, str]):
         dartboard_id (Union[Unset, str]):
         description (Union[Unset, str]):
@@ -417,6 +568,8 @@ async def asyncio_detailed(
         in_trash (Union[Unset, bool]):
         is_completed (Union[Unset, bool]):
         limit (Union[Unset, int]):
+        no_defaults (Union[Unset, bool]):  Default: False.
+        o (Union[Unset, list[ListTasksOItem]]):
         offset (Union[Unset, int]):
         parent_id (Union[Unset, str]):
         priority (Union[Unset, str]):
@@ -431,6 +584,11 @@ async def asyncio_detailed(
         title (Union[Unset, str]):
         type_ (Union[Unset, str]):
         type_id (Union[Unset, str]):
+        updated_at (Union[Unset, datetime.datetime]):
+        updated_at_after (Union[Unset, datetime.datetime]):
+        updated_at_before (Union[Unset, datetime.datetime]):
+        updated_by (Union[Unset, str]):
+        updated_by_id (Union[Unset, str]):
         view (Union[Unset, str]):
         view_id (Union[Unset, str]):
 
@@ -445,6 +603,11 @@ async def asyncio_detailed(
     kwargs = _get_kwargs(
         assignee=assignee,
         assignee_id=assignee_id,
+        created_at=created_at,
+        created_at_after=created_at_after,
+        created_at_before=created_at_before,
+        created_by=created_by,
+        created_by_id=created_by_id,
         dartboard=dartboard,
         dartboard_id=dartboard_id,
         description=description,
@@ -455,6 +618,8 @@ async def asyncio_detailed(
         in_trash=in_trash,
         is_completed=is_completed,
         limit=limit,
+        no_defaults=no_defaults,
+        o=o,
         offset=offset,
         parent_id=parent_id,
         priority=priority,
@@ -469,6 +634,11 @@ async def asyncio_detailed(
         title=title,
         type_=type_,
         type_id=type_id,
+        updated_at=updated_at,
+        updated_at_after=updated_at_after,
+        updated_at_before=updated_at_before,
+        updated_by=updated_by,
+        updated_by_id=updated_by_id,
         view=view,
         view_id=view_id,
     )
@@ -483,6 +653,11 @@ async def asyncio(
     client: Union[AuthenticatedClient, Client],
     assignee: Union[Unset, str] = UNSET,
     assignee_id: Union[Unset, str] = UNSET,
+    created_at: Union[Unset, datetime.datetime] = UNSET,
+    created_at_after: Union[Unset, datetime.datetime] = UNSET,
+    created_at_before: Union[Unset, datetime.datetime] = UNSET,
+    created_by: Union[Unset, str] = UNSET,
+    created_by_id: Union[Unset, str] = UNSET,
     dartboard: Union[Unset, str] = UNSET,
     dartboard_id: Union[Unset, str] = UNSET,
     description: Union[Unset, str] = UNSET,
@@ -493,6 +668,8 @@ async def asyncio(
     in_trash: Union[Unset, bool] = UNSET,
     is_completed: Union[Unset, bool] = UNSET,
     limit: Union[Unset, int] = UNSET,
+    no_defaults: Union[Unset, bool] = False,
+    o: Union[Unset, list[ListTasksOItem]] = UNSET,
     offset: Union[Unset, int] = UNSET,
     parent_id: Union[Unset, str] = UNSET,
     priority: Union[Unset, str] = UNSET,
@@ -507,6 +684,11 @@ async def asyncio(
     title: Union[Unset, str] = UNSET,
     type_: Union[Unset, str] = UNSET,
     type_id: Union[Unset, str] = UNSET,
+    updated_at: Union[Unset, datetime.datetime] = UNSET,
+    updated_at_after: Union[Unset, datetime.datetime] = UNSET,
+    updated_at_before: Union[Unset, datetime.datetime] = UNSET,
+    updated_by: Union[Unset, str] = UNSET,
+    updated_by_id: Union[Unset, str] = UNSET,
     view: Union[Unset, str] = UNSET,
     view_id: Union[Unset, str] = UNSET,
 ) -> Optional[PaginatedConciseTaskList]:
@@ -516,6 +698,11 @@ async def asyncio(
     Args:
         assignee (Union[Unset, str]):
         assignee_id (Union[Unset, str]):
+        created_at (Union[Unset, datetime.datetime]):
+        created_at_after (Union[Unset, datetime.datetime]):
+        created_at_before (Union[Unset, datetime.datetime]):
+        created_by (Union[Unset, str]):
+        created_by_id (Union[Unset, str]):
         dartboard (Union[Unset, str]):
         dartboard_id (Union[Unset, str]):
         description (Union[Unset, str]):
@@ -526,6 +713,8 @@ async def asyncio(
         in_trash (Union[Unset, bool]):
         is_completed (Union[Unset, bool]):
         limit (Union[Unset, int]):
+        no_defaults (Union[Unset, bool]):  Default: False.
+        o (Union[Unset, list[ListTasksOItem]]):
         offset (Union[Unset, int]):
         parent_id (Union[Unset, str]):
         priority (Union[Unset, str]):
@@ -540,6 +729,11 @@ async def asyncio(
         title (Union[Unset, str]):
         type_ (Union[Unset, str]):
         type_id (Union[Unset, str]):
+        updated_at (Union[Unset, datetime.datetime]):
+        updated_at_after (Union[Unset, datetime.datetime]):
+        updated_at_before (Union[Unset, datetime.datetime]):
+        updated_by (Union[Unset, str]):
+        updated_by_id (Union[Unset, str]):
         view (Union[Unset, str]):
         view_id (Union[Unset, str]):
 
@@ -556,6 +750,11 @@ async def asyncio(
             client=client,
             assignee=assignee,
             assignee_id=assignee_id,
+            created_at=created_at,
+            created_at_after=created_at_after,
+            created_at_before=created_at_before,
+            created_by=created_by,
+            created_by_id=created_by_id,
             dartboard=dartboard,
             dartboard_id=dartboard_id,
             description=description,
@@ -566,6 +765,8 @@ async def asyncio(
             in_trash=in_trash,
             is_completed=is_completed,
             limit=limit,
+            no_defaults=no_defaults,
+            o=o,
             offset=offset,
             parent_id=parent_id,
             priority=priority,
@@ -580,6 +781,11 @@ async def asyncio(
             title=title,
             type_=type_,
             type_id=type_id,
+            updated_at=updated_at,
+            updated_at_after=updated_at_after,
+            updated_at_before=updated_at_before,
+            updated_by=updated_by,
+            updated_by_id=updated_by_id,
             view=view,
             view_id=view_id,
         )
