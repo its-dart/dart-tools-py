@@ -1,8 +1,10 @@
+import datetime
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any, TypeVar, Union, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
+from dateutil.parser import isoparse
 
 from ..models.priority import Priority
 from ..types import UNSET, Unset
@@ -32,6 +34,8 @@ class Task:
         description (str): A longer description of the task, which can include markdown formatting.
         attachments (list['Attachment']): The attachments, which is a list of attachments that are associated with the
             task.
+        created_at (datetime.datetime): The date and time when the task was created in ISO format.
+        updated_at (datetime.datetime): The date and time when the task was last updated in ISO format.
         assignees (Union[None, Unset, list[str]]): The names or emails of the users that the task is assigned to. Either
             this or assignee must be included, depending on whether the workspaces allows multiple assignees or not.
         assignee (Union[None, Unset, str]): The name or email of the user that the task is assigned to. Either this or
@@ -52,6 +56,8 @@ class Task:
         custom_properties (Union['CustomProperties', None, Unset]): The custom properties, which is a dict of custom
             properties that are associated with the task.
         task_relationships (Union['TaskRelationshipsType0', None, Unset]): The relationships associated with the task.
+        created_by (Union[None, Unset, str]): The name or email (moniker) of the user that created the task.
+        updated_by (Union[None, Unset, str]): The name or email (moniker) of the user that last updated the task.
     """
 
     id: str
@@ -63,6 +69,8 @@ class Task:
     status: str
     description: str
     attachments: list["Attachment"]
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
     assignees: Union[None, Unset, list[str]] = UNSET
     assignee: Union[None, Unset, str] = UNSET
     tags: Union[Unset, list[str]] = UNSET
@@ -73,6 +81,8 @@ class Task:
     time_tracking: Union[Unset, str] = UNSET
     custom_properties: Union["CustomProperties", None, Unset] = UNSET
     task_relationships: Union["TaskRelationshipsType0", None, Unset] = UNSET
+    created_by: Union[None, Unset, str] = UNSET
+    updated_by: Union[None, Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -100,6 +110,10 @@ class Task:
         for attachments_item_data in self.attachments:
             attachments_item = attachments_item_data.to_dict()
             attachments.append(attachments_item)
+
+        created_at = self.created_at.isoformat()
+
+        updated_at = self.updated_at.isoformat()
 
         assignees: Union[None, Unset, list[str]]
         if isinstance(self.assignees, Unset):
@@ -164,6 +178,18 @@ class Task:
         else:
             task_relationships = self.task_relationships
 
+        created_by: Union[None, Unset, str]
+        if isinstance(self.created_by, Unset):
+            created_by = UNSET
+        else:
+            created_by = self.created_by
+
+        updated_by: Union[None, Unset, str]
+        if isinstance(self.updated_by, Unset):
+            updated_by = UNSET
+        else:
+            updated_by = self.updated_by
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -177,6 +203,8 @@ class Task:
                 "status": status,
                 "description": description,
                 "attachments": attachments,
+                "createdAt": created_at,
+                "updatedAt": updated_at,
             }
         )
         if assignees is not UNSET:
@@ -199,6 +227,10 @@ class Task:
             field_dict["customProperties"] = custom_properties
         if task_relationships is not UNSET:
             field_dict["taskRelationships"] = task_relationships
+        if created_by is not UNSET:
+            field_dict["createdBy"] = created_by
+        if updated_by is not UNSET:
+            field_dict["updatedBy"] = updated_by
 
         return field_dict
 
@@ -236,6 +268,10 @@ class Task:
             attachments_item = Attachment.from_dict(attachments_item_data)
 
             attachments.append(attachments_item)
+
+        created_at = isoparse(d.pop("createdAt"))
+
+        updated_at = isoparse(d.pop("updatedAt"))
 
         def _parse_assignees(data: object) -> Union[None, Unset, list[str]]:
             if data is None:
@@ -349,6 +385,24 @@ class Task:
 
         task_relationships = _parse_task_relationships(d.pop("taskRelationships", UNSET))
 
+        def _parse_created_by(data: object) -> Union[None, Unset, str]:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(Union[None, Unset, str], data)
+
+        created_by = _parse_created_by(d.pop("createdBy", UNSET))
+
+        def _parse_updated_by(data: object) -> Union[None, Unset, str]:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(Union[None, Unset, str], data)
+
+        updated_by = _parse_updated_by(d.pop("updatedBy", UNSET))
+
         task = cls(
             id=id,
             html_url=html_url,
@@ -359,6 +413,8 @@ class Task:
             status=status,
             description=description,
             attachments=attachments,
+            created_at=created_at,
+            updated_at=updated_at,
             assignees=assignees,
             assignee=assignee,
             tags=tags,
@@ -369,6 +425,8 @@ class Task:
             time_tracking=time_tracking,
             custom_properties=custom_properties,
             task_relationships=task_relationships,
+            created_by=created_by,
+            updated_by=updated_by,
         )
 
         task.additional_properties = d
