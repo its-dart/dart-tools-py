@@ -85,6 +85,7 @@ _ROOT_PUBLIC_API_URL_FRAG = f"{_ROOT_PRIVATE_API_URL_FRAG}/public"
 _COPY_BRANCH_URL_FRAG = "/vcs/copy-branch-link"
 
 _AUTH_TOKEN_ENVVAR_KEY = "DART_TOKEN"
+_HOST_ENVVAR_KEY = "DART_HOST"
 _CONFIG_FPATH = platformdirs.user_config_path(_APP)
 _CLIENT_ID_KEY = "clientId"
 _HOST_KEY = "host"
@@ -105,6 +106,8 @@ _DEFAULT_DARTBOARD = "General/Active"
 
 _VERSION = version(_APP)
 _AUTH_TOKEN_ENVVAR = os.environ.get(_AUTH_TOKEN_ENVVAR_KEY)
+_HOST_ENVVAR = os.environ.get(_HOST_ENVVAR_KEY)
+_DEFAULT_HOST = _HOST_ENVVAR or _PROD_HOST
 
 
 def _get_help_text(fn: Callable) -> str:
@@ -221,7 +224,7 @@ class _Config:
                 pass
         self._content = {
             _CLIENT_ID_KEY: _make_id(),
-            _HOST_KEY: _PROD_HOST,
+            _HOST_KEY: _DEFAULT_HOST,
             _HOSTS_KEY: {},
         } | self._content
         self._content[_HOSTS_KEY] = defaultdict(dict, self._content[_HOSTS_KEY])
