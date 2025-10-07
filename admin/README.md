@@ -1,17 +1,18 @@
 # Admin functionality
 
 - [Admin functionality](#admin-functionality)
-  - [Install local version](#install-local-version)
+  - [Local setup](#local-setup)
   - [Test with a different Python version](#test-with-a-different-python-version)
   - [Sync API](#sync-api)
   - [Deploy setup](#deploy-setup)
   - [Deploy](#deploy)
   - [Dependency updating](#dependency-updating)
 
-## Install local version
+## Local setup
 
-1. Run `uv sync` as needed
-2. Run with `uv run dart [args ...]`
+1. Run `uv sync` to install the dependencies
+2. Run `cp -n .env.example .env` to copy the example environment file and then fill out all needed variables
+3. Run with `uv run dart [args ...]`
 
 ## Test with a different Python version
 
