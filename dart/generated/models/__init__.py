@@ -22,7 +22,9 @@ from .priority import Priority
 from .skill import Skill
 from .task import Task
 from .task_create import TaskCreate
+from .task_move import TaskMove
 from .task_relationships_type_0 import TaskRelationshipsType0
+from .task_time_tracking_create import TaskTimeTrackingCreate
 from .task_update import TaskUpdate
 from .time_tracking_entry import TimeTrackingEntry
 from .user import User
@@ -95,7 +97,9 @@ __all__ = (
     "Skill",
     "Task",
     "TaskCreate",
+    "TaskMove",
     "TaskRelationshipsType0",
+    "TaskTimeTrackingCreate",
     "TaskUpdate",
     "TimeTrackingEntry",
     "User",
