@@ -22,9 +22,5 @@ find "$api_dir" -type f -name "*.py" ! -name "__init__.py" | while read -r file;
     echo "from .$service import $method" >> "$init_file"
 done
 
-# Patch generated files to fix naming issues
-echo "Patching generated files..."
-if [ -f "$GENERATED_PATH/models/list_comments_o_item.py" ]; then
-    sed -i '' 's/VALUE_0 = "-published_at"/PUBLISHED_AT_DESC = "-published_at"/' "$GENERATED_PATH/models/list_comments_o_item.py"
-    echo "Fixed VALUE_0 enum key in list_comments_o_item.py"
-fi
+# Fix enum naming issues (VALUE_0, VALUE_1, etc. -> descriptive names)
+python3 $(dirname "$0")/fix_enum_names.py
