@@ -8,6 +8,9 @@ from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
     from ..models.comment import Comment
+    from ..models.paginated_comment_list_meta_type_0 import (
+        PaginatedCommentListMetaType0,
+    )
 
 
 T = TypeVar("T", bound="PaginatedCommentList")
@@ -21,15 +24,21 @@ class PaginatedCommentList:
         results (list['Comment']):
         next_ (Union[None, Unset, str]):  Example: http://api.example.org/accounts/?offset=400&limit=100.
         previous (Union[None, Unset, str]):  Example: http://api.example.org/accounts/?offset=200&limit=100.
+        meta (Union['PaginatedCommentListMetaType0', None, Unset]):
     """
 
     count: int
     results: list["Comment"]
     next_: Union[None, Unset, str] = UNSET
     previous: Union[None, Unset, str] = UNSET
+    meta: Union["PaginatedCommentListMetaType0", None, Unset] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        from ..models.paginated_comment_list_meta_type_0 import (
+            PaginatedCommentListMetaType0,
+        )
+
         count = self.count
 
         results = []
@@ -49,6 +58,14 @@ class PaginatedCommentList:
         else:
             previous = self.previous
 
+        meta: Union[None, Unset, dict[str, Any]]
+        if isinstance(self.meta, Unset):
+            meta = UNSET
+        elif isinstance(self.meta, PaginatedCommentListMetaType0):
+            meta = self.meta.to_dict()
+        else:
+            meta = self.meta
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -61,12 +78,17 @@ class PaginatedCommentList:
             field_dict["next"] = next_
         if previous is not UNSET:
             field_dict["previous"] = previous
+        if meta is not UNSET:
+            field_dict["meta"] = meta
 
         return field_dict
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         from ..models.comment import Comment
+        from ..models.paginated_comment_list_meta_type_0 import (
+            PaginatedCommentListMetaType0,
+        )
 
         d = dict(src_dict)
         count = d.pop("count")
@@ -96,11 +118,31 @@ class PaginatedCommentList:
 
         previous = _parse_previous(d.pop("previous", UNSET))
 
+        def _parse_meta(
+            data: object,
+        ) -> Union["PaginatedCommentListMetaType0", None, Unset]:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            try:
+                if not isinstance(data, dict):
+                    raise TypeError()
+                meta_type_0 = PaginatedCommentListMetaType0.from_dict(data)
+
+                return meta_type_0
+            except:  # noqa: E722
+                pass
+            return cast(Union["PaginatedCommentListMetaType0", None, Unset], data)
+
+        meta = _parse_meta(d.pop("meta", UNSET))
+
         paginated_comment_list = cls(
             count=count,
             results=results,
             next_=next_,
             previous=previous,
+            meta=meta,
         )
 
         paginated_comment_list.additional_properties = d
