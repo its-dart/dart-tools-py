@@ -68,7 +68,8 @@ def sync_detailed(
 ) -> Response[Union[Any, WrappedTask]]:
     """Move a task within its dartboard
 
-     Move a task to a specific position within its dartboard ordering and return the updated task.
+     Move a task to a specific position within results sorted by the order field. Use afterTaskId to
+    place the task after a specific task, or beforeTaskId to place it before one.
 
     Args:
         id (str):
@@ -102,7 +103,8 @@ def sync(
 ) -> Optional[Union[Any, WrappedTask]]:
     """Move a task within its dartboard
 
-     Move a task to a specific position within its dartboard ordering and return the updated task.
+     Move a task to a specific position within results sorted by the order field. Use afterTaskId to
+    place the task after a specific task, or beforeTaskId to place it before one.
 
     Args:
         id (str):
@@ -131,7 +133,8 @@ async def asyncio_detailed(
 ) -> Response[Union[Any, WrappedTask]]:
     """Move a task within its dartboard
 
-     Move a task to a specific position within its dartboard ordering and return the updated task.
+     Move a task to a specific position within results sorted by the order field. Use afterTaskId to
+    place the task after a specific task, or beforeTaskId to place it before one.
 
     Args:
         id (str):
@@ -163,7 +166,8 @@ async def asyncio(
 ) -> Optional[Union[Any, WrappedTask]]:
     """Move a task within its dartboard
 
-     Move a task to a specific position within its dartboard ordering and return the updated task.
+     Move a task to a specific position within results sorted by the order field. Use afterTaskId to
+    place the task after a specific task, or beforeTaskId to place it before one.
 
     Args:
         id (str):

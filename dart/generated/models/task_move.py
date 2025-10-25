@@ -13,36 +13,37 @@ T = TypeVar("T", bound="TaskMove")
 class TaskMove:
     """
     Attributes:
-        insert_before_id (Union[None, Unset, str]): Move the task to immediately before the provided task ID. Use null
-            to move the task to the beginning of the dartboard.
-        insert_after_id (Union[None, Unset, str]): Move the task to immediately after the provided task ID. Use null to
-            move the task to the end of the dartboard.
+        before_task_id (Union[None, Unset, str]): Move the task immediately before this task. For example: if tasks are
+            [A, B, C], then beforeTaskId=B produces [A, moved_task, B, C]. Use null to move to the beginning (first
+            position).
+        after_task_id (Union[None, Unset, str]): Move the task immediately after this task. For example: if tasks are
+            [A, B, C], then afterTaskId=B produces [A, B, moved_task, C]. Use null to move to the end (last position).
     """
 
-    insert_before_id: Union[None, Unset, str] = UNSET
-    insert_after_id: Union[None, Unset, str] = UNSET
+    before_task_id: Union[None, Unset, str] = UNSET
+    after_task_id: Union[None, Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        insert_before_id: Union[None, Unset, str]
-        if isinstance(self.insert_before_id, Unset):
-            insert_before_id = UNSET
+        before_task_id: Union[None, Unset, str]
+        if isinstance(self.before_task_id, Unset):
+            before_task_id = UNSET
         else:
-            insert_before_id = self.insert_before_id
+            before_task_id = self.before_task_id
 
-        insert_after_id: Union[None, Unset, str]
-        if isinstance(self.insert_after_id, Unset):
-            insert_after_id = UNSET
+        after_task_id: Union[None, Unset, str]
+        if isinstance(self.after_task_id, Unset):
+            after_task_id = UNSET
         else:
-            insert_after_id = self.insert_after_id
+            after_task_id = self.after_task_id
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
-        if insert_before_id is not UNSET:
-            field_dict["insertBeforeId"] = insert_before_id
-        if insert_after_id is not UNSET:
-            field_dict["insertAfterId"] = insert_after_id
+        if before_task_id is not UNSET:
+            field_dict["beforeTaskId"] = before_task_id
+        if after_task_id is not UNSET:
+            field_dict["afterTaskId"] = after_task_id
 
         return field_dict
 
@@ -50,27 +51,27 @@ class TaskMove:
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         d = dict(src_dict)
 
-        def _parse_insert_before_id(data: object) -> Union[None, Unset, str]:
+        def _parse_before_task_id(data: object) -> Union[None, Unset, str]:
             if data is None:
                 return data
             if isinstance(data, Unset):
                 return data
             return cast(Union[None, Unset, str], data)
 
-        insert_before_id = _parse_insert_before_id(d.pop("insertBeforeId", UNSET))
+        before_task_id = _parse_before_task_id(d.pop("beforeTaskId", UNSET))
 
-        def _parse_insert_after_id(data: object) -> Union[None, Unset, str]:
+        def _parse_after_task_id(data: object) -> Union[None, Unset, str]:
             if data is None:
                 return data
             if isinstance(data, Unset):
                 return data
             return cast(Union[None, Unset, str], data)
 
-        insert_after_id = _parse_insert_after_id(d.pop("insertAfterId", UNSET))
+        after_task_id = _parse_after_task_id(d.pop("afterTaskId", UNSET))
 
         task_move = cls(
-            insert_before_id=insert_before_id,
-            insert_after_id=insert_after_id,
+            before_task_id=before_task_id,
+            after_task_id=after_task_id,
         )
 
         task_move.additional_properties = d
