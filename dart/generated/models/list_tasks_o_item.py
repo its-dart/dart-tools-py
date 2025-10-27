@@ -7,11 +7,11 @@ class ListTasksOItem(str, Enum):
     ORDER = "order"
     TITLE = "title"
     UPDATED_AT = "updated_at"
-    VALUE_0 = "-created_at"
-    VALUE_1 = "-dartboard__order"
-    VALUE_2 = "-order"
-    VALUE_3 = "-title"
-    VALUE_4 = "-updated_at"
+    CREATED_AT_DESC = "-created_at"
+    DARTBOARD_ORDER_DESC = "-dartboard__order"
+    ORDER_DESC = "-order"
+    TITLE_DESC = "-title"
+    UPDATED_AT_DESC = "-updated_at"
 
     def __str__(self) -> str:
         return str(self.value)
