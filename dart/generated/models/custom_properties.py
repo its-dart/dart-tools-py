@@ -21,8 +21,8 @@ class CustomProperties:
 
     """
 
-    additional_properties: dict[str, Union[None, bool, float, list[Union[None, str]], list[str], str]] = _attrs_field(
-        init=False, factory=dict
+    additional_properties: dict[str, Union[None, bool, float, int, list[Union[None, str]], list[str], str]] = (
+        _attrs_field(init=False, factory=dict)
     )
 
     def to_dict(self) -> dict[str, Any]:
@@ -56,7 +56,7 @@ class CustomProperties:
 
             def _parse_additional_property(
                 data: object,
-            ) -> Union[None, bool, float, list[Union[None, str]], list[str], str]:
+            ) -> Union[None, bool, float, int, list[Union[None, str]], list[str], str]:
                 if data is None:
                     return data
                 try:
@@ -93,13 +93,13 @@ class CustomProperties:
                 try:
                     if not isinstance(data, list):
                         raise TypeError()
-                    additional_property_type_9 = cast(list[str], data)
+                    additional_property_type_11 = cast(list[str], data)
 
-                    return additional_property_type_9
+                    return additional_property_type_11
                 except:  # noqa: E722
                     pass
                 return cast(
-                    Union[None, bool, float, list[Union[None, str]], list[str], str],
+                    Union[None, bool, float, int, list[Union[None, str]], list[str], str],
                     data,
                 )
 
@@ -114,13 +114,13 @@ class CustomProperties:
     def additional_keys(self) -> list[str]:
         return list(self.additional_properties.keys())
 
-    def __getitem__(self, key: str) -> Union[None, bool, float, list[Union[None, str]], list[str], str]:
+    def __getitem__(self, key: str) -> Union[None, bool, float, int, list[Union[None, str]], list[str], str]:
         return self.additional_properties[key]
 
     def __setitem__(
         self,
         key: str,
-        value: Union[None, bool, float, list[Union[None, str]], list[str], str],
+        value: Union[None, bool, float, int, list[Union[None, str]], list[str], str],
     ) -> None:
         self.additional_properties[key] = value
 
