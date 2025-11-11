@@ -374,70 +374,10 @@ class Dart:
         self._private_api.get_httpx_client().post(_COPY_BRANCH_URL_FRAG, json={"duid": id})
 
 
-class _Git:
-    @staticmethod
-    def _cmd_succeeds(cmd: str) -> bool:
-        try:
-            _run_cmd(f"{cmd} 2>&1")
-        except subprocess.CalledProcessError as ex:
-            if "128" in str(ex):
-                return False
-            raise ex
-        return True
-
-    @staticmethod
-    def make_task_name(email: str, task: ConciseTask | Task) -> str:
-        username = slugify_str(email.split("@")[0], lower=True)
-        title = slugify_str(task.title, lower=True)
-        return trim_slug_str(f"{username}/{task.id}-{title}", length=60)
-
-    @staticmethod
-    def get_current_branch() -> str:
-        return _run_cmd("git rev-parse --abbrev-ref HEAD").strip()
-
-    @staticmethod
-    def ensure_in_repo() -> None:
-        if _Git._cmd_succeeds("git rev-parse --is-inside-work-tree"):
-            return
-        _dart_exit("You are not in a git repo.")
-
-    @staticmethod
-    def ensure_no_unstaged_changes() -> None:
-        if _run_cmd("git status --porcelain") == "":
-            return
-        _dart_exit("You have uncommitted changes. Please commit or stash them.")
-
-    @staticmethod
-    def ensure_on_main_or_intended() -> None:
-        branch = _Git.get_current_branch()
-        if branch == "main":
-            return
-        if (
-            pick(
-                ["Yes", "No"],
-                "You're not on the 'main' branch. Is this intentional?",
-                "→",
-            )[0]
-            == "Yes"
-        ):
-            return
-        _run_cmd("git checkout main")
-
-    @staticmethod
-    def branch_exists(branch: str) -> bool:
-        return _Git._cmd_succeeds(f"git rev-parse --verify {branch}")
-
-    @staticmethod
-    def checkout_branch(branch: str) -> None:
-        if _Git.branch_exists(branch):
-            _run_cmd(f"git checkout {branch}")
-            return
-
-        if _Git.branch_exists(f"origin/{branch}"):
-            _run_cmd(f"git checkout --track origin/{branch}")
-            return
-
-        _run_cmd(f"git checkout -b {branch}")
+def make_task_branch_name(email: str, task: ConciseTask | Task) -> str:
+    username = slugify_str(email.split("@")[0], lower=True)
+    title = slugify_str(task.title, lower=True)
+    return trim_slug_str(f"{username}/{task.id}-{title}", length=60)
 
 
 def get_host() -> str:
@@ -530,26 +470,11 @@ def login(token: str | None = None) -> bool:
     return True
 
 
-def _begin_task(dart: Dart, email: str, task: ConciseTask | Task) -> bool:
-    _Git.ensure_in_repo()
-    _Git.ensure_no_unstaged_changes()
-    _Git.ensure_on_main_or_intended()
-
-    dart = Dart()
-    dart.copy_branch_link(task.id)
-
-    branch_name = _Git.make_task_name(email, task)
-    _Git.checkout_branch(branch_name)
-
-    _log(f"Started work on\n\n  {task.title}\n  {task.html_url}\n")
-    return True
-
 
 def begin_task() -> bool:
     dart = Dart()
     config = dart.get_config()
     user = config.user
-    print(config.dartboards)
     dartboard_maybe = {"dartboard": _DEFAULT_DARTBOARD} if _DEFAULT_DARTBOARD in config.dartboards else {}
     filtered_tasks = dart.list_tasks(assignee=user.email, is_completed=False, **dartboard_maybe).results
 
@@ -563,9 +488,10 @@ def begin_task() -> bool:
     )[1]
     assert isinstance(picked_idx, int)
 
-    _begin_task(dart, user.email, filtered_tasks[picked_idx])
+    task = filtered_tasks[picked_idx]
+    branch_name = make_task_branch_name(user.email, task)
 
-    _log("Done.")
+    _log(json.dumps({"title": task.title, "branch": branch_name, "id": task.id}))
     return True
 
 
@@ -601,7 +527,6 @@ def create_task(
     priority_int: Union[int, None, Unset] = UNSET,
     size_int: Union[int, None, Unset] = UNSET,
     due_at_str: Union[str, None, Unset] = UNSET,
-    should_begin: bool = False,
 ) -> Task:
     dart = Dart()
     task_create = WrappedTaskCreate(
@@ -619,11 +544,6 @@ def create_task(
     task = dart.create_task(task_create).item
     _log(f"Created task\n\n  {task.title}\n  {task.html_url}\n  ID: {task.id}\n")
 
-    if should_begin:
-        user = dart.get_config().user
-        _begin_task(dart, user.email, task)
-
-    _log("Done.")
     return task
 
 
@@ -819,13 +739,6 @@ def cli() -> None:
         _CREATE_TASK_CMD, aliases=["tc"], help=_HELP_TEXT_TO_COMMAND[_CREATE_TASK_CMD]
     )
     create_task_parser.add_argument("title", help="title of the task")
-    create_task_parser.add_argument(
-        "-b",
-        "--begin",
-        dest="should_begin",
-        action="store_true",
-        help="begin work on the task after creation",
-    )
     _add_standard_task_arguments(create_task_parser)
     create_task_parser.set_defaults(func=create_task)
 
