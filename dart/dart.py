@@ -470,6 +470,15 @@ def login(token: str | None = None) -> bool:
     return True
 
 
+def _begin_task(dart: Dart, email: str, task: ConciseTask | Task) -> bool:
+    dart = Dart()
+    dart.copy_branch_link(task.id)
+
+    branch_name = make_task_branch_name(email, task)
+
+    _log(f"Started work on\n\n  {task.title}\n  {task.html_url}\n  {branch_name}\n")
+    return True
+
 
 def begin_task() -> bool:
     dart = Dart()
@@ -488,10 +497,9 @@ def begin_task() -> bool:
     )[1]
     assert isinstance(picked_idx, int)
 
-    task = filtered_tasks[picked_idx]
-    branch_name = make_task_branch_name(user.email, task)
+    _begin_task(dart, user.email, filtered_tasks[picked_idx])
 
-    _log(json.dumps({"title": task.title, "branch": branch_name, "id": task.id}))
+    _log("Done.")
     return True
 
 
@@ -527,6 +535,7 @@ def create_task(
     priority_int: Union[int, None, Unset] = UNSET,
     size_int: Union[int, None, Unset] = UNSET,
     due_at_str: Union[str, None, Unset] = UNSET,
+    should_begin: bool = False,
 ) -> Task:
     dart = Dart()
     task_create = WrappedTaskCreate(
@@ -544,6 +553,11 @@ def create_task(
     task = dart.create_task(task_create).item
     _log(f"Created task\n\n  {task.title}\n  {task.html_url}\n  ID: {task.id}\n")
 
+    if should_begin:
+        user = dart.get_config().user
+        _begin_task(dart, user.email, task)
+
+    _log("Done.")
     return task
 
 
@@ -739,6 +753,13 @@ def cli() -> None:
         _CREATE_TASK_CMD, aliases=["tc"], help=_HELP_TEXT_TO_COMMAND[_CREATE_TASK_CMD]
     )
     create_task_parser.add_argument("title", help="title of the task")
+    create_task_parser.add_argument(
+        "-b",
+        "--begin",
+        dest="should_begin",
+        action="store_true",
+        help="begin work on the task after creation",
+    )
     _add_standard_task_arguments(create_task_parser)
     create_task_parser.set_defaults(func=create_task)
 
