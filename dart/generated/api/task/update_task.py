@@ -69,10 +69,11 @@ def sync_detailed(
     client: Union[AuthenticatedClient, Client],
     body: WrappedTaskUpdate,
 ) -> Response[Union[Any, WrappedTask]]:
-    """Update an existing task
+    r"""Update an existing task
 
-     Update certain properties of an existing task. This will save the task in Dart for later access,
-    search, etc. Any properties that are not specified will not be changed.
+     Update properties of an existing task. For customProperties, use property NAME (not ID) as key. Get
+    property names from workspace config. Example: {\"customTextProperty\": \"Some text\"}. Fields not
+    provided are unchanged.
 
     Args:
         id (str):
@@ -104,10 +105,11 @@ def sync(
     client: Union[AuthenticatedClient, Client],
     body: WrappedTaskUpdate,
 ) -> Optional[Union[Any, WrappedTask]]:
-    """Update an existing task
+    r"""Update an existing task
 
-     Update certain properties of an existing task. This will save the task in Dart for later access,
-    search, etc. Any properties that are not specified will not be changed.
+     Update properties of an existing task. For customProperties, use property NAME (not ID) as key. Get
+    property names from workspace config. Example: {\"customTextProperty\": \"Some text\"}. Fields not
+    provided are unchanged.
 
     Args:
         id (str):
@@ -134,10 +136,11 @@ async def asyncio_detailed(
     client: Union[AuthenticatedClient, Client],
     body: WrappedTaskUpdate,
 ) -> Response[Union[Any, WrappedTask]]:
-    """Update an existing task
+    r"""Update an existing task
 
-     Update certain properties of an existing task. This will save the task in Dart for later access,
-    search, etc. Any properties that are not specified will not be changed.
+     Update properties of an existing task. For customProperties, use property NAME (not ID) as key. Get
+    property names from workspace config. Example: {\"customTextProperty\": \"Some text\"}. Fields not
+    provided are unchanged.
 
     Args:
         id (str):
@@ -167,10 +170,11 @@ async def asyncio(
     client: Union[AuthenticatedClient, Client],
     body: WrappedTaskUpdate,
 ) -> Optional[Union[Any, WrappedTask]]:
-    """Update an existing task
+    r"""Update an existing task
 
-     Update certain properties of an existing task. This will save the task in Dart for later access,
-    search, etc. Any properties that are not specified will not be changed.
+     Update properties of an existing task. For customProperties, use property NAME (not ID) as key. Get
+    property names from workspace config. Example: {\"customTextProperty\": \"Some text\"}. Fields not
+    provided are unchanged.
 
     Args:
         id (str):

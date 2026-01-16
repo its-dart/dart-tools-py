@@ -3,11 +3,14 @@ from typing import (
     Any,
     Literal,
     TypeVar,
+    Union,
     cast,
 )
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
+
+from ..types import UNSET, Unset
 
 T = TypeVar("T", bound="UserSpaceConfigurationCustomPropertyStatusTypeDef")
 
@@ -18,16 +21,22 @@ class UserSpaceConfigurationCustomPropertyStatusTypeDef:
     Attributes:
         name (str):
         type_ (Literal['Status']):
+        statuses (Union[Unset, list[str]]):
     """
 
     name: str
     type_: Literal["Status"]
+    statuses: Union[Unset, list[str]] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         name = self.name
 
         type_ = self.type_
+
+        statuses: Union[Unset, list[str]] = UNSET
+        if not isinstance(self.statuses, Unset):
+            statuses = self.statuses
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -37,6 +46,8 @@ class UserSpaceConfigurationCustomPropertyStatusTypeDef:
                 "type": type_,
             }
         )
+        if statuses is not UNSET:
+            field_dict["statuses"] = statuses
 
         return field_dict
 
@@ -49,9 +60,12 @@ class UserSpaceConfigurationCustomPropertyStatusTypeDef:
         if type_ != "Status":
             raise ValueError(f"type must match const 'Status', got '{type_}'")
 
+        statuses = cast(list[str], d.pop("statuses", UNSET))
+
         user_space_configuration_custom_property_status_type_def = cls(
             name=name,
             type_=type_,
+            statuses=statuses,
         )
 
         user_space_configuration_custom_property_status_type_def.additional_properties = d
