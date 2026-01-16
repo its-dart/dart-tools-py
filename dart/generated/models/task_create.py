@@ -8,7 +8,9 @@ from ..models.priority import Priority
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.custom_properties import CustomProperties
+    from ..models.task_create_custom_properties_type_0 import (
+        TaskCreateCustomPropertiesType0,
+    )
     from ..models.task_relationships_type_0 import TaskRelationshipsType0
 
 
@@ -42,8 +44,15 @@ class TaskCreate:
             format, like YYYY-MM-DD.
         size (Union[None, Unset, int, str]): The size, which represents the amount of work that needs to be done. This
             is used to determine how long the task will take to complete.
-        custom_properties (Union['CustomProperties', None, Unset]): The custom properties, which is a dict of custom
-            properties that are associated with the task.
+        custom_properties (Union['TaskCreateCustomPropertiesType0', None, Unset]): Custom properties as a dict mapping
+            property NAME to value. Use exact property names from workspace config (e.g., {"customCheckboxProperty": true,
+            "customTextProperty": "Some text"}). Property names are case-sensitive. Example: {'customCheckboxProperty':
+            True, 'customDatesProperty': '2025-05-10', 'customDatesPropertyWithRange': ['2025-05-01', '2025-05-30'],
+            'customMultiselectProperty': ['frontend', 'bug'], 'customNumberPropertyWithIntegerFormat': 5,
+            'customNumberPropertyWithPercentageFormat': 75, 'customNumberPropertyWithDollarsFormat': 1500.5,
+            'customSelectProperty': 'In Progress', 'customStatusProperty': 'Blocked', 'customTextProperty': 'This task
+            requires additional review from the design team', 'customUserProperty': 'john.doe@example.com',
+            'customMultipleUserProperty': ['john.doe@example.com', 'Alice Smith']}.
         task_relationships (Union['TaskRelationshipsType0', None, Unset]): The relationships associated with the task.
     """
 
@@ -60,12 +69,14 @@ class TaskCreate:
     start_at: Union[None, Unset, str] = UNSET
     due_at: Union[None, Unset, str] = UNSET
     size: Union[None, Unset, int, str] = UNSET
-    custom_properties: Union["CustomProperties", None, Unset] = UNSET
+    custom_properties: Union["TaskCreateCustomPropertiesType0", None, Unset] = UNSET
     task_relationships: Union["TaskRelationshipsType0", None, Unset] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.custom_properties import CustomProperties
+        from ..models.task_create_custom_properties_type_0 import (
+            TaskCreateCustomPropertiesType0,
+        )
         from ..models.task_relationships_type_0 import TaskRelationshipsType0
 
         title = self.title
@@ -132,7 +143,7 @@ class TaskCreate:
         custom_properties: Union[None, Unset, dict[str, Any]]
         if isinstance(self.custom_properties, Unset):
             custom_properties = UNSET
-        elif isinstance(self.custom_properties, CustomProperties):
+        elif isinstance(self.custom_properties, TaskCreateCustomPropertiesType0):
             custom_properties = self.custom_properties.to_dict()
         else:
             custom_properties = self.custom_properties
@@ -185,7 +196,9 @@ class TaskCreate:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.custom_properties import CustomProperties
+        from ..models.task_create_custom_properties_type_0 import (
+            TaskCreateCustomPropertiesType0,
+        )
         from ..models.task_relationships_type_0 import TaskRelationshipsType0
 
         d = dict(src_dict)
@@ -282,7 +295,7 @@ class TaskCreate:
 
         def _parse_custom_properties(
             data: object,
-        ) -> Union["CustomProperties", None, Unset]:
+        ) -> Union["TaskCreateCustomPropertiesType0", None, Unset]:
             if data is None:
                 return data
             if isinstance(data, Unset):
@@ -290,12 +303,12 @@ class TaskCreate:
             try:
                 if not isinstance(data, dict):
                     raise TypeError()
-                custom_properties_type_0 = CustomProperties.from_dict(data)
+                custom_properties_type_0 = TaskCreateCustomPropertiesType0.from_dict(data)
 
                 return custom_properties_type_0
             except:  # noqa: E722
                 pass
-            return cast(Union["CustomProperties", None, Unset], data)
+            return cast(Union["TaskCreateCustomPropertiesType0", None, Unset], data)
 
         custom_properties = _parse_custom_properties(d.pop("customProperties", UNSET))
 

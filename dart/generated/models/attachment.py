@@ -13,10 +13,12 @@ class Attachment:
     Attributes:
         name (str): The name of the attachment.
         url (str): The link to access the attachment.
+        kind (str): The MIME type of the attachment
     """
 
     name: str
     url: str
+    kind: str
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -24,12 +26,15 @@ class Attachment:
 
         url = self.url
 
+        kind = self.kind
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
             {
                 "name": name,
                 "url": url,
+                "kind": kind,
             }
         )
 
@@ -42,9 +47,12 @@ class Attachment:
 
         url = d.pop("url")
 
+        kind = d.pop("kind")
+
         attachment = cls(
             name=name,
             url=url,
+            kind=kind,
         )
 
         attachment.additional_properties = d

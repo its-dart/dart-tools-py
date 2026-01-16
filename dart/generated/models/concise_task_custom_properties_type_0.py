@@ -4,20 +4,22 @@ from typing import Any, TypeVar, Union, cast
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-T = TypeVar("T", bound="CustomProperties")
+T = TypeVar("T", bound="ConciseTaskCustomPropertiesType0")
 
 
 @_attrs_define
-class CustomProperties:
-    """
-    Example:
-        {'customCheckboxProperty': True, 'customDatesProperty': '2025-05-10', 'customDatesPropertyWithRange':
-            ['2025-05-01', '2025-05-30'], 'customMultiselectProperty': ['frontend', 'bug'],
-            'customNumberPropertyWithIntegerFormat': 5, 'customNumberPropertyWithPercentageFormat': 75,
-            'customNumberPropertyWithDollarsFormat': 1500.5, 'customSelectProperty': 'In Progress', 'customStatusProperty':
-            'Blocked', 'customTextProperty': 'This task requires additional review from the design team',
-            'customUserProperty': 'john.doe@example.com', 'customMultipleUserProperty': ['john.doe@example.com', 'Alice
-            Smith']}
+class ConciseTaskCustomPropertiesType0:
+    """Custom properties as a dict mapping property NAME to value. Use exact property names from workspace config (e.g.,
+    {"customCheckboxProperty": true, "customTextProperty": "Some text"}). Property names are case-sensitive.
+
+        Example:
+            {'customCheckboxProperty': True, 'customDatesProperty': '2025-05-10', 'customDatesPropertyWithRange':
+                ['2025-05-01', '2025-05-30'], 'customMultiselectProperty': ['frontend', 'bug'],
+                'customNumberPropertyWithIntegerFormat': 5, 'customNumberPropertyWithPercentageFormat': 75,
+                'customNumberPropertyWithDollarsFormat': 1500.5, 'customSelectProperty': 'In Progress', 'customStatusProperty':
+                'Blocked', 'customTextProperty': 'This task requires additional review from the design team',
+                'customUserProperty': 'john.doe@example.com', 'customMultipleUserProperty': ['john.doe@example.com', 'Alice
+                Smith']}
 
     """
 
@@ -49,7 +51,7 @@ class CustomProperties:
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         d = dict(src_dict)
-        custom_properties = cls()
+        concise_task_custom_properties_type_0 = cls()
 
         additional_properties = {}
         for prop_name, prop_dict in d.items():
@@ -107,8 +109,8 @@ class CustomProperties:
 
             additional_properties[prop_name] = additional_property
 
-        custom_properties.additional_properties = additional_properties
-        return custom_properties
+        concise_task_custom_properties_type_0.additional_properties = additional_properties
+        return concise_task_custom_properties_type_0
 
     @property
     def additional_keys(self) -> list[str]:

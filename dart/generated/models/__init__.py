@@ -6,7 +6,7 @@ from .comment import Comment
 from .comment_create import CommentCreate
 from .concise_doc import ConciseDoc
 from .concise_task import ConciseTask
-from .custom_properties import CustomProperties
+from .concise_task_custom_properties_type_0 import ConciseTaskCustomPropertiesType0
 from .dartboard import Dartboard
 from .doc import Doc
 from .doc_create import DocCreate
@@ -34,10 +34,13 @@ from .priority import Priority
 from .skill import Skill
 from .task import Task
 from .task_create import TaskCreate
+from .task_create_custom_properties_type_0 import TaskCreateCustomPropertiesType0
+from .task_custom_properties_type_0 import TaskCustomPropertiesType0
 from .task_move import TaskMove
 from .task_relationships_type_0 import TaskRelationshipsType0
 from .task_time_tracking_create import TaskTimeTrackingCreate
 from .task_update import TaskUpdate
+from .task_update_custom_properties_type_0 import TaskUpdateCustomPropertiesType0
 from .time_tracking_entry import TimeTrackingEntry
 from .user import User
 from .user_space_configuration import UserSpaceConfiguration
@@ -93,7 +96,7 @@ __all__ = (
     "CommentCreate",
     "ConciseDoc",
     "ConciseTask",
-    "CustomProperties",
+    "ConciseTaskCustomPropertiesType0",
     "Dartboard",
     "Doc",
     "DocCreate",
@@ -115,10 +118,13 @@ __all__ = (
     "Skill",
     "Task",
     "TaskCreate",
+    "TaskCreateCustomPropertiesType0",
+    "TaskCustomPropertiesType0",
     "TaskMove",
     "TaskRelationshipsType0",
     "TaskTimeTrackingCreate",
     "TaskUpdate",
+    "TaskUpdateCustomPropertiesType0",
     "TimeTrackingEntry",
     "User",
     "UserSpaceConfiguration",
