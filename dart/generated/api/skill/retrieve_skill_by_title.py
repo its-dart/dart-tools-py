@@ -57,7 +57,7 @@ def _build_response(
 
 def sync_detailed(
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
     title: str,
 ) -> Response[Union[Any, WrappedSkill]]:
     """Retrieve a skill by title
@@ -89,7 +89,7 @@ def sync_detailed(
 
 def sync(
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
     title: str,
 ) -> Optional[Union[Any, WrappedSkill]]:
     """Retrieve a skill by title
@@ -116,7 +116,7 @@ def sync(
 
 async def asyncio_detailed(
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
     title: str,
 ) -> Response[Union[Any, WrappedSkill]]:
     """Retrieve a skill by title
@@ -146,7 +146,7 @@ async def asyncio_detailed(
 
 async def asyncio(
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
     title: str,
 ) -> Optional[Union[Any, WrappedSkill]]:
     """Retrieve a skill by title

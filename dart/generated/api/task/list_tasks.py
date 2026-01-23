@@ -216,7 +216,7 @@ def _build_response(
 
 def sync_detailed(
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
     assignee: Union[Unset, str] = UNSET,
     assignee_id: Union[Unset, str] = UNSET,
     created_at: Union[Unset, datetime.datetime] = UNSET,
@@ -363,7 +363,7 @@ def sync_detailed(
 
 def sync(
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
     assignee: Union[Unset, str] = UNSET,
     assignee_id: Union[Unset, str] = UNSET,
     created_at: Union[Unset, datetime.datetime] = UNSET,
@@ -505,7 +505,7 @@ def sync(
 
 async def asyncio_detailed(
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
     assignee: Union[Unset, str] = UNSET,
     assignee_id: Union[Unset, str] = UNSET,
     created_at: Union[Unset, datetime.datetime] = UNSET,
@@ -650,7 +650,7 @@ async def asyncio_detailed(
 
 async def asyncio(
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
     assignee: Union[Unset, str] = UNSET,
     assignee_id: Union[Unset, str] = UNSET,
     created_at: Union[Unset, datetime.datetime] = UNSET,

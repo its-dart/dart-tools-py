@@ -52,7 +52,7 @@ def _build_response(*, client: Union[AuthenticatedClient, Client], response: htt
 
 def sync_detailed(
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
     body: WrappedTaskCreate,
 ) -> Response[WrappedTask]:
     """Create a new task
@@ -85,7 +85,7 @@ def sync_detailed(
 
 def sync(
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
     body: WrappedTaskCreate,
 ) -> Optional[WrappedTask]:
     """Create a new task
@@ -113,7 +113,7 @@ def sync(
 
 async def asyncio_detailed(
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
     body: WrappedTaskCreate,
 ) -> Response[WrappedTask]:
     """Create a new task
@@ -144,7 +144,7 @@ async def asyncio_detailed(
 
 async def asyncio(
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
     body: WrappedTaskCreate,
 ) -> Optional[WrappedTask]:
     """Create a new task

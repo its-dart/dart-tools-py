@@ -59,7 +59,7 @@ def _build_response(
 
 def sync_detailed(
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
     body: WrappedDocCreate,
 ) -> Response[Union[Any, WrappedDoc]]:
     """Create a new doc
@@ -92,7 +92,7 @@ def sync_detailed(
 
 def sync(
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
     body: WrappedDocCreate,
 ) -> Optional[Union[Any, WrappedDoc]]:
     """Create a new doc
@@ -120,7 +120,7 @@ def sync(
 
 async def asyncio_detailed(
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
     body: WrappedDocCreate,
 ) -> Response[Union[Any, WrappedDoc]]:
     """Create a new doc
@@ -151,7 +151,7 @@ async def asyncio_detailed(
 
 async def asyncio(
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
     body: WrappedDocCreate,
 ) -> Optional[Union[Any, WrappedDoc]]:
     """Create a new doc

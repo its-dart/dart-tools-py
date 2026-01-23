@@ -54,7 +54,7 @@ def _build_response(
 
 def sync_detailed(
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
     query: Union[Unset, str] = UNSET,
 ) -> Response[WrappedHelpCenterArticles]:
     """List help center articles by query
@@ -85,7 +85,7 @@ def sync_detailed(
 
 def sync(
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
     query: Union[Unset, str] = UNSET,
 ) -> Optional[WrappedHelpCenterArticles]:
     """List help center articles by query
@@ -111,7 +111,7 @@ def sync(
 
 async def asyncio_detailed(
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
     query: Union[Unset, str] = UNSET,
 ) -> Response[WrappedHelpCenterArticles]:
     """List help center articles by query
@@ -140,7 +140,7 @@ async def asyncio_detailed(
 
 async def asyncio(
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
     query: Union[Unset, str] = UNSET,
 ) -> Optional[WrappedHelpCenterArticles]:
     """List help center articles by query

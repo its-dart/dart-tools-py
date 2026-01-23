@@ -63,7 +63,7 @@ def _build_response(
 def sync_detailed(
     id: str,
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
     body: AttachmentCreateFromUrl,
 ) -> Response[Union[Any, Attachment]]:
     """Attach a file from a provided URL to a task
@@ -98,7 +98,7 @@ def sync_detailed(
 def sync(
     id: str,
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
     body: AttachmentCreateFromUrl,
 ) -> Optional[Union[Any, Attachment]]:
     """Attach a file from a provided URL to a task
@@ -128,7 +128,7 @@ def sync(
 async def asyncio_detailed(
     id: str,
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
     body: AttachmentCreateFromUrl,
 ) -> Response[Union[Any, Attachment]]:
     """Attach a file from a provided URL to a task
@@ -161,7 +161,7 @@ async def asyncio_detailed(
 async def asyncio(
     id: str,
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
     body: AttachmentCreateFromUrl,
 ) -> Optional[Union[Any, Attachment]]:
     """Attach a file from a provided URL to a task

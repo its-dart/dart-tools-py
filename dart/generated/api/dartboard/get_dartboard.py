@@ -55,7 +55,7 @@ def _build_response(
 def sync_detailed(
     id: str,
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
 ) -> Response[Union[Any, WrappedDartboard]]:
     """Retrieve an existing dartboard
 
@@ -87,7 +87,7 @@ def sync_detailed(
 def sync(
     id: str,
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
 ) -> Optional[Union[Any, WrappedDartboard]]:
     """Retrieve an existing dartboard
 
@@ -114,7 +114,7 @@ def sync(
 async def asyncio_detailed(
     id: str,
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
 ) -> Response[Union[Any, WrappedDartboard]]:
     """Retrieve an existing dartboard
 
@@ -144,7 +144,7 @@ async def asyncio_detailed(
 async def asyncio(
     id: str,
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
 ) -> Optional[Union[Any, WrappedDartboard]]:
     """Retrieve an existing dartboard
 
