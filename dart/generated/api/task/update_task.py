@@ -66,7 +66,7 @@ def _build_response(
 def sync_detailed(
     id: str,
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
     body: WrappedTaskUpdate,
 ) -> Response[Union[Any, WrappedTask]]:
     r"""Update an existing task
@@ -102,7 +102,7 @@ def sync_detailed(
 def sync(
     id: str,
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
     body: WrappedTaskUpdate,
 ) -> Optional[Union[Any, WrappedTask]]:
     r"""Update an existing task
@@ -133,7 +133,7 @@ def sync(
 async def asyncio_detailed(
     id: str,
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
     body: WrappedTaskUpdate,
 ) -> Response[Union[Any, WrappedTask]]:
     r"""Update an existing task
@@ -167,7 +167,7 @@ async def asyncio_detailed(
 async def asyncio(
     id: str,
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
     body: WrappedTaskUpdate,
 ) -> Optional[Union[Any, WrappedTask]]:
     r"""Update an existing task

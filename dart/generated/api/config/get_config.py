@@ -44,7 +44,7 @@ def _build_response(
 
 def sync_detailed(
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
 ) -> Response[UserSpaceConfiguration]:
     """Get user space configuration
 
@@ -70,7 +70,7 @@ def sync_detailed(
 
 def sync(
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
 ) -> Optional[UserSpaceConfiguration]:
     """Get user space configuration
 
@@ -92,7 +92,7 @@ def sync(
 
 async def asyncio_detailed(
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
 ) -> Response[UserSpaceConfiguration]:
     """Get user space configuration
 
@@ -116,7 +116,7 @@ async def asyncio_detailed(
 
 async def asyncio(
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
 ) -> Optional[UserSpaceConfiguration]:
     """Get user space configuration
 

@@ -63,7 +63,7 @@ def _build_response(
 def sync_detailed(
     id: str,
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
     body: TaskMove,
 ) -> Response[Union[Any, WrappedTask]]:
     """Move a task within its dartboard
@@ -98,7 +98,7 @@ def sync_detailed(
 def sync(
     id: str,
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
     body: TaskMove,
 ) -> Optional[Union[Any, WrappedTask]]:
     """Move a task within its dartboard
@@ -128,7 +128,7 @@ def sync(
 async def asyncio_detailed(
     id: str,
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
     body: TaskMove,
 ) -> Response[Union[Any, WrappedTask]]:
     """Move a task within its dartboard
@@ -161,7 +161,7 @@ async def asyncio_detailed(
 async def asyncio(
     id: str,
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
     body: TaskMove,
 ) -> Optional[Union[Any, WrappedTask]]:
     """Move a task within its dartboard

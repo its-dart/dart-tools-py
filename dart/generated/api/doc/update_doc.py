@@ -66,7 +66,7 @@ def _build_response(
 def sync_detailed(
     id: str,
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
     body: WrappedDocUpdate,
 ) -> Response[Union[Any, WrappedDoc]]:
     """Update an existing doc
@@ -101,7 +101,7 @@ def sync_detailed(
 def sync(
     id: str,
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
     body: WrappedDocUpdate,
 ) -> Optional[Union[Any, WrappedDoc]]:
     """Update an existing doc
@@ -131,7 +131,7 @@ def sync(
 async def asyncio_detailed(
     id: str,
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
     body: WrappedDocUpdate,
 ) -> Response[Union[Any, WrappedDoc]]:
     """Update an existing doc
@@ -164,7 +164,7 @@ async def asyncio_detailed(
 async def asyncio(
     id: str,
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
     body: WrappedDocUpdate,
 ) -> Optional[Union[Any, WrappedDoc]]:
     """Update an existing doc

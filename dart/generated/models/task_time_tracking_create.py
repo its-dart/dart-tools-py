@@ -4,6 +4,8 @@ from typing import Any, TypeVar, Union, cast
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..types import UNSET, Unset
+
 T = TypeVar("T", bound="TaskTimeTrackingCreate")
 
 
@@ -16,11 +18,14 @@ class TaskTimeTrackingCreate:
         started_at (str): The start timestamp for the tracked time entry in ISO 8601 format.
         finished_at (str): The end timestamp for the tracked time entry in ISO 8601 format. Must be after the start
             time.
+        custom_property_name (Union[None, Unset, str]): The time tracking custom property name listed in config
+            customProperties. Must be a time tracking type. If omitted, defaults to the main time tracking property.
     """
 
     user: Union[None, str]
     started_at: str
     finished_at: str
+    custom_property_name: Union[None, Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -31,6 +36,12 @@ class TaskTimeTrackingCreate:
 
         finished_at = self.finished_at
 
+        custom_property_name: Union[None, Unset, str]
+        if isinstance(self.custom_property_name, Unset):
+            custom_property_name = UNSET
+        else:
+            custom_property_name = self.custom_property_name
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -40,6 +51,8 @@ class TaskTimeTrackingCreate:
                 "finishedAt": finished_at,
             }
         )
+        if custom_property_name is not UNSET:
+            field_dict["customPropertyName"] = custom_property_name
 
         return field_dict
 
@@ -58,10 +71,20 @@ class TaskTimeTrackingCreate:
 
         finished_at = d.pop("finishedAt")
 
+        def _parse_custom_property_name(data: object) -> Union[None, Unset, str]:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(Union[None, Unset, str], data)
+
+        custom_property_name = _parse_custom_property_name(d.pop("customPropertyName", UNSET))
+
         task_time_tracking_create = cls(
             user=user,
             started_at=started_at,
             finished_at=finished_at,
+            custom_property_name=custom_property_name,
         )
 
         task_time_tracking_create.additional_properties = d

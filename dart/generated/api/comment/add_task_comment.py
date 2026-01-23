@@ -59,7 +59,7 @@ def _build_response(
 
 def sync_detailed(
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
     body: WrappedCommentCreate,
 ) -> Response[Union[Any, WrappedComment]]:
     """Create a new comment
@@ -91,7 +91,7 @@ def sync_detailed(
 
 def sync(
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
     body: WrappedCommentCreate,
 ) -> Optional[Union[Any, WrappedComment]]:
     """Create a new comment
@@ -118,7 +118,7 @@ def sync(
 
 async def asyncio_detailed(
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
     body: WrappedCommentCreate,
 ) -> Response[Union[Any, WrappedComment]]:
     """Create a new comment
@@ -148,7 +148,7 @@ async def asyncio_detailed(
 
 async def asyncio(
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient,
     body: WrappedCommentCreate,
 ) -> Optional[Union[Any, WrappedComment]]:
     """Create a new comment
