@@ -1,8 +1,16 @@
 from collections.abc import Mapping
-from typing import Any, TypeVar, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    TypeVar,
+)
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
+
+if TYPE_CHECKING:
+    from ..models.help_center_article import HelpCenterArticle
+
 
 T = TypeVar("T", bound="WrappedHelpCenterArticles")
 
@@ -11,14 +19,17 @@ T = TypeVar("T", bound="WrappedHelpCenterArticles")
 class WrappedHelpCenterArticles:
     """
     Attributes:
-        items (list[str]):
+        items (list['HelpCenterArticle']):
     """
 
-    items: list[str]
+    items: list["HelpCenterArticle"]
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        items = self.items
+        items = []
+        for items_item_data in self.items:
+            items_item = items_item_data.to_dict()
+            items.append(items_item)
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -32,8 +43,15 @@ class WrappedHelpCenterArticles:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+        from ..models.help_center_article import HelpCenterArticle
+
         d = dict(src_dict)
-        items = cast(list[str], d.pop("items"))
+        items = []
+        _items = d.pop("items")
+        for items_item_data in _items:
+            items_item = HelpCenterArticle.from_dict(items_item_data)
+
+            items.append(items_item)
 
         wrapped_help_center_articles = cls(
             items=items,

@@ -1,38 +1,40 @@
 from collections.abc import Mapping
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    TypeVar,
-)
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-if TYPE_CHECKING:
-    from ..models.task import Task
-
-
-T = TypeVar("T", bound="WrappedTask")
+T = TypeVar("T", bound="HelpCenterArticle")
 
 
 @_attrs_define
-class WrappedTask:
+class HelpCenterArticle:
     """
     Attributes:
-        item (Task):
+        url (str):
+        title (str):
+        description (str):
     """
 
-    item: "Task"
+    url: str
+    title: str
+    description: str
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        item = self.item.to_dict()
+        url = self.url
+
+        title = self.title
+
+        description = self.description
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
             {
-                "item": item,
+                "url": url,
+                "title": title,
+                "description": description,
             }
         )
 
@@ -40,17 +42,21 @@ class WrappedTask:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.task import Task
-
         d = dict(src_dict)
-        item = Task.from_dict(d.pop("item"))
+        url = d.pop("url")
 
-        wrapped_task = cls(
-            item=item,
+        title = d.pop("title")
+
+        description = d.pop("description")
+
+        help_center_article = cls(
+            url=url,
+            title=title,
+            description=description,
         )
 
-        wrapped_task.additional_properties = d
-        return wrapped_task
+        help_center_article.additional_properties = d
+        return help_center_article
 
     @property
     def additional_keys(self) -> list[str]:

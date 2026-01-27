@@ -1,6 +1,12 @@
 import datetime
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, TypeVar, Union, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    TypeVar,
+    Union,
+    cast,
+)
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -316,76 +322,90 @@ class UserSpaceConfiguration:
                 try:
                     if not isinstance(data, dict):
                         raise TypeError()
-                    custom_properties_item_type_0 = UserSpaceConfigurationCustomPropertyCheckboxTypeDef.from_dict(data)
-
-                    return custom_properties_item_type_0
-                except:  # noqa: E722
-                    pass
-                try:
-                    if not isinstance(data, dict):
-                        raise TypeError()
-                    custom_properties_item_type_1 = UserSpaceConfigurationCustomPropertyDatesTypeDef.from_dict(data)
-
-                    return custom_properties_item_type_1
-                except:  # noqa: E722
-                    pass
-                try:
-                    if not isinstance(data, dict):
-                        raise TypeError()
-                    custom_properties_item_type_2 = UserSpaceConfigurationCustomPropertyMultiselectTypeDef.from_dict(
-                        data
+                    custom_properties_item_custom_property_checkbox_type_def = (
+                        UserSpaceConfigurationCustomPropertyCheckboxTypeDef.from_dict(data)
                     )
 
-                    return custom_properties_item_type_2
+                    return custom_properties_item_custom_property_checkbox_type_def
                 except:  # noqa: E722
                     pass
                 try:
                     if not isinstance(data, dict):
                         raise TypeError()
-                    custom_properties_item_type_3 = UserSpaceConfigurationCustomPropertyNumberTypeDef.from_dict(data)
-
-                    return custom_properties_item_type_3
-                except:  # noqa: E722
-                    pass
-                try:
-                    if not isinstance(data, dict):
-                        raise TypeError()
-                    custom_properties_item_type_4 = UserSpaceConfigurationCustomPropertySelectTypeDef.from_dict(data)
-
-                    return custom_properties_item_type_4
-                except:  # noqa: E722
-                    pass
-                try:
-                    if not isinstance(data, dict):
-                        raise TypeError()
-                    custom_properties_item_type_5 = UserSpaceConfigurationCustomPropertyStatusTypeDef.from_dict(data)
-
-                    return custom_properties_item_type_5
-                except:  # noqa: E722
-                    pass
-                try:
-                    if not isinstance(data, dict):
-                        raise TypeError()
-                    custom_properties_item_type_6 = UserSpaceConfigurationCustomPropertyTextTypeDef.from_dict(data)
-
-                    return custom_properties_item_type_6
-                except:  # noqa: E722
-                    pass
-                try:
-                    if not isinstance(data, dict):
-                        raise TypeError()
-                    custom_properties_item_type_7 = UserSpaceConfigurationCustomPropertyTimeTrackingTypeDef.from_dict(
-                        data
+                    custom_properties_item_custom_property_dates_type_def = (
+                        UserSpaceConfigurationCustomPropertyDatesTypeDef.from_dict(data)
                     )
 
-                    return custom_properties_item_type_7
+                    return custom_properties_item_custom_property_dates_type_def
+                except:  # noqa: E722
+                    pass
+                try:
+                    if not isinstance(data, dict):
+                        raise TypeError()
+                    custom_properties_item_custom_property_multiselect_type_def = (
+                        UserSpaceConfigurationCustomPropertyMultiselectTypeDef.from_dict(data)
+                    )
+
+                    return custom_properties_item_custom_property_multiselect_type_def
+                except:  # noqa: E722
+                    pass
+                try:
+                    if not isinstance(data, dict):
+                        raise TypeError()
+                    custom_properties_item_custom_property_number_type_def = (
+                        UserSpaceConfigurationCustomPropertyNumberTypeDef.from_dict(data)
+                    )
+
+                    return custom_properties_item_custom_property_number_type_def
+                except:  # noqa: E722
+                    pass
+                try:
+                    if not isinstance(data, dict):
+                        raise TypeError()
+                    custom_properties_item_custom_property_select_type_def = (
+                        UserSpaceConfigurationCustomPropertySelectTypeDef.from_dict(data)
+                    )
+
+                    return custom_properties_item_custom_property_select_type_def
+                except:  # noqa: E722
+                    pass
+                try:
+                    if not isinstance(data, dict):
+                        raise TypeError()
+                    custom_properties_item_custom_property_status_type_def = (
+                        UserSpaceConfigurationCustomPropertyStatusTypeDef.from_dict(data)
+                    )
+
+                    return custom_properties_item_custom_property_status_type_def
+                except:  # noqa: E722
+                    pass
+                try:
+                    if not isinstance(data, dict):
+                        raise TypeError()
+                    custom_properties_item_custom_property_text_type_def = (
+                        UserSpaceConfigurationCustomPropertyTextTypeDef.from_dict(data)
+                    )
+
+                    return custom_properties_item_custom_property_text_type_def
+                except:  # noqa: E722
+                    pass
+                try:
+                    if not isinstance(data, dict):
+                        raise TypeError()
+                    custom_properties_item_custom_property_time_tracking_type_def = (
+                        UserSpaceConfigurationCustomPropertyTimeTrackingTypeDef.from_dict(data)
+                    )
+
+                    return custom_properties_item_custom_property_time_tracking_type_def
                 except:  # noqa: E722
                     pass
                 if not isinstance(data, dict):
                     raise TypeError()
-                custom_properties_item_type_8 = UserSpaceConfigurationCustomPropertyUserTypeDef.from_dict(data)
+                custom_properties_item_custom_property_user_type_def = (
+                    UserSpaceConfigurationCustomPropertyUserTypeDef.from_dict(data)
+                )
 
-                return custom_properties_item_type_8
+                return custom_properties_item_custom_property_user_type_def
 
             custom_properties_item = _parse_custom_properties_item(custom_properties_item_data)
 

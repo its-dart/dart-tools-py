@@ -1,5 +1,10 @@
 from collections.abc import Mapping
-from typing import Any, TypeVar, Union, cast
+from typing import (
+    Any,
+    TypeVar,
+    Union,
+    cast,
+)
 
 from attrs import define as _attrs_define
 
@@ -61,6 +66,7 @@ class TaskRelationshipsType0:
             related_ids = self.related_ids
 
         field_dict: dict[str, Any] = {}
+
         field_dict.update({})
         if subtask_ids is not UNSET:
             field_dict["subtaskIds"] = subtask_ids

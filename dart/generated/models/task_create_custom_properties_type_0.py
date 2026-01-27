@@ -1,5 +1,10 @@
 from collections.abc import Mapping
-from typing import Any, TypeVar, Union, cast
+from typing import (
+    Any,
+    TypeVar,
+    Union,
+    cast,
+)
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -32,10 +37,12 @@ class TaskCreateCustomPropertiesType0:
         for prop_name, prop in self.additional_properties.items():
             if isinstance(prop, list):
                 field_dict[prop_name] = []
-                for additional_property_type_1_type_0_item_data in prop:
-                    additional_property_type_1_type_0_item: Union[None, str]
-                    additional_property_type_1_type_0_item = additional_property_type_1_type_0_item_data
-                    field_dict[prop_name].append(additional_property_type_1_type_0_item)
+                for additional_property_custom_property_dates_range_type_0_item_data in prop:
+                    additional_property_custom_property_dates_range_type_0_item: Union[None, str]
+                    additional_property_custom_property_dates_range_type_0_item = (
+                        additional_property_custom_property_dates_range_type_0_item_data
+                    )
+                    field_dict[prop_name].append(additional_property_custom_property_dates_range_type_0_item)
 
             elif isinstance(prop, list):
                 field_dict[prop_name] = prop
@@ -64,40 +71,46 @@ class TaskCreateCustomPropertiesType0:
                 try:
                     if not isinstance(data, list):
                         raise TypeError()
-                    additional_property_type_1_type_0 = []
-                    _additional_property_type_1_type_0 = data
-                    for additional_property_type_1_type_0_item_data in _additional_property_type_1_type_0:
+                    additional_property_custom_property_dates_range_type_0 = []
+                    _additional_property_custom_property_dates_range_type_0 = data
+                    for (
+                        additional_property_custom_property_dates_range_type_0_item_data
+                    ) in _additional_property_custom_property_dates_range_type_0:
 
-                        def _parse_additional_property_type_1_type_0_item(
+                        def _parse_additional_property_custom_property_dates_range_type_0_item(
                             data: object,
                         ) -> Union[None, str]:
                             if data is None:
                                 return data
                             return cast(Union[None, str], data)
 
-                        additional_property_type_1_type_0_item = _parse_additional_property_type_1_type_0_item(
-                            additional_property_type_1_type_0_item_data
+                        additional_property_custom_property_dates_range_type_0_item = (
+                            _parse_additional_property_custom_property_dates_range_type_0_item(
+                                additional_property_custom_property_dates_range_type_0_item_data
+                            )
                         )
 
-                        additional_property_type_1_type_0.append(additional_property_type_1_type_0_item)
+                        additional_property_custom_property_dates_range_type_0.append(
+                            additional_property_custom_property_dates_range_type_0_item
+                        )
 
-                    return additional_property_type_1_type_0
+                    return additional_property_custom_property_dates_range_type_0
                 except:  # noqa: E722
                     pass
                 try:
                     if not isinstance(data, list):
                         raise TypeError()
-                    additional_property_type_3 = cast(list[str], data)
+                    additional_property_custom_property_multiselect = cast(list[str], data)
 
-                    return additional_property_type_3
+                    return additional_property_custom_property_multiselect
                 except:  # noqa: E722
                     pass
                 try:
                     if not isinstance(data, list):
                         raise TypeError()
-                    additional_property_type_11 = cast(list[str], data)
+                    additional_property_custom_property_user_multiple = cast(list[str], data)
 
-                    return additional_property_type_11
+                    return additional_property_custom_property_user_multiple
                 except:  # noqa: E722
                     pass
                 return cast(
