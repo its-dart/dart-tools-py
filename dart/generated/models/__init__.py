@@ -12,6 +12,7 @@ from .doc import Doc
 from .doc_create import DocCreate
 from .doc_update import DocUpdate
 from .folder import Folder
+from .help_center_article import HelpCenterArticle
 from .list_comments_o_item import ListCommentsOItem
 from .list_docs_o_item import ListDocsOItem
 from .list_tasks_o_item import ListTasksOItem
@@ -102,6 +103,7 @@ __all__ = (
     "DocCreate",
     "DocUpdate",
     "Folder",
+    "HelpCenterArticle",
     "ListCommentsOItem",
     "ListDocsOItem",
     "ListTasksOItem",

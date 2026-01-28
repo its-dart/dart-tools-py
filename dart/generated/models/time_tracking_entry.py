@@ -1,5 +1,10 @@
 from collections.abc import Mapping
-from typing import Any, TypeVar, Union, cast
+from typing import (
+    Any,
+    TypeVar,
+    Union,
+    cast,
+)
 
 from attrs import define as _attrs_define
 
@@ -28,6 +33,7 @@ class TimeTrackingEntry:
         finished_at = self.finished_at
 
         field_dict: dict[str, Any] = {}
+
         field_dict.update(
             {
                 "userDuid": user_duid,
