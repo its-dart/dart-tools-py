@@ -62,11 +62,13 @@ _PROD_HOST = "https://app.dartai.com"
 _STAG_HOST = "https://stag.dartai.com"
 _DEV_HOST = "http://localhost:5100"
 _HOST_MAP = {"prod": _PROD_HOST, "stag": _STAG_HOST, "dev": _DEV_HOST}
+_REVERSE_HOST_MAP = {v: k for k, v in _HOST_MAP.items()}
 
 # Service commands
-_LOGIN_CMD = "login"
-_SET_HOST_CMD = "host-set"
 _VERSION_CMD = "--version"
+_GET_HOST_CMD = "host-get"
+_SET_HOST_CMD = "host-set"
+_LOGIN_CMD = "login"
 # Task commands
 _CREATE_TASK_CMD = "task-create"
 _UPDATE_TASK_CMD = "task-update"
@@ -102,7 +104,6 @@ _PRIORITY_MAP: dict[int, str] = {
     3: Priority.LOW,
 }
 _SIZES = {1, 2, 3, 5, 8}
-_DEFAULT_DARTBOARD = "General/Active"
 
 _VERSION = version(_APP)
 _AUTH_TOKEN_ENVVAR = os.environ.get(_AUTH_TOKEN_ENVVAR_KEY)
@@ -112,7 +113,7 @@ _DEFAULT_HOST = _HOST_ENVVAR or _PROD_HOST
 
 def _get_help_text(fn: Callable) -> str:
     if fn.__doc__ is None:
-        raise ValueError(f"Function {fn.__name__} has no docstring.")
+        raise ValueError(f"Function {fn.__name__} has no docstring")
     return fn.__doc__.split("\n")[0].lower()
 
 
@@ -384,7 +385,7 @@ def get_host() -> str:
     config = _Config()
 
     host = config.host
-    _log(f"Host is {host}")
+    _log(f"Host is {_REVERSE_HOST_MAP.get(host, host)}")
     _log("Done.")
     return host
 
@@ -480,12 +481,14 @@ def _begin_task(dart: Dart, email: str, task: ConciseTask | Task) -> bool:
     return True
 
 
-def begin_task() -> bool:
+def begin_task(
+    *,
+    dartboard_title: Union[Unset, str] = UNSET
+) -> bool:
     dart = Dart()
     config = dart.get_config()
     user = config.user
-    dartboard_maybe = {"dartboard": _DEFAULT_DARTBOARD} if _DEFAULT_DARTBOARD in config.dartboards else {}
-    filtered_tasks = dart.list_tasks(assignee=user.email, is_completed=False, **dartboard_maybe).results
+    filtered_tasks = dart.list_tasks(assignee=user.email, is_completed=False, dartboard=dartboard_title).results
 
     if not filtered_tasks:
         _dart_exit("No active, incomplete tasks found.")
@@ -606,11 +609,11 @@ def delete_task(id: str) -> Task:
 def create_doc(
     title: str,
     *,
-    folder: Union[str, Unset] = UNSET,
+    folder_title: Union[str, Unset] = UNSET,
     text: Union[str, Unset] = UNSET,
 ) -> Doc:
     dart = Dart()
-    doc_create = WrappedDocCreate(item=DocCreate(title=title, folder=folder, text=text))
+    doc_create = WrappedDocCreate(item=DocCreate(title=title, folder=folder_title, text=text))
     doc = dart.create_doc(doc_create).item
 
     _log(f"Created doc\n\n  {doc.title}\n  {doc.html_url}\n  ID: {doc.id}\n")
@@ -622,11 +625,11 @@ def update_doc(
     id: str,
     *,
     title: str,
-    folder: Union[str, Unset] = UNSET,
+    folder_title: Union[str, Unset] = UNSET,
     text: Union[str, Unset] = UNSET,
 ) -> Doc:
     dart = Dart()
-    doc_update = WrappedDocUpdate(item=DocUpdate(id, title=title, folder=folder, text=text))
+    doc_update = WrappedDocUpdate(item=DocUpdate(id, title=title, folder=folder_title, text=text))
     doc = dart.update_doc(id, doc_update).item
 
     _log(f"Updated doc\n\n  {doc.title}\n  {doc.html_url}\n  ID: {doc.id}\n")
@@ -741,6 +744,9 @@ def cli() -> None:
         metavar=f"{{{metavar}}}",
     )
 
+    get_host_parser = subparsers.add_parser(_GET_HOST_CMD, aliases=["hg"])
+    get_host_parser.set_defaults(func=get_host)
+
     set_host_parser = subparsers.add_parser(_SET_HOST_CMD, aliases=["hs"])
     set_host_parser.add_argument("host", help="the new host: {prod|stag|dev|[URL]}")
     set_host_parser.set_defaults(func=set_host)
@@ -778,13 +784,14 @@ def cli() -> None:
     delete_task_parser.set_defaults(func=delete_task)
 
     begin_task_parser = subparsers.add_parser(_BEGIN_TASK_CMD, aliases=["tb"], help="begin work on a task")
+    begin_task_parser.add_argument("-d", "--dartboard", dest="dartboard_title", help="dartboard title", default=UNSET)
     begin_task_parser.set_defaults(func=begin_task)
 
     create_doc_parser = subparsers.add_parser(
         _CREATE_DOC_CMD, aliases=["dc"], help=_HELP_TEXT_TO_COMMAND[_CREATE_DOC_CMD]
     )
     create_doc_parser.add_argument("title", help="title of the doc")
-    create_doc_parser.add_argument("-f", "--folder", dest="folder", help="doc folder", default=UNSET)
+    create_doc_parser.add_argument("-f", "--folder", dest="folder_title", help="doc folder title", default=UNSET)
     create_doc_parser.add_argument("-t", "--text", dest="text", help="doc text", default=UNSET)
     create_doc_parser.set_defaults(func=create_doc)
 
@@ -793,7 +800,7 @@ def cli() -> None:
     )
     update_doc_parser.add_argument("id", help="ID of the doc")
     update_doc_parser.add_argument("-e", "--title", dest="title", help="doc title", default=UNSET)
-    update_doc_parser.add_argument("-f", "--folder", dest="folder", help="doc folder", default=UNSET)
+    update_doc_parser.add_argument("-f", "--folder", dest="folder_title", help="doc folder title", default=UNSET)
     update_doc_parser.add_argument("-t", "--text", dest="text", help="doc text", default=UNSET)
     update_doc_parser.set_defaults(func=update_doc)
 
