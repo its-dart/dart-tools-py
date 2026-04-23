@@ -481,10 +481,7 @@ def _begin_task(dart: Dart, email: str, task: ConciseTask | Task) -> bool:
     return True
 
 
-def begin_task(
-    *,
-    dartboard_title: Union[Unset, str] = UNSET
-) -> bool:
+def begin_task(*, dartboard_title: Union[Unset, str] = UNSET) -> bool:
     dart = Dart()
     config = dart.get_config()
     user = config.user

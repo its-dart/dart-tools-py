@@ -1,5 +1,8 @@
 """Contains all the data models used in inputs/outputs"""
 
+from .agent import Agent
+from .agent_create import AgentCreate
+from .agent_update import AgentUpdate
 from .attachment import Attachment
 from .attachment_create_from_url import AttachmentCreateFromUrl
 from .comment import Comment
@@ -16,6 +19,11 @@ from .help_center_article import HelpCenterArticle
 from .list_comments_o_item import ListCommentsOItem
 from .list_docs_o_item import ListDocsOItem
 from .list_tasks_o_item import ListTasksOItem
+from .paginated_agent_list import PaginatedAgentList
+from .paginated_agent_list_meta_type_0 import PaginatedAgentListMetaType0
+from .paginated_agent_list_meta_type_0_applied_default_filters import (
+    PaginatedAgentListMetaType0AppliedDefaultFilters,
+)
 from .paginated_comment_list import PaginatedCommentList
 from .paginated_comment_list_meta_type_0 import PaginatedCommentListMetaType0
 from .paginated_comment_list_meta_type_0_applied_default_filters import (
@@ -31,8 +39,15 @@ from .paginated_concise_task_list_meta_type_0 import PaginatedConciseTaskListMet
 from .paginated_concise_task_list_meta_type_0_applied_default_filters import (
     PaginatedConciseTaskListMetaType0AppliedDefaultFilters,
 )
+from .paginated_skill_list import PaginatedSkillList
+from .paginated_skill_list_meta_type_0 import PaginatedSkillListMetaType0
+from .paginated_skill_list_meta_type_0_applied_default_filters import (
+    PaginatedSkillListMetaType0AppliedDefaultFilters,
+)
 from .priority import Priority
 from .skill import Skill
+from .skill_create import SkillCreate
+from .skill_update import SkillUpdate
 from .task import Task
 from .task_create import TaskCreate
 from .task_create_custom_properties_type_0 import TaskCreateCustomPropertiesType0
@@ -76,6 +91,9 @@ from .user_space_configuration_custom_property_user_type_def import (
     UserSpaceConfigurationCustomPropertyUserTypeDef,
 )
 from .view import View
+from .wrapped_agent import WrappedAgent
+from .wrapped_agent_create import WrappedAgentCreate
+from .wrapped_agent_update import WrappedAgentUpdate
 from .wrapped_comment import WrappedComment
 from .wrapped_comment_create import WrappedCommentCreate
 from .wrapped_dartboard import WrappedDartboard
@@ -85,12 +103,17 @@ from .wrapped_doc_update import WrappedDocUpdate
 from .wrapped_folder import WrappedFolder
 from .wrapped_help_center_articles import WrappedHelpCenterArticles
 from .wrapped_skill import WrappedSkill
+from .wrapped_skill_create import WrappedSkillCreate
+from .wrapped_skill_update import WrappedSkillUpdate
 from .wrapped_task import WrappedTask
 from .wrapped_task_create import WrappedTaskCreate
 from .wrapped_task_update import WrappedTaskUpdate
 from .wrapped_view import WrappedView
 
 __all__ = (
+    "Agent",
+    "AgentCreate",
+    "AgentUpdate",
     "Attachment",
     "AttachmentCreateFromUrl",
     "Comment",
@@ -107,6 +130,9 @@ __all__ = (
     "ListCommentsOItem",
     "ListDocsOItem",
     "ListTasksOItem",
+    "PaginatedAgentList",
+    "PaginatedAgentListMetaType0",
+    "PaginatedAgentListMetaType0AppliedDefaultFilters",
     "PaginatedCommentList",
     "PaginatedCommentListMetaType0",
     "PaginatedCommentListMetaType0AppliedDefaultFilters",
@@ -116,8 +142,13 @@ __all__ = (
     "PaginatedConciseTaskList",
     "PaginatedConciseTaskListMetaType0",
     "PaginatedConciseTaskListMetaType0AppliedDefaultFilters",
+    "PaginatedSkillList",
+    "PaginatedSkillListMetaType0",
+    "PaginatedSkillListMetaType0AppliedDefaultFilters",
     "Priority",
     "Skill",
+    "SkillCreate",
+    "SkillUpdate",
     "Task",
     "TaskCreate",
     "TaskCreateCustomPropertiesType0",
@@ -141,6 +172,9 @@ __all__ = (
     "UserSpaceConfigurationCustomPropertyTimeTrackingTypeDef",
     "UserSpaceConfigurationCustomPropertyUserTypeDef",
     "View",
+    "WrappedAgent",
+    "WrappedAgentCreate",
+    "WrappedAgentUpdate",
     "WrappedComment",
     "WrappedCommentCreate",
     "WrappedDartboard",
@@ -150,6 +184,8 @@ __all__ = (
     "WrappedFolder",
     "WrappedHelpCenterArticles",
     "WrappedSkill",
+    "WrappedSkillCreate",
+    "WrappedSkillUpdate",
     "WrappedTask",
     "WrappedTaskCreate",
     "WrappedTaskUpdate",
