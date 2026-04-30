@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash",
+      "Edit",
+      "mcp__dart__*",
+      "mcp__ide__*",
+      "MultiEdit",
+      "WebFetch",
+      "WebSearch",
+      "Write"
+    ],
+    "deny": [
+      "Bash(gh api:*)",
+      "Bash(gh pr close:*)",
+      "Bash(gh pr create:*)",
+      "Bash(gh pr merge:*)",
+      "Bash(git add:*)",
+      "Bash(git apply --cached:*)",
+      "Bash(git commit:*)",
+      "Bash(git restore --staged:*)",
+      "Bash(git rm --cached:*)",
+      "Bash(git push:*)",
+      "Bash(git reset:*)",
+      "Bash(git stash:*)",
+      "Bash(git update-index:*)"
+    ]
+  }
+}

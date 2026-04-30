@@ -62,10 +62,10 @@ def sync_detailed(
     limit: Union[Unset, int] = UNSET,
     offset: Union[Unset, int] = UNSET,
 ) -> Response[PaginatedAgentList]:
-    """List all custom agents
+    """List all agents
 
-     List all custom agents in the workspace. Agents are AI assistants that can be assigned tasks and
-    have customizable instructions.
+     List all agents in the workspace. Agents are AI assistants that can be assigned tasks and have
+    customizable instructions.
 
     Args:
         limit (Union[Unset, int]):
@@ -97,10 +97,10 @@ def sync(
     limit: Union[Unset, int] = UNSET,
     offset: Union[Unset, int] = UNSET,
 ) -> Optional[PaginatedAgentList]:
-    """List all custom agents
+    """List all agents
 
-     List all custom agents in the workspace. Agents are AI assistants that can be assigned tasks and
-    have customizable instructions.
+     List all agents in the workspace. Agents are AI assistants that can be assigned tasks and have
+    customizable instructions.
 
     Args:
         limit (Union[Unset, int]):
@@ -127,10 +127,10 @@ async def asyncio_detailed(
     limit: Union[Unset, int] = UNSET,
     offset: Union[Unset, int] = UNSET,
 ) -> Response[PaginatedAgentList]:
-    """List all custom agents
+    """List all agents
 
-     List all custom agents in the workspace. Agents are AI assistants that can be assigned tasks and
-    have customizable instructions.
+     List all agents in the workspace. Agents are AI assistants that can be assigned tasks and have
+    customizable instructions.
 
     Args:
         limit (Union[Unset, int]):
@@ -160,10 +160,10 @@ async def asyncio(
     limit: Union[Unset, int] = UNSET,
     offset: Union[Unset, int] = UNSET,
 ) -> Optional[PaginatedAgentList]:
-    """List all custom agents
+    """List all agents
 
-     List all custom agents in the workspace. Agents are AI assistants that can be assigned tasks and
-    have customizable instructions.
+     List all agents in the workspace. Agents are AI assistants that can be assigned tasks and have
+    customizable instructions.
 
     Args:
         limit (Union[Unset, int]):

@@ -71,10 +71,10 @@ def sync_detailed(
     client: AuthenticatedClient,
     body: WrappedAgentUpdate,
 ) -> Response[Union[Any, WrappedAgent]]:
-    """Update a custom agent
+    """Update an agent
 
-     Update a custom agent's name and/or description. Only the fields provided will be changed. The agent
-    is identified by its ID in the URL.
+     Update an agent's name and/or description. Only the fields provided will be changed. The agent is
+    identified by its ID in the URL.
 
     Args:
         id (str):
@@ -106,10 +106,10 @@ def sync(
     client: AuthenticatedClient,
     body: WrappedAgentUpdate,
 ) -> Optional[Union[Any, WrappedAgent]]:
-    """Update a custom agent
+    """Update an agent
 
-     Update a custom agent's name and/or description. Only the fields provided will be changed. The agent
-    is identified by its ID in the URL.
+     Update an agent's name and/or description. Only the fields provided will be changed. The agent is
+    identified by its ID in the URL.
 
     Args:
         id (str):
@@ -136,10 +136,10 @@ async def asyncio_detailed(
     client: AuthenticatedClient,
     body: WrappedAgentUpdate,
 ) -> Response[Union[Any, WrappedAgent]]:
-    """Update a custom agent
+    """Update an agent
 
-     Update a custom agent's name and/or description. Only the fields provided will be changed. The agent
-    is identified by its ID in the URL.
+     Update an agent's name and/or description. Only the fields provided will be changed. The agent is
+    identified by its ID in the URL.
 
     Args:
         id (str):
@@ -169,10 +169,10 @@ async def asyncio(
     client: AuthenticatedClient,
     body: WrappedAgentUpdate,
 ) -> Optional[Union[Any, WrappedAgent]]:
-    """Update a custom agent
+    """Update an agent
 
-     Update a custom agent's name and/or description. Only the fields provided will be changed. The agent
-    is identified by its ID in the URL.
+     Update an agent's name and/or description. Only the fields provided will be changed. The agent is
+    identified by its ID in the URL.
 
     Args:
         id (str):

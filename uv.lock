@@ -137,11 +137,12 @@ wheels = [
 
 [[package]]
 name = "dart-tools"
-version = "0.8.13"
+version = "0.9.0"
 source = { editable = "." }
 dependencies = [
     { name = "attrs" },
     { name = "dateparser" },
+    { name = "flask" },
     { name = "httpx" },
     { name = "pick" },
     { name = "platformdirs", version = "4.4.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
@@ -151,7 +152,6 @@ dependencies = [
 [package.dev-dependencies]
 dev = [
     { name = "black" },
-    { name = "flask" },
     { name = "isort" },
     { name = "openapi-python-client" },
 ]
@@ -160,6 +160,7 @@ dev = [
 requires-dist = [
     { name = "attrs", specifier = ">=25.4" },
     { name = "dateparser", specifier = ">=1.2" },
+    { name = "flask", specifier = ">=3.1" },
     { name = "httpx", specifier = ">=0.28" },
     { name = "pick", specifier = ">=2.4" },
     { name = "platformdirs", specifier = ">=4.4" },
@@ -168,7 +169,6 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "black", specifier = "==25.1.0" },
-    { name = "flask", specifier = "==3.1.2" },
     { name = "isort", specifier = "==6.1.0" },
     { name = "openapi-python-client", specifier = "==0.26.2" },
 ]

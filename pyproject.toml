@@ -1,6 +1,6 @@
 [project]
 name = "dart-tools"
-version = "0.8.13"
+version = "0.9.0"
 description = "The Dart CLI and Python Library"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -34,6 +34,7 @@ classifiers=[
 dependencies = [
   "attrs>=25.4",
   "dateparser>=1.2",
+  "flask>=3.1",
   "httpx>=0.28",
   "pick>=2.4",
   "platformdirs>=4.4",
@@ -42,7 +43,6 @@ dependencies = [
 [dependency-groups]
 dev = [
     "black==25.1.0",
-    "flask==3.1.2",
     "isort==6.1.0",
     "openapi-python-client==0.26.2",
 ]

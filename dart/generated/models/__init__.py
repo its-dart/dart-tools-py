@@ -14,6 +14,7 @@ from .dartboard import Dartboard
 from .doc import Doc
 from .doc_create import DocCreate
 from .doc_update import DocUpdate
+from .event_kinds_enum import EventKindsEnum
 from .folder import Folder
 from .help_center_article import HelpCenterArticle
 from .list_comments_o_item import ListCommentsOItem
@@ -43,6 +44,11 @@ from .paginated_skill_list import PaginatedSkillList
 from .paginated_skill_list_meta_type_0 import PaginatedSkillListMetaType0
 from .paginated_skill_list_meta_type_0_applied_default_filters import (
     PaginatedSkillListMetaType0AppliedDefaultFilters,
+)
+from .paginated_webhook_list import PaginatedWebhookList
+from .paginated_webhook_list_meta_type_0 import PaginatedWebhookListMetaType0
+from .paginated_webhook_list_meta_type_0_applied_default_filters import (
+    PaginatedWebhookListMetaType0AppliedDefaultFilters,
 )
 from .priority import Priority
 from .skill import Skill
@@ -91,6 +97,9 @@ from .user_space_configuration_custom_property_user_type_def import (
     UserSpaceConfigurationCustomPropertyUserTypeDef,
 )
 from .view import View
+from .webhook import Webhook
+from .webhook_create import WebhookCreate
+from .webhook_update import WebhookUpdate
 from .wrapped_agent import WrappedAgent
 from .wrapped_agent_create import WrappedAgentCreate
 from .wrapped_agent_update import WrappedAgentUpdate
@@ -109,6 +118,9 @@ from .wrapped_task import WrappedTask
 from .wrapped_task_create import WrappedTaskCreate
 from .wrapped_task_update import WrappedTaskUpdate
 from .wrapped_view import WrappedView
+from .wrapped_webhook import WrappedWebhook
+from .wrapped_webhook_create import WrappedWebhookCreate
+from .wrapped_webhook_update import WrappedWebhookUpdate
 
 __all__ = (
     "Agent",
@@ -125,6 +137,7 @@ __all__ = (
     "Doc",
     "DocCreate",
     "DocUpdate",
+    "EventKindsEnum",
     "Folder",
     "HelpCenterArticle",
     "ListCommentsOItem",
@@ -145,6 +158,9 @@ __all__ = (
     "PaginatedSkillList",
     "PaginatedSkillListMetaType0",
     "PaginatedSkillListMetaType0AppliedDefaultFilters",
+    "PaginatedWebhookList",
+    "PaginatedWebhookListMetaType0",
+    "PaginatedWebhookListMetaType0AppliedDefaultFilters",
     "Priority",
     "Skill",
     "SkillCreate",
@@ -172,6 +188,9 @@ __all__ = (
     "UserSpaceConfigurationCustomPropertyTimeTrackingTypeDef",
     "UserSpaceConfigurationCustomPropertyUserTypeDef",
     "View",
+    "Webhook",
+    "WebhookCreate",
+    "WebhookUpdate",
     "WrappedAgent",
     "WrappedAgentCreate",
     "WrappedAgentUpdate",
@@ -190,4 +209,7 @@ __all__ = (
     "WrappedTaskCreate",
     "WrappedTaskUpdate",
     "WrappedView",
+    "WrappedWebhook",
+    "WrappedWebhookCreate",
+    "WrappedWebhookUpdate",
 )

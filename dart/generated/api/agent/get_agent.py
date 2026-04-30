@@ -56,10 +56,9 @@ def sync_detailed(
     *,
     client: AuthenticatedClient,
 ) -> Response[Union[Any, WrappedAgent]]:
-    """Retrieve an existing custom agent
+    """Retrieve an existing agent
 
-     Retrieve an existing custom agent by its ID, including its name and current description or
-    instructions.
+     Retrieve an existing agent by its ID, including its name and current description or instructions.
 
     Args:
         id (str):
@@ -88,10 +87,9 @@ def sync(
     *,
     client: AuthenticatedClient,
 ) -> Optional[Union[Any, WrappedAgent]]:
-    """Retrieve an existing custom agent
+    """Retrieve an existing agent
 
-     Retrieve an existing custom agent by its ID, including its name and current description or
-    instructions.
+     Retrieve an existing agent by its ID, including its name and current description or instructions.
 
     Args:
         id (str):
@@ -115,10 +113,9 @@ async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
 ) -> Response[Union[Any, WrappedAgent]]:
-    """Retrieve an existing custom agent
+    """Retrieve an existing agent
 
-     Retrieve an existing custom agent by its ID, including its name and current description or
-    instructions.
+     Retrieve an existing agent by its ID, including its name and current description or instructions.
 
     Args:
         id (str):
@@ -145,10 +142,9 @@ async def asyncio(
     *,
     client: AuthenticatedClient,
 ) -> Optional[Union[Any, WrappedAgent]]:
-    """Retrieve an existing custom agent
+    """Retrieve an existing agent
 
-     Retrieve an existing custom agent by its ID, including its name and current description or
-    instructions.
+     Retrieve an existing agent by its ID, including its name and current description or instructions.
 
     Args:
         id (str):

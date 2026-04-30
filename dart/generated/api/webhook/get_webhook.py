@@ -5,7 +5,7 @@ import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
-from ...models.wrapped_agent import WrappedAgent
+from ...models.wrapped_webhook import WrappedWebhook
 from ...types import Response
 
 
@@ -13,8 +13,8 @@ def _get_kwargs(
     id: str,
 ) -> dict[str, Any]:
     _kwargs: dict[str, Any] = {
-        "method": "delete",
-        "url": "/agents/{id}".format(
+        "method": "get",
+        "url": "/webhooks/{id}".format(
             id=id,
         ),
     }
@@ -24,9 +24,9 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Optional[Union[Any, WrappedAgent]]:
+) -> Optional[Union[Any, WrappedWebhook]]:
     if response.status_code == 200:
-        response_200 = WrappedAgent.from_dict(response.json())
+        response_200 = WrappedWebhook.from_dict(response.json())
 
         return response_200
 
@@ -42,7 +42,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Response[Union[Any, WrappedAgent]]:
+) -> Response[Union[Any, WrappedWebhook]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -55,10 +55,10 @@ def sync_detailed(
     id: str,
     *,
     client: AuthenticatedClient,
-) -> Response[Union[Any, WrappedAgent]]:
-    """Delete an agent
+) -> Response[Union[Any, WrappedWebhook]]:
+    """Retrieve an existing webhook
 
-     Delete an agent by its ID.
+     Retrieve an existing webhook by its ID.
 
     Args:
         id (str):
@@ -68,7 +68,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, WrappedAgent]]
+        Response[Union[Any, WrappedWebhook]]
     """
 
     kwargs = _get_kwargs(
@@ -86,10 +86,10 @@ def sync(
     id: str,
     *,
     client: AuthenticatedClient,
-) -> Optional[Union[Any, WrappedAgent]]:
-    """Delete an agent
+) -> Optional[Union[Any, WrappedWebhook]]:
+    """Retrieve an existing webhook
 
-     Delete an agent by its ID.
+     Retrieve an existing webhook by its ID.
 
     Args:
         id (str):
@@ -99,7 +99,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, WrappedAgent]
+        Union[Any, WrappedWebhook]
     """
 
     return sync_detailed(
@@ -112,10 +112,10 @@ async def asyncio_detailed(
     id: str,
     *,
     client: AuthenticatedClient,
-) -> Response[Union[Any, WrappedAgent]]:
-    """Delete an agent
+) -> Response[Union[Any, WrappedWebhook]]:
+    """Retrieve an existing webhook
 
-     Delete an agent by its ID.
+     Retrieve an existing webhook by its ID.
 
     Args:
         id (str):
@@ -125,7 +125,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, WrappedAgent]]
+        Response[Union[Any, WrappedWebhook]]
     """
 
     kwargs = _get_kwargs(
@@ -141,10 +141,10 @@ async def asyncio(
     id: str,
     *,
     client: AuthenticatedClient,
-) -> Optional[Union[Any, WrappedAgent]]:
-    """Delete an agent
+) -> Optional[Union[Any, WrappedWebhook]]:
+    """Retrieve an existing webhook
 
-     Delete an agent by its ID.
+     Retrieve an existing webhook by its ID.
 
     Args:
         id (str):
@@ -154,7 +154,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, WrappedAgent]
+        Union[Any, WrappedWebhook]
     """
 
     return (

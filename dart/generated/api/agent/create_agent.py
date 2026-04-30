@@ -63,9 +63,9 @@ def sync_detailed(
     client: AuthenticatedClient,
     body: WrappedAgentCreate,
 ) -> Response[Union[Any, WrappedAgent]]:
-    """Create a new custom agent
+    """Create a new agent
 
-     Create a new custom agent in the workspace with a name and optional description or instructions.
+     Create a new agent in the workspace with a name and optional description or instructions.
 
     Args:
         body (WrappedAgentCreate):
@@ -94,9 +94,9 @@ def sync(
     client: AuthenticatedClient,
     body: WrappedAgentCreate,
 ) -> Optional[Union[Any, WrappedAgent]]:
-    """Create a new custom agent
+    """Create a new agent
 
-     Create a new custom agent in the workspace with a name and optional description or instructions.
+     Create a new agent in the workspace with a name and optional description or instructions.
 
     Args:
         body (WrappedAgentCreate):
@@ -120,9 +120,9 @@ async def asyncio_detailed(
     client: AuthenticatedClient,
     body: WrappedAgentCreate,
 ) -> Response[Union[Any, WrappedAgent]]:
-    """Create a new custom agent
+    """Create a new agent
 
-     Create a new custom agent in the workspace with a name and optional description or instructions.
+     Create a new agent in the workspace with a name and optional description or instructions.
 
     Args:
         body (WrappedAgentCreate):
@@ -149,9 +149,9 @@ async def asyncio(
     client: AuthenticatedClient,
     body: WrappedAgentCreate,
 ) -> Optional[Union[Any, WrappedAgent]]:
-    """Create a new custom agent
+    """Create a new agent
 
-     Create a new custom agent in the workspace with a name and optional description or instructions.
+     Create a new agent in the workspace with a name and optional description or instructions.
 
     Args:
         body (WrappedAgentCreate):

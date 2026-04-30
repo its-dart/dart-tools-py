@@ -1,22 +1,31 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union, cast
+from typing import Any, Optional, Union
 
 import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
-from ...models.wrapped_agent import WrappedAgent
-from ...types import Response
+from ...models.paginated_webhook_list import PaginatedWebhookList
+from ...types import UNSET, Response, Unset
 
 
 def _get_kwargs(
-    id: str,
+    *,
+    limit: Union[Unset, int] = UNSET,
+    offset: Union[Unset, int] = UNSET,
 ) -> dict[str, Any]:
+    params: dict[str, Any] = {}
+
+    params["limit"] = limit
+
+    params["offset"] = offset
+
+    params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
+
     _kwargs: dict[str, Any] = {
-        "method": "delete",
-        "url": "/agents/{id}".format(
-            id=id,
-        ),
+        "method": "get",
+        "url": "/webhooks/list",
+        "params": params,
     }
 
     return _kwargs
@@ -24,15 +33,11 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Optional[Union[Any, WrappedAgent]]:
+) -> Optional[PaginatedWebhookList]:
     if response.status_code == 200:
-        response_200 = WrappedAgent.from_dict(response.json())
+        response_200 = PaginatedWebhookList.from_dict(response.json())
 
         return response_200
-
-    if response.status_code == 404:
-        response_404 = cast(Any, None)
-        return response_404
 
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
@@ -42,7 +47,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Response[Union[Any, WrappedAgent]]:
+) -> Response[PaginatedWebhookList]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -52,27 +57,30 @@ def _build_response(
 
 
 def sync_detailed(
-    id: str,
     *,
     client: AuthenticatedClient,
-) -> Response[Union[Any, WrappedAgent]]:
-    """Delete an agent
+    limit: Union[Unset, int] = UNSET,
+    offset: Union[Unset, int] = UNSET,
+) -> Response[PaginatedWebhookList]:
+    """List all webhooks
 
-     Delete an agent by its ID.
+     List all webhooks in the workspace.
 
     Args:
-        id (str):
+        limit (Union[Unset, int]):
+        offset (Union[Unset, int]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, WrappedAgent]]
+        Response[PaginatedWebhookList]
     """
 
     kwargs = _get_kwargs(
-        id=id,
+        limit=limit,
+        offset=offset,
     )
 
     response = client.get_httpx_client().request(
@@ -83,53 +91,59 @@ def sync_detailed(
 
 
 def sync(
-    id: str,
     *,
     client: AuthenticatedClient,
-) -> Optional[Union[Any, WrappedAgent]]:
-    """Delete an agent
+    limit: Union[Unset, int] = UNSET,
+    offset: Union[Unset, int] = UNSET,
+) -> Optional[PaginatedWebhookList]:
+    """List all webhooks
 
-     Delete an agent by its ID.
+     List all webhooks in the workspace.
 
     Args:
-        id (str):
+        limit (Union[Unset, int]):
+        offset (Union[Unset, int]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, WrappedAgent]
+        PaginatedWebhookList
     """
 
     return sync_detailed(
-        id=id,
         client=client,
+        limit=limit,
+        offset=offset,
     ).parsed
 
 
 async def asyncio_detailed(
-    id: str,
     *,
     client: AuthenticatedClient,
-) -> Response[Union[Any, WrappedAgent]]:
-    """Delete an agent
+    limit: Union[Unset, int] = UNSET,
+    offset: Union[Unset, int] = UNSET,
+) -> Response[PaginatedWebhookList]:
+    """List all webhooks
 
-     Delete an agent by its ID.
+     List all webhooks in the workspace.
 
     Args:
-        id (str):
+        limit (Union[Unset, int]):
+        offset (Union[Unset, int]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, WrappedAgent]]
+        Response[PaginatedWebhookList]
     """
 
     kwargs = _get_kwargs(
-        id=id,
+        limit=limit,
+        offset=offset,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -138,28 +152,31 @@ async def asyncio_detailed(
 
 
 async def asyncio(
-    id: str,
     *,
     client: AuthenticatedClient,
-) -> Optional[Union[Any, WrappedAgent]]:
-    """Delete an agent
+    limit: Union[Unset, int] = UNSET,
+    offset: Union[Unset, int] = UNSET,
+) -> Optional[PaginatedWebhookList]:
+    """List all webhooks
 
-     Delete an agent by its ID.
+     List all webhooks in the workspace.
 
     Args:
-        id (str):
+        limit (Union[Unset, int]):
+        offset (Union[Unset, int]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, WrappedAgent]
+        PaginatedWebhookList
     """
 
     return (
         await asyncio_detailed(
-            id=id,
             client=client,
+            limit=limit,
+            offset=offset,
         )
     ).parsed

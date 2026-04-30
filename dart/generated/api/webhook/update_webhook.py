@@ -5,30 +5,44 @@ import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
-from ...models.wrapped_agent import WrappedAgent
+from ...models.wrapped_webhook import WrappedWebhook
+from ...models.wrapped_webhook_update import WrappedWebhookUpdate
 from ...types import Response
 
 
 def _get_kwargs(
     id: str,
+    *,
+    body: WrappedWebhookUpdate,
 ) -> dict[str, Any]:
+    headers: dict[str, Any] = {}
+
     _kwargs: dict[str, Any] = {
-        "method": "delete",
-        "url": "/agents/{id}".format(
+        "method": "put",
+        "url": "/webhooks/{id}".format(
             id=id,
         ),
     }
 
+    _kwargs["json"] = body.to_dict()
+
+    headers["Content-Type"] = "application/json"
+
+    _kwargs["headers"] = headers
     return _kwargs
 
 
 def _parse_response(
     *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Optional[Union[Any, WrappedAgent]]:
+) -> Optional[Union[Any, WrappedWebhook]]:
     if response.status_code == 200:
-        response_200 = WrappedAgent.from_dict(response.json())
+        response_200 = WrappedWebhook.from_dict(response.json())
 
         return response_200
+
+    if response.status_code == 400:
+        response_400 = cast(Any, None)
+        return response_400
 
     if response.status_code == 404:
         response_404 = cast(Any, None)
@@ -42,7 +56,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Response[Union[Any, WrappedAgent]]:
+) -> Response[Union[Any, WrappedWebhook]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -55,24 +69,27 @@ def sync_detailed(
     id: str,
     *,
     client: AuthenticatedClient,
-) -> Response[Union[Any, WrappedAgent]]:
-    """Delete an agent
+    body: WrappedWebhookUpdate,
+) -> Response[Union[Any, WrappedWebhook]]:
+    """Update an existing webhook
 
-     Delete an agent by its ID.
+     Update an existing webhook. Only the fields provided will be updated.
 
     Args:
         id (str):
+        body (WrappedWebhookUpdate):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, WrappedAgent]]
+        Response[Union[Any, WrappedWebhook]]
     """
 
     kwargs = _get_kwargs(
         id=id,
+        body=body,
     )
 
     response = client.get_httpx_client().request(
@@ -86,25 +103,28 @@ def sync(
     id: str,
     *,
     client: AuthenticatedClient,
-) -> Optional[Union[Any, WrappedAgent]]:
-    """Delete an agent
+    body: WrappedWebhookUpdate,
+) -> Optional[Union[Any, WrappedWebhook]]:
+    """Update an existing webhook
 
-     Delete an agent by its ID.
+     Update an existing webhook. Only the fields provided will be updated.
 
     Args:
         id (str):
+        body (WrappedWebhookUpdate):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, WrappedAgent]
+        Union[Any, WrappedWebhook]
     """
 
     return sync_detailed(
         id=id,
         client=client,
+        body=body,
     ).parsed
 
 
@@ -112,24 +132,27 @@ async def asyncio_detailed(
     id: str,
     *,
     client: AuthenticatedClient,
-) -> Response[Union[Any, WrappedAgent]]:
-    """Delete an agent
+    body: WrappedWebhookUpdate,
+) -> Response[Union[Any, WrappedWebhook]]:
+    """Update an existing webhook
 
-     Delete an agent by its ID.
+     Update an existing webhook. Only the fields provided will be updated.
 
     Args:
         id (str):
+        body (WrappedWebhookUpdate):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, WrappedAgent]]
+        Response[Union[Any, WrappedWebhook]]
     """
 
     kwargs = _get_kwargs(
         id=id,
+        body=body,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -141,25 +164,28 @@ async def asyncio(
     id: str,
     *,
     client: AuthenticatedClient,
-) -> Optional[Union[Any, WrappedAgent]]:
-    """Delete an agent
+    body: WrappedWebhookUpdate,
+) -> Optional[Union[Any, WrappedWebhook]]:
+    """Update an existing webhook
 
-     Delete an agent by its ID.
+     Update an existing webhook. Only the fields provided will be updated.
 
     Args:
         id (str):
+        body (WrappedWebhookUpdate):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, WrappedAgent]
+        Union[Any, WrappedWebhook]
     """
 
     return (
         await asyncio_detailed(
             id=id,
             client=client,
+            body=body,
         )
     ).parsed

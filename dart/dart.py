@@ -54,6 +54,8 @@ from .generated.models import (
     WrappedTaskUpdate,
 )
 from .generated.types import UNSET, Response, Unset
+from .server import DEFAULT_PORT as _SERVER_DEFAULT_PORT
+from .server import run_server
 
 _APP = "dart-tools"
 _PROG = "dart"
@@ -80,6 +82,8 @@ _UPDATE_DOC_CMD = "doc-update"
 _DELETE_DOC_CMD = "doc-delete"
 # Comment commands
 _CREATE_COMMENT_CMD = "comment-create"
+# Other commands
+_SERVER_CMD = "server"
 
 _PROFILE_SETTINGS_URL_FRAG = "/?settings=account"
 _ROOT_PRIVATE_API_URL_FRAG = "/api/v0"
@@ -652,6 +656,17 @@ def create_comment(id: str, text: str) -> Comment:
     return comment
 
 
+def server(*, response_str: Union[str, None] = None, port: int = _SERVER_DEFAULT_PORT, no_ngrok: bool = False) -> None:
+    """Run a simple Flask server, optionally tunneled with ngrok."""
+    response: Union[dict, list, str, int, float, bool, None] = None
+    if response_str is not None:
+        try:
+            response = json.loads(response_str)
+        except json.JSONDecodeError as ex:
+            _dart_exit(f"Invalid JSON for --response: {ex}")
+    run_server(response=response, port=port, no_ngrok=no_ngrok)
+
+
 def _add_standard_task_arguments(parser: ArgumentParser) -> None:
     parser.add_argument(
         "-d",
@@ -733,6 +748,7 @@ def cli() -> None:
             _UPDATE_DOC_CMD,
             _DELETE_DOC_CMD,
             _CREATE_COMMENT_CMD,
+            _SERVER_CMD,
         ]
     )
     subparsers = parser.add_subparsers(
@@ -813,6 +829,22 @@ def cli() -> None:
     create_comment_parser.add_argument("id", help="ID of the task")
     create_comment_parser.add_argument("text", help="text of the comment")
     create_comment_parser.set_defaults(func=create_comment)
+
+    server_parser = subparsers.add_parser(_SERVER_CMD, help="run a simple HTTP server, optionally tunneled with ngrok")
+    server_parser.add_argument(
+        "-p", "--port", dest="port", type=int, default=_SERVER_DEFAULT_PORT, help="port to listen on"
+    )
+    server_parser.add_argument(
+        "-r",
+        "--response",
+        dest="response_str",
+        help='JSON to return for every request (default: {"ok": true})',
+        default=None,
+    )
+    server_parser.add_argument(
+        "-n", "--no-ngrok", dest="no_ngrok", action="store_true", help="don't try to start an ngrok tunnel"
+    )
+    server_parser.set_defaults(func=server)
 
     args = vars(parser.parse_args())
     func = args.pop("func")
