@@ -2,11 +2,13 @@ from enum import Enum
 
 
 class ListTasksOItem(str, Enum):
+    COMPLETED_AT = "completed_at"
     CREATED_AT = "created_at"
     DARTBOARD_ORDER = "dartboard__order"
     ORDER = "order"
     TITLE = "title"
     UPDATED_AT = "updated_at"
+    COMPLETED_AT_DESC = "-completed_at"
     CREATED_AT_DESC = "-created_at"
     DARTBOARD_ORDER_DESC = "-dartboard__order"
     ORDER_DESC = "-order"

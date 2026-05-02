@@ -15,6 +15,9 @@ def _get_kwargs(
     *,
     assignee: Union[Unset, str] = UNSET,
     assignee_id: Union[Unset, str] = UNSET,
+    completed_at: Union[Unset, datetime.datetime] = UNSET,
+    completed_at_after: Union[Unset, datetime.datetime] = UNSET,
+    completed_at_before: Union[Unset, datetime.datetime] = UNSET,
     created_at: Union[Unset, datetime.datetime] = UNSET,
     created_at_after: Union[Unset, datetime.datetime] = UNSET,
     created_at_before: Union[Unset, datetime.datetime] = UNSET,
@@ -59,6 +62,21 @@ def _get_kwargs(
     params["assignee"] = assignee
 
     params["assignee_id"] = assignee_id
+
+    json_completed_at: Union[Unset, str] = UNSET
+    if not isinstance(completed_at, Unset):
+        json_completed_at = completed_at.isoformat()
+    params["completed_at"] = json_completed_at
+
+    json_completed_at_after: Union[Unset, str] = UNSET
+    if not isinstance(completed_at_after, Unset):
+        json_completed_at_after = completed_at_after.isoformat()
+    params["completed_at_after"] = json_completed_at_after
+
+    json_completed_at_before: Union[Unset, str] = UNSET
+    if not isinstance(completed_at_before, Unset):
+        json_completed_at_before = completed_at_before.isoformat()
+    params["completed_at_before"] = json_completed_at_before
 
     json_created_at: Union[Unset, str] = UNSET
     if not isinstance(created_at, Unset):
@@ -220,6 +238,9 @@ def sync_detailed(
     client: AuthenticatedClient,
     assignee: Union[Unset, str] = UNSET,
     assignee_id: Union[Unset, str] = UNSET,
+    completed_at: Union[Unset, datetime.datetime] = UNSET,
+    completed_at_after: Union[Unset, datetime.datetime] = UNSET,
+    completed_at_before: Union[Unset, datetime.datetime] = UNSET,
     created_at: Union[Unset, datetime.datetime] = UNSET,
     created_at_after: Union[Unset, datetime.datetime] = UNSET,
     created_at_before: Union[Unset, datetime.datetime] = UNSET,
@@ -265,6 +286,9 @@ def sync_detailed(
     Args:
         assignee (Union[Unset, str]):
         assignee_id (Union[Unset, str]):
+        completed_at (Union[Unset, datetime.datetime]):
+        completed_at_after (Union[Unset, datetime.datetime]):
+        completed_at_before (Union[Unset, datetime.datetime]):
         created_at (Union[Unset, datetime.datetime]):
         created_at_after (Union[Unset, datetime.datetime]):
         created_at_before (Union[Unset, datetime.datetime]):
@@ -315,6 +339,9 @@ def sync_detailed(
     kwargs = _get_kwargs(
         assignee=assignee,
         assignee_id=assignee_id,
+        completed_at=completed_at,
+        completed_at_after=completed_at_after,
+        completed_at_before=completed_at_before,
         created_at=created_at,
         created_at_after=created_at_after,
         created_at_before=created_at_before,
@@ -367,6 +394,9 @@ def sync(
     client: AuthenticatedClient,
     assignee: Union[Unset, str] = UNSET,
     assignee_id: Union[Unset, str] = UNSET,
+    completed_at: Union[Unset, datetime.datetime] = UNSET,
+    completed_at_after: Union[Unset, datetime.datetime] = UNSET,
+    completed_at_before: Union[Unset, datetime.datetime] = UNSET,
     created_at: Union[Unset, datetime.datetime] = UNSET,
     created_at_after: Union[Unset, datetime.datetime] = UNSET,
     created_at_before: Union[Unset, datetime.datetime] = UNSET,
@@ -412,6 +442,9 @@ def sync(
     Args:
         assignee (Union[Unset, str]):
         assignee_id (Union[Unset, str]):
+        completed_at (Union[Unset, datetime.datetime]):
+        completed_at_after (Union[Unset, datetime.datetime]):
+        completed_at_before (Union[Unset, datetime.datetime]):
         created_at (Union[Unset, datetime.datetime]):
         created_at_after (Union[Unset, datetime.datetime]):
         created_at_before (Union[Unset, datetime.datetime]):
@@ -463,6 +496,9 @@ def sync(
         client=client,
         assignee=assignee,
         assignee_id=assignee_id,
+        completed_at=completed_at,
+        completed_at_after=completed_at_after,
+        completed_at_before=completed_at_before,
         created_at=created_at,
         created_at_after=created_at_after,
         created_at_before=created_at_before,
@@ -509,6 +545,9 @@ async def asyncio_detailed(
     client: AuthenticatedClient,
     assignee: Union[Unset, str] = UNSET,
     assignee_id: Union[Unset, str] = UNSET,
+    completed_at: Union[Unset, datetime.datetime] = UNSET,
+    completed_at_after: Union[Unset, datetime.datetime] = UNSET,
+    completed_at_before: Union[Unset, datetime.datetime] = UNSET,
     created_at: Union[Unset, datetime.datetime] = UNSET,
     created_at_after: Union[Unset, datetime.datetime] = UNSET,
     created_at_before: Union[Unset, datetime.datetime] = UNSET,
@@ -554,6 +593,9 @@ async def asyncio_detailed(
     Args:
         assignee (Union[Unset, str]):
         assignee_id (Union[Unset, str]):
+        completed_at (Union[Unset, datetime.datetime]):
+        completed_at_after (Union[Unset, datetime.datetime]):
+        completed_at_before (Union[Unset, datetime.datetime]):
         created_at (Union[Unset, datetime.datetime]):
         created_at_after (Union[Unset, datetime.datetime]):
         created_at_before (Union[Unset, datetime.datetime]):
@@ -604,6 +646,9 @@ async def asyncio_detailed(
     kwargs = _get_kwargs(
         assignee=assignee,
         assignee_id=assignee_id,
+        completed_at=completed_at,
+        completed_at_after=completed_at_after,
+        completed_at_before=completed_at_before,
         created_at=created_at,
         created_at_after=created_at_after,
         created_at_before=created_at_before,
@@ -654,6 +699,9 @@ async def asyncio(
     client: AuthenticatedClient,
     assignee: Union[Unset, str] = UNSET,
     assignee_id: Union[Unset, str] = UNSET,
+    completed_at: Union[Unset, datetime.datetime] = UNSET,
+    completed_at_after: Union[Unset, datetime.datetime] = UNSET,
+    completed_at_before: Union[Unset, datetime.datetime] = UNSET,
     created_at: Union[Unset, datetime.datetime] = UNSET,
     created_at_after: Union[Unset, datetime.datetime] = UNSET,
     created_at_before: Union[Unset, datetime.datetime] = UNSET,
@@ -699,6 +747,9 @@ async def asyncio(
     Args:
         assignee (Union[Unset, str]):
         assignee_id (Union[Unset, str]):
+        completed_at (Union[Unset, datetime.datetime]):
+        completed_at_after (Union[Unset, datetime.datetime]):
+        completed_at_before (Union[Unset, datetime.datetime]):
         created_at (Union[Unset, datetime.datetime]):
         created_at_after (Union[Unset, datetime.datetime]):
         created_at_before (Union[Unset, datetime.datetime]):
@@ -751,6 +802,9 @@ async def asyncio(
             client=client,
             assignee=assignee,
             assignee_id=assignee_id,
+            completed_at=completed_at,
+            completed_at_after=completed_at_after,
+            completed_at_before=completed_at_before,
             created_at=created_at,
             created_at_after=created_at_after,
             created_at_before=created_at_before,

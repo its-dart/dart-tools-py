@@ -8,9 +8,13 @@ Handles both:
 from __future__ import annotations
 
 import json
+import logging
 import shutil
+import signal
 import subprocess
+import threading
 import time
+from datetime import datetime, timezone
 from typing import Any, Union
 
 import httpx
@@ -99,7 +103,7 @@ def _handle_webhook(payload: bytes) -> bool:
     return True
 
 
-def make_app(response: Any = None) -> Flask:
+def make_app(webhook: bool = False, response: Any = None) -> Flask:
     """Build a Flask app that returns ``response`` as JSON and verifies Dart webhooks."""
     payload = response if response is not None else {"ok": True}
     app = Flask(__name__)
@@ -108,36 +112,40 @@ def make_app(response: Any = None) -> Flask:
     @app.route("/<path:path>", methods=["GET", "POST"])
     def handle(path: str) -> Response:  # pylint: disable=unused-variable
         body = request.get_data() or b""
-        print(f"{request.method} /{path}")
+        print(f"{datetime.now(timezone.utc).isoformat()} {request.method} /{path}")
+        if webhook:
+            ok = _handle_webhook(body)
+            return jsonify(success=ok)
+
         if body:
             try:
                 print(json.dumps(json.loads(body), indent=2))
             except (ValueError, TypeError):
                 print(body.decode("utf-8", errors="replace"))
-
-        if request.headers.get("Dart-Signature") is not None:
-            ok = _handle_webhook(body)
-            return jsonify(success=ok)
-
         return jsonify(payload)
 
     return app
 
 
-def run_server(response: Any = None, port: int = DEFAULT_PORT, no_ngrok: bool = False) -> None:
+def run_server(port: int = DEFAULT_PORT, no_ngrok: bool = False, webhook: bool = False, response: Any = None) -> None:
     """Run the Flask server, optionally with an ngrok tunnel."""
-    app = make_app(response)
+    logging.getLogger("werkzeug").setLevel(logging.ERROR)
+    app = make_app(webhook=webhook, response=response)
     print(
         f"Listening on http://localhost:{port} (default response: {json.dumps(response if response is not None else {'ok': True})})"
     )
 
     ngrok_proc = None if no_ngrok else _start_ngrok(port)
     server = make_server("0.0.0.0", port, app)
+
+    def _shutdown(*_: Any) -> None:
+        threading.Thread(target=server.shutdown, daemon=True).start()
+
+    signal.signal(signal.SIGINT, _shutdown)
+    signal.signal(signal.SIGTERM, _shutdown)
     print("Press CTRL+C to quit")
     try:
         server.serve_forever()
-    except KeyboardInterrupt:
-        pass
     finally:
         server.server_close()
         if ngrok_proc is not None:

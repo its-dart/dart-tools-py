@@ -12,8 +12,9 @@ import random
 import re
 import signal
 import string
-import subprocess
 import sys
+import threading
+import time
 from argparse import ArgumentParser
 from collections import defaultdict
 from datetime import timezone
@@ -98,6 +99,13 @@ _HOST_KEY = "host"
 _HOSTS_KEY = "hosts"
 _AUTH_TOKEN_KEY = "authToken"
 
+_VERSION_CHECK_KEY = "versionCheck"
+_VERSION_CHECK_LATEST_KEY = "latest"
+_VERSION_CHECK_AT_KEY = "checkedAt"
+_VERSION_CHECK_TTL_S = 24 * 60 * 60
+_VERSION_CHECK_JOIN_TIMEOUT_S = 0.5
+_PYPI_VERSION_URL = "https://pypi.org/pypi/dart-tools/json"
+
 _ID_CHARS = string.ascii_lowercase + string.ascii_uppercase + string.digits
 _NON_ALPHANUM_RE = re.compile(r"[^a-zA-Z0-9-]+")
 _REPEATED_DASH_RE = re.compile(r"-{2,}")
@@ -154,10 +162,6 @@ def slugify_str(s: str, lower: bool = False, trim_kwargs: Union[dict, None] = No
     formatted = _NON_ALPHANUM_RE.sub("-", lowered.replace("'", ""))
     formatted = _REPEATED_DASH_RE.sub("-", formatted).strip("-")
     return trim_slug_str(formatted, **trim_kwargs) if trim_kwargs is not None else formatted
-
-
-def _run_cmd(cmd: str) -> str:
-    return subprocess.check_output(cmd, shell=True).decode()
 
 
 def _suppress_exception(fn: Callable) -> Callable:
@@ -260,6 +264,23 @@ class _Config:
 
     def set(self, k: str, v: str) -> None:
         self._content[_HOSTS_KEY][self.host][k] = v
+        self._write()
+
+    def get_cached_latest_version(self) -> str | None:
+        cache = self._content.get(_VERSION_CHECK_KEY)
+        if not isinstance(cache, dict):
+            return None
+        checked_at = cache.get(_VERSION_CHECK_AT_KEY, 0)
+        if time.time() - checked_at >= _VERSION_CHECK_TTL_S:
+            return None
+        latest = cache.get(_VERSION_CHECK_LATEST_KEY)
+        return latest if isinstance(latest, str) else None
+
+    def set_cached_latest_version(self, latest: str) -> None:
+        self._content[_VERSION_CHECK_KEY] = {
+            _VERSION_CHECK_LATEST_KEY: latest,
+            _VERSION_CHECK_AT_KEY: time.time(),
+        }
         self._write()
 
 
@@ -423,20 +444,42 @@ def print_version() -> str:
     return result
 
 
-@_suppress_exception
-def print_version_update_message_maybe() -> None:
-    latest = (
-        _run_cmd("pip --disable-pip-version-check index versions dart-tools 2>&1")
-        .rsplit("LATEST:", maxsplit=1)[-1]
-        .split("\n", maxsplit=1)[0]
-        .strip()
-    )
-    if latest == _VERSION or [int(e) for e in latest.split(".")] <= [int(e) for e in _VERSION.split(".")]:
-        return
+_pending_version_message: list[str] = []
 
-    _log(
+
+@_suppress_exception
+def _fetch_and_cache_latest_version(config: _Config) -> str | None:
+    response = httpx.get(_PYPI_VERSION_URL, timeout=2.0)
+    response.raise_for_status()
+    latest = response.json()["info"]["version"]
+    if isinstance(latest, str):
+        config.set_cached_latest_version(latest)
+        return latest
+    return None
+
+
+@_suppress_exception
+def _check_for_version_update(config: _Config) -> None:
+    latest = config.get_cached_latest_version() or _fetch_and_cache_latest_version(config)
+    if latest is None or latest == _VERSION:
+        return
+    if [int(e) for e in latest.split(".")] <= [int(e) for e in _VERSION.split(".")]:
+        return
+    _pending_version_message.append(
         f"A new version of dart-tools is available. Upgrade from {_VERSION} to {latest} with\n\n  pip install --upgrade dart-tools\n"
     )
+
+
+def _start_version_check_thread() -> threading.Thread:
+    thread = threading.Thread(target=_check_for_version_update, args=(_Config(),), daemon=True)
+    thread.start()
+    return thread
+
+
+def _print_pending_version_message(thread: threading.Thread) -> None:
+    thread.join(timeout=_VERSION_CHECK_JOIN_TIMEOUT_S)
+    if _pending_version_message:
+        _log(_pending_version_message[0])
 
 
 def is_logged_in(should_raise: bool = False) -> bool:
@@ -656,15 +699,21 @@ def create_comment(id: str, text: str) -> Comment:
     return comment
 
 
-def server(*, response_str: Union[str, None] = None, port: int = _SERVER_DEFAULT_PORT, no_ngrok: bool = False) -> None:
+def server(
+    *,
+    port: int = _SERVER_DEFAULT_PORT,
+    no_ngrok: bool = False,
+    webhook: bool = False,
+    response_str: Union[str, None] = None,
+) -> None:
     """Run a simple Flask server, optionally tunneled with ngrok."""
     response: Union[dict, list, str, int, float, bool, None] = None
     if response_str is not None:
         try:
             response = json.loads(response_str)
         except json.JSONDecodeError as ex:
-            _dart_exit(f"Invalid JSON for --response: {ex}")
-    run_server(response=response, port=port, no_ngrok=no_ngrok)
+            _dart_exit(f"Invalid JSON for --response: {ex}.")
+    run_server(port=port, no_ngrok=no_ngrok, webhook=webhook, response=response)
 
 
 def _add_standard_task_arguments(parser: ArgumentParser) -> None:
@@ -730,10 +779,11 @@ def cli() -> None:
     global _is_cli
     _is_cli = True
 
-    print_version_update_message_maybe()
+    version_check_thread = _start_version_check_thread()
 
     if _VERSION_CMD in sys.argv[1:]:
         print_version()
+        _print_pending_version_message(version_check_thread)
         return
 
     parser = ArgumentParser(prog=_PROG, description="A CLI to interact with Dart")
@@ -835,17 +885,27 @@ def cli() -> None:
         "-p", "--port", dest="port", type=int, default=_SERVER_DEFAULT_PORT, help="port to listen on"
     )
     server_parser.add_argument(
+        "-n", "--no-ngrok", dest="no_ngrok", action="store_true", help="don't try to start an ngrok tunnel"
+    )
+    server_parser.add_argument(
+        "-w",
+        "--webhook",
+        dest="webhook",
+        action="store_true",
+        help="treat all requests as Dart webhook events instead of inspecting the Dart-Signature header",
+    )
+    server_parser.add_argument(
         "-r",
         "--response",
         dest="response_str",
         help='JSON to return for every request (default: {"ok": true})',
         default=None,
     )
-    server_parser.add_argument(
-        "-n", "--no-ngrok", dest="no_ngrok", action="store_true", help="don't try to start an ngrok tunnel"
-    )
     server_parser.set_defaults(func=server)
 
     args = vars(parser.parse_args())
     func = args.pop("func")
-    func(**args)
+    try:
+        func(**args)
+    finally:
+        _print_pending_version_message(version_check_thread)

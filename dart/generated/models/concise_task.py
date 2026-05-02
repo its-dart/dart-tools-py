@@ -40,6 +40,8 @@ class ConciseTask:
         status (str): The status from the list of available statuses.
         created_at (datetime.datetime): The date and time when the task was created in ISO format.
         updated_at (datetime.datetime): The date and time when the task was last updated in ISO format.
+        completed_at (Union[None, datetime.datetime]): The date and time when the task was completed in ISO format. Null
+            if the task is not completed.
         assignees (Union[None, Unset, list[str]]): The names or emails of the users that the task is assigned to. Either
             this or assignee must be included, depending on whether the workspaces allows multiple assignees or not.
         assignee (Union[None, Unset, str]): The name or email of the user that the task is assigned to. Either this or
@@ -79,6 +81,7 @@ class ConciseTask:
     status: str
     created_at: datetime.datetime
     updated_at: datetime.datetime
+    completed_at: Union[None, datetime.datetime]
     assignees: Union[None, Unset, list[str]] = UNSET
     assignee: Union[None, Unset, str] = UNSET
     tags: Union[Unset, list[str]] = UNSET
@@ -115,6 +118,12 @@ class ConciseTask:
         created_at = self.created_at.isoformat()
 
         updated_at = self.updated_at.isoformat()
+
+        completed_at: Union[None, str]
+        if isinstance(self.completed_at, datetime.datetime):
+            completed_at = self.completed_at.isoformat()
+        else:
+            completed_at = self.completed_at
 
         assignees: Union[None, Unset, list[str]]
         if isinstance(self.assignees, Unset):
@@ -196,6 +205,7 @@ class ConciseTask:
                 "status": status,
                 "createdAt": created_at,
                 "updatedAt": updated_at,
+                "completedAt": completed_at,
             }
         )
         if assignees is not UNSET:
@@ -252,6 +262,21 @@ class ConciseTask:
         created_at = isoparse(d.pop("createdAt"))
 
         updated_at = isoparse(d.pop("updatedAt"))
+
+        def _parse_completed_at(data: object) -> Union[None, datetime.datetime]:
+            if data is None:
+                return data
+            try:
+                if not isinstance(data, str):
+                    raise TypeError()
+                completed_at_type_0 = isoparse(data)
+
+                return completed_at_type_0
+            except:  # noqa: E722
+                pass
+            return cast(Union[None, datetime.datetime], data)
+
+        completed_at = _parse_completed_at(d.pop("completedAt"))
 
         def _parse_assignees(data: object) -> Union[None, Unset, list[str]]:
             if data is None:
@@ -374,6 +399,7 @@ class ConciseTask:
             status=status,
             created_at=created_at,
             updated_at=updated_at,
+            completed_at=completed_at,
             assignees=assignees,
             assignee=assignee,
             tags=tags,
