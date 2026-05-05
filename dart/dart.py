@@ -84,12 +84,12 @@ _DELETE_DOC_CMD = "doc-delete"
 # Comment commands
 _CREATE_COMMENT_CMD = "comment-create"
 # Other commands
-_SERVER_CMD = "server"
+_SERVER_START_CMD = "server-start"
 
 _PROFILE_SETTINGS_URL_FRAG = "/?settings=account"
-_ROOT_PRIVATE_API_URL_FRAG = "/api/v0"
-_ROOT_PUBLIC_API_URL_FRAG = f"{_ROOT_PRIVATE_API_URL_FRAG}/public"
-_COPY_BRANCH_URL_FRAG = "/vcs/copy-branch-link"
+_ROOT_PUBLIC_API_URL_FRAG = "/api/v0/public"
+
+_DEFAULT_BEGIN_STATUS = "Doing"
 
 _AUTH_TOKEN_ENVVAR_KEY = "DART_TOKEN"
 _HOST_ENVVAR_KEY = "DART_HOST"
@@ -290,10 +290,6 @@ class Dart:
         self._init_clients()
 
     def _init_clients(self) -> None:
-        self._private_api = Client(
-            base_url=self.get_base_url() + _ROOT_PRIVATE_API_URL_FRAG,
-            headers=self.get_headers(),
-        )
         self._public_api = Client(
             base_url=self.get_base_url() + _ROOT_PUBLIC_API_URL_FRAG,
             headers=self.get_headers(),
@@ -394,10 +390,6 @@ class Dart:
     def list_docs(self, **kwargs) -> PaginatedConciseDocList:
         response = api.list_docs.sync_detailed(client=self._public_api, **kwargs)
         return _get_response_parsed(response)
-
-    @_handle_request_errors
-    def copy_branch_link(self, id: str) -> None:
-        self._private_api.get_httpx_client().post(_COPY_BRANCH_URL_FRAG, json={"duid": id})
 
 
 def make_task_branch_name(email: str, task: ConciseTask | Task) -> str:
@@ -518,17 +510,38 @@ def login(token: str | None = None) -> bool:
     return True
 
 
-def _begin_task(dart: Dart, email: str, task: ConciseTask | Task) -> bool:
-    dart = Dart()
-    dart.copy_branch_link(task.id)
+def _begin_task(
+    dart: Dart,
+    config: UserSpaceConfiguration,
+    task: ConciseTask | Task,
+    *,
+    status_name: str,
+) -> bool:
+    user = config.user
 
-    branch_name = make_task_branch_name(email, task)
+    update_kwargs: dict = {}
+    if status_name in config.statuses and task.status != status_name:
+        update_kwargs["status"] = status_name
+
+    current_assignees = task.assignees if isinstance(task.assignees, list) else []
+    if user.email not in current_assignees:
+        update_kwargs["assignees"] = [*current_assignees, user.email]
+
+    if update_kwargs:
+        task_update = WrappedTaskUpdate(item=TaskUpdate(task.id, **update_kwargs))
+        task = dart.update_task(task.id, task_update).item
+
+    branch_name = make_task_branch_name(user.email, task)
 
     _log(f"Started work on\n\n  {task.title}\n  {task.html_url}\n  {branch_name}\n")
     return True
 
 
-def begin_task(*, dartboard_title: Union[Unset, str] = UNSET) -> bool:
+def begin_task(
+    *,
+    status_name: str = _DEFAULT_BEGIN_STATUS,
+    dartboard_title: Union[Unset, str] = UNSET,
+) -> bool:
     dart = Dart()
     config = dart.get_config()
     user = config.user
@@ -544,7 +557,7 @@ def begin_task(*, dartboard_title: Union[Unset, str] = UNSET) -> bool:
     )[1]
     assert isinstance(picked_idx, int)
 
-    _begin_task(dart, user.email, filtered_tasks[picked_idx])
+    _begin_task(dart, config, filtered_tasks[picked_idx], status_name=status_name)
 
     _log("Done.")
     return True
@@ -583,6 +596,7 @@ def create_task(
     size_int: Union[int, None, Unset] = UNSET,
     due_at_str: Union[str, None, Unset] = UNSET,
     should_begin: bool = False,
+    begin_status_name: str = _DEFAULT_BEGIN_STATUS,
 ) -> Task:
     dart = Dart()
     task_create = WrappedTaskCreate(
@@ -601,8 +615,8 @@ def create_task(
     _log(f"Created task\n\n  {task.title}\n  {task.html_url}\n  ID: {task.id}\n")
 
     if should_begin:
-        user = dart.get_config().user
-        _begin_task(dart, user.email, task)
+        config = dart.get_config()
+        _begin_task(dart, config, task, status_name=begin_status_name)
 
     _log("Done.")
     return task
@@ -798,7 +812,7 @@ def cli() -> None:
             _UPDATE_DOC_CMD,
             _DELETE_DOC_CMD,
             _CREATE_COMMENT_CMD,
-            _SERVER_CMD,
+            _SERVER_START_CMD,
         ]
     )
     subparsers = parser.add_subparsers(
@@ -829,6 +843,12 @@ def cli() -> None:
         action="store_true",
         help="begin work on the task after creation",
     )
+    create_task_parser.add_argument(
+        "--begin-status",
+        dest="begin_status_name",
+        help=f"status to move the task to when beginning (default: {_DEFAULT_BEGIN_STATUS})",
+        default=_DEFAULT_BEGIN_STATUS,
+    )
     _add_standard_task_arguments(create_task_parser)
     create_task_parser.set_defaults(func=create_task)
 
@@ -847,6 +867,13 @@ def cli() -> None:
     delete_task_parser.set_defaults(func=delete_task)
 
     begin_task_parser = subparsers.add_parser(_BEGIN_TASK_CMD, aliases=["tb"], help="begin work on a task")
+    begin_task_parser.add_argument(
+        "-s",
+        "--status",
+        dest="status_name",
+        help=f"status to move the task to (default: {_DEFAULT_BEGIN_STATUS})",
+        default=_DEFAULT_BEGIN_STATUS,
+    )
     begin_task_parser.add_argument("-d", "--dartboard", dest="dartboard_title", help="dartboard title", default=UNSET)
     begin_task_parser.set_defaults(func=begin_task)
 
@@ -880,7 +907,9 @@ def cli() -> None:
     create_comment_parser.add_argument("text", help="text of the comment")
     create_comment_parser.set_defaults(func=create_comment)
 
-    server_parser = subparsers.add_parser(_SERVER_CMD, help="run a simple HTTP server, optionally tunneled with ngrok")
+    server_parser = subparsers.add_parser(
+        _SERVER_START_CMD, aliases=["ss"], help="run a simple HTTP server, optionally tunneled with ngrok"
+    )
     server_parser.add_argument(
         "-p", "--port", dest="port", type=int, default=_SERVER_DEFAULT_PORT, help="port to listen on"
     )
