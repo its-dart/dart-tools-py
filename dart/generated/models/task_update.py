@@ -40,6 +40,10 @@ class TaskUpdate:
             this or assignee must be included, depending on whether the workspaces allows multiple assignees or not.
         assignee (Union[None, Unset, str]): The name or email of the user that the task is assigned to. Either this or
             assignees must be included, depending on whether the workspaces allows multiple assignees or not.
+        reviewers (Union[None, Unset, list[str]]): The names or emails of the users that are reviewing the task. Either
+            this or reviewer must be included, depending on whether the workspace allows multiple reviewers or not.
+        reviewer (Union[None, Unset, str]): The name or email of the user that is reviewing the task. Either this or
+            reviewers must be included, depending on whether the workspace allows multiple reviewers or not.
         tags (Union[Unset, list[str]]): Any tags that should be applied to the task, which can be used to filter and
             search for tasks. Tags are also known as labels or components and are strings that can be anything, but should
             be short and descriptive. This list can be empty.
@@ -72,6 +76,8 @@ class TaskUpdate:
     description: Union[Unset, str] = UNSET
     assignees: Union[None, Unset, list[str]] = UNSET
     assignee: Union[None, Unset, str] = UNSET
+    reviewers: Union[None, Unset, list[str]] = UNSET
+    reviewer: Union[None, Unset, str] = UNSET
     tags: Union[Unset, list[str]] = UNSET
     priority: Union[None, Priority, Unset] = UNSET
     start_at: Union[None, Unset, str] = UNSET
@@ -119,6 +125,21 @@ class TaskUpdate:
             assignee = UNSET
         else:
             assignee = self.assignee
+
+        reviewers: Union[None, Unset, list[str]]
+        if isinstance(self.reviewers, Unset):
+            reviewers = UNSET
+        elif isinstance(self.reviewers, list):
+            reviewers = self.reviewers
+
+        else:
+            reviewers = self.reviewers
+
+        reviewer: Union[None, Unset, str]
+        if isinstance(self.reviewer, Unset):
+            reviewer = UNSET
+        else:
+            reviewer = self.reviewer
 
         tags: Union[Unset, list[str]] = UNSET
         if not isinstance(self.tags, Unset):
@@ -189,6 +210,10 @@ class TaskUpdate:
             field_dict["assignees"] = assignees
         if assignee is not UNSET:
             field_dict["assignee"] = assignee
+        if reviewers is not UNSET:
+            field_dict["reviewers"] = reviewers
+        if reviewer is not UNSET:
+            field_dict["reviewer"] = reviewer
         if tags is not UNSET:
             field_dict["tags"] = tags
         if priority is not UNSET:
@@ -260,6 +285,32 @@ class TaskUpdate:
             return cast(Union[None, Unset, str], data)
 
         assignee = _parse_assignee(d.pop("assignee", UNSET))
+
+        def _parse_reviewers(data: object) -> Union[None, Unset, list[str]]:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            try:
+                if not isinstance(data, list):
+                    raise TypeError()
+                reviewers_type_0 = cast(list[str], data)
+
+                return reviewers_type_0
+            except:  # noqa: E722
+                pass
+            return cast(Union[None, Unset, list[str]], data)
+
+        reviewers = _parse_reviewers(d.pop("reviewers", UNSET))
+
+        def _parse_reviewer(data: object) -> Union[None, Unset, str]:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(Union[None, Unset, str], data)
+
+        reviewer = _parse_reviewer(d.pop("reviewer", UNSET))
 
         tags = cast(list[str], d.pop("tags", UNSET))
 
@@ -355,6 +406,8 @@ class TaskUpdate:
             description=description,
             assignees=assignees,
             assignee=assignee,
+            reviewers=reviewers,
+            reviewer=reviewer,
             tags=tags,
             priority=priority,
             start_at=start_at,

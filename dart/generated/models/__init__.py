@@ -2,7 +2,15 @@
 
 from .agent import Agent
 from .agent_create import AgentCreate
+from .agent_execution_mode import AgentExecutionMode
+from .agent_forwarding import AgentForwarding
+from .agent_instructions import AgentInstructions
+from .agent_local import AgentLocal
 from .agent_update import AgentUpdate
+from .agent_workflow import AgentWorkflow
+from .agent_workflow_headers import AgentWorkflowHeaders
+from .ai_model import AiModel
+from .ai_thinking_level import AiThinkingLevel
 from .attachment import Attachment
 from .attachment_create_from_url import AttachmentCreateFromUrl
 from .comment import Comment
@@ -14,12 +22,14 @@ from .dartboard import Dartboard
 from .doc import Doc
 from .doc_create import DocCreate
 from .doc_update import DocUpdate
+from .event_kind import EventKind
 from .event_kinds_enum import EventKindsEnum
 from .folder import Folder
 from .help_center_article import HelpCenterArticle
 from .list_comments_o_item import ListCommentsOItem
 from .list_docs_o_item import ListDocsOItem
 from .list_tasks_o_item import ListTasksOItem
+from .local_agent import LocalAgent
 from .paginated_agent_list import PaginatedAgentList
 from .paginated_agent_list_meta_type_0 import PaginatedAgentListMetaType0
 from .paginated_agent_list_meta_type_0_applied_default_filters import (
@@ -125,7 +135,15 @@ from .wrapped_webhook_update import WrappedWebhookUpdate
 __all__ = (
     "Agent",
     "AgentCreate",
+    "AgentExecutionMode",
+    "AgentForwarding",
+    "AgentInstructions",
+    "AgentLocal",
     "AgentUpdate",
+    "AgentWorkflow",
+    "AgentWorkflowHeaders",
+    "AiModel",
+    "AiThinkingLevel",
     "Attachment",
     "AttachmentCreateFromUrl",
     "Comment",
@@ -137,12 +155,14 @@ __all__ = (
     "Doc",
     "DocCreate",
     "DocUpdate",
+    "EventKind",
     "EventKindsEnum",
     "Folder",
     "HelpCenterArticle",
     "ListCommentsOItem",
     "ListDocsOItem",
     "ListTasksOItem",
+    "LocalAgent",
     "PaginatedAgentList",
     "PaginatedAgentListMetaType0",
     "PaginatedAgentListMetaType0AppliedDefaultFilters",

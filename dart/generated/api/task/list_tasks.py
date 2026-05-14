@@ -38,6 +38,8 @@ def _get_kwargs(
     offset: Union[Unset, int] = UNSET,
     parent_id: Union[Unset, str] = UNSET,
     priority: Union[Unset, str] = UNSET,
+    reviewer: Union[Unset, str] = UNSET,
+    reviewer_id: Union[Unset, str] = UNSET,
     size: Union[Unset, int] = UNSET,
     start_at: Union[Unset, datetime.datetime] = UNSET,
     start_at_after: Union[Unset, datetime.datetime] = UNSET,
@@ -142,6 +144,10 @@ def _get_kwargs(
     params["parent_id"] = parent_id
 
     params["priority"] = priority
+
+    params["reviewer"] = reviewer
+
+    params["reviewer_id"] = reviewer_id
 
     params["size"] = size
 
@@ -261,6 +267,8 @@ def sync_detailed(
     offset: Union[Unset, int] = UNSET,
     parent_id: Union[Unset, str] = UNSET,
     priority: Union[Unset, str] = UNSET,
+    reviewer: Union[Unset, str] = UNSET,
+    reviewer_id: Union[Unset, str] = UNSET,
     size: Union[Unset, int] = UNSET,
     start_at: Union[Unset, datetime.datetime] = UNSET,
     start_at_after: Union[Unset, datetime.datetime] = UNSET,
@@ -309,6 +317,8 @@ def sync_detailed(
         offset (Union[Unset, int]):
         parent_id (Union[Unset, str]):
         priority (Union[Unset, str]):
+        reviewer (Union[Unset, str]):
+        reviewer_id (Union[Unset, str]):
         size (Union[Unset, int]):
         start_at (Union[Unset, datetime.datetime]):
         start_at_after (Union[Unset, datetime.datetime]):
@@ -362,6 +372,8 @@ def sync_detailed(
         offset=offset,
         parent_id=parent_id,
         priority=priority,
+        reviewer=reviewer,
+        reviewer_id=reviewer_id,
         size=size,
         start_at=start_at,
         start_at_after=start_at_after,
@@ -417,6 +429,8 @@ def sync(
     offset: Union[Unset, int] = UNSET,
     parent_id: Union[Unset, str] = UNSET,
     priority: Union[Unset, str] = UNSET,
+    reviewer: Union[Unset, str] = UNSET,
+    reviewer_id: Union[Unset, str] = UNSET,
     size: Union[Unset, int] = UNSET,
     start_at: Union[Unset, datetime.datetime] = UNSET,
     start_at_after: Union[Unset, datetime.datetime] = UNSET,
@@ -465,6 +479,8 @@ def sync(
         offset (Union[Unset, int]):
         parent_id (Union[Unset, str]):
         priority (Union[Unset, str]):
+        reviewer (Union[Unset, str]):
+        reviewer_id (Union[Unset, str]):
         size (Union[Unset, int]):
         start_at (Union[Unset, datetime.datetime]):
         start_at_after (Union[Unset, datetime.datetime]):
@@ -519,6 +535,8 @@ def sync(
         offset=offset,
         parent_id=parent_id,
         priority=priority,
+        reviewer=reviewer,
+        reviewer_id=reviewer_id,
         size=size,
         start_at=start_at,
         start_at_after=start_at_after,
@@ -568,6 +586,8 @@ async def asyncio_detailed(
     offset: Union[Unset, int] = UNSET,
     parent_id: Union[Unset, str] = UNSET,
     priority: Union[Unset, str] = UNSET,
+    reviewer: Union[Unset, str] = UNSET,
+    reviewer_id: Union[Unset, str] = UNSET,
     size: Union[Unset, int] = UNSET,
     start_at: Union[Unset, datetime.datetime] = UNSET,
     start_at_after: Union[Unset, datetime.datetime] = UNSET,
@@ -616,6 +636,8 @@ async def asyncio_detailed(
         offset (Union[Unset, int]):
         parent_id (Union[Unset, str]):
         priority (Union[Unset, str]):
+        reviewer (Union[Unset, str]):
+        reviewer_id (Union[Unset, str]):
         size (Union[Unset, int]):
         start_at (Union[Unset, datetime.datetime]):
         start_at_after (Union[Unset, datetime.datetime]):
@@ -669,6 +691,8 @@ async def asyncio_detailed(
         offset=offset,
         parent_id=parent_id,
         priority=priority,
+        reviewer=reviewer,
+        reviewer_id=reviewer_id,
         size=size,
         start_at=start_at,
         start_at_after=start_at_after,
@@ -722,6 +746,8 @@ async def asyncio(
     offset: Union[Unset, int] = UNSET,
     parent_id: Union[Unset, str] = UNSET,
     priority: Union[Unset, str] = UNSET,
+    reviewer: Union[Unset, str] = UNSET,
+    reviewer_id: Union[Unset, str] = UNSET,
     size: Union[Unset, int] = UNSET,
     start_at: Union[Unset, datetime.datetime] = UNSET,
     start_at_after: Union[Unset, datetime.datetime] = UNSET,
@@ -770,6 +796,8 @@ async def asyncio(
         offset (Union[Unset, int]):
         parent_id (Union[Unset, str]):
         priority (Union[Unset, str]):
+        reviewer (Union[Unset, str]):
+        reviewer_id (Union[Unset, str]):
         size (Union[Unset, int]):
         start_at (Union[Unset, datetime.datetime]):
         start_at_after (Union[Unset, datetime.datetime]):
@@ -825,6 +853,8 @@ async def asyncio(
             offset=offset,
             parent_id=parent_id,
             priority=priority,
+            reviewer=reviewer,
+            reviewer_id=reviewer_id,
             size=size,
             start_at=start_at,
             start_at_after=start_at_after,
