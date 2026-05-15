@@ -28,15 +28,27 @@ import httpx
 import platformdirs
 from pick import pick
 
+from .agent import AgentAuthError
+from .agent import connect_agent as _connect_local_agent
 from .exception import DartException
 from .generated import Client, api
 from .generated.models import (
+    Agent,
+    AgentCreate,
+    AgentExecutionMode,
+    AgentForwarding,
+    AgentInstructions,
+    AgentLocal,
+    AgentUpdate,
+    AgentWorkflow,
     Comment,
     CommentCreate,
     ConciseTask,
     Doc,
     DocCreate,
     DocUpdate,
+    EventKind,
+    LocalAgent,
     PaginatedCommentList,
     PaginatedConciseDocList,
     PaginatedConciseTaskList,
@@ -45,6 +57,9 @@ from .generated.models import (
     TaskCreate,
     TaskUpdate,
     UserSpaceConfiguration,
+    WrappedAgent,
+    WrappedAgentCreate,
+    WrappedAgentUpdate,
     WrappedComment,
     WrappedCommentCreate,
     WrappedDoc,
@@ -64,7 +79,7 @@ _PROG = "dart"
 _PROD_HOST = "https://app.dartai.com"
 _STAG_HOST = "https://stag.dartai.com"
 _DEV_HOST = "http://localhost:5100"
-_HOST_MAP = {"prod": _PROD_HOST, "stag": _STAG_HOST, "dev": _DEV_HOST}
+_HOST_MAP = {"prod": _PROD_HOST, "stag": _STAG_HOST, "dev": _DEV_HOST, "local": _DEV_HOST}
 _REVERSE_HOST_MAP = {v: k for k, v in _HOST_MAP.items()}
 
 # Service commands
@@ -72,6 +87,11 @@ _VERSION_CMD = "--version"
 _GET_HOST_CMD = "host-get"
 _SET_HOST_CMD = "host-set"
 _LOGIN_CMD = "login"
+# Agent commands
+_CREATE_AGENT_CMD = "agent-create"
+_UPDATE_AGENT_CMD = "agent-update"
+_DELETE_AGENT_CMD = "agent-delete"
+_CONNECT_AGENT_CMD = "agent-connect"
 # Task commands
 _CREATE_TASK_CMD = "task-create"
 _UPDATE_TASK_CMD = "task-update"
@@ -94,6 +114,7 @@ _DEFAULT_BEGIN_STATUS = "Doing"
 _AUTH_TOKEN_ENVVAR_KEY = "DART_TOKEN"
 _HOST_ENVVAR_KEY = "DART_HOST"
 _CONFIG_FPATH = platformdirs.user_config_path(_APP)
+_AUTH_FAILURE_STATUS_CODES = (401, 403)
 _CLIENT_ID_KEY = "clientId"
 _HOST_KEY = "host"
 _HOSTS_KEY = "hosts"
@@ -130,6 +151,9 @@ def _get_help_text(fn: Callable) -> str:
 
 
 _HELP_TEXT_TO_COMMAND = {
+    _CREATE_AGENT_CMD: _get_help_text(api.create_agent.sync_detailed),
+    _UPDATE_AGENT_CMD: _get_help_text(api.update_agent.sync_detailed),
+    _DELETE_AGENT_CMD: _get_help_text(api.delete_agent.sync_detailed),
     _CREATE_TASK_CMD: _get_help_text(api.create_task.sync_detailed),
     _UPDATE_TASK_CMD: _get_help_text(api.update_task.sync_detailed),
     _DELETE_TASK_CMD: _get_help_text(api.delete_task.sync_detailed),
@@ -191,13 +215,21 @@ def _log(s: str) -> None:
     print(s)
 
 
+def _get_required_text(prompt: str) -> str:
+    while True:
+        result = input(prompt).strip()
+        if result:
+            return result
+        _log("Please enter a value.")
+
+
 T = TypeVar("T")
 
 
 def _get_response_parsed(response: Response[T], not_found_message="Not found.") -> T:
     if response.parsed is not None:
         return response.parsed
-    if response.status_code in {401, 403}:
+    if response.status_code in _AUTH_FAILURE_STATUS_CODES:
         _auth_failure_exit()
     elif response.status_code == 404:
         _dart_exit(not_found_message)
@@ -330,6 +362,21 @@ class Dart:
     def get_config(self) -> UserSpaceConfiguration:
         response = api.get_config.sync_detailed(client=self._public_api)
         return _get_response_parsed(response)
+
+    @_handle_request_errors
+    def create_agent(self, body: WrappedAgentCreate) -> WrappedAgent:
+        response = api.create_agent.sync_detailed(client=self._public_api, body=body)
+        return _get_response_parsed(response)
+
+    @_handle_request_errors
+    def update_agent(self, id: str, body: WrappedAgentUpdate) -> WrappedAgent:
+        response = api.update_agent.sync_detailed(id, client=self._public_api, body=body)
+        return _get_response_parsed(response, not_found_message=f"Agent with ID {id} not found.")
+
+    @_handle_request_errors
+    def delete_agent(self, id: str) -> WrappedAgent:
+        response = api.delete_agent.sync_detailed(id, client=self._public_api)
+        return _get_response_parsed(response, not_found_message=f"Agent with ID {id} not found.")
 
     @_handle_request_errors
     def create_task(self, body: WrappedTaskCreate) -> WrappedTask:
@@ -510,13 +557,15 @@ def login(token: str | None = None) -> bool:
     return True
 
 
-def _begin_task(
-    dart: Dart,
-    config: UserSpaceConfiguration,
-    task: ConciseTask | Task,
+def begin_task(
+    id: str,
     *,
-    status_name: str,
+    status_name: str = _DEFAULT_BEGIN_STATUS,
 ) -> bool:
+    dart = Dart()
+    config = dart.get_config()
+    task = dart.retrieve_task(id).item
+
     user = config.user
 
     update_kwargs: dict = {}
@@ -537,7 +586,7 @@ def _begin_task(
     return True
 
 
-def begin_task(
+def begin_task_interactive(
     *,
     status_name: str = _DEFAULT_BEGIN_STATUS,
     dartboard_title: Union[Unset, str] = UNSET,
@@ -555,9 +604,8 @@ def begin_task(
         "Which of your active, incomplete tasks are you beginning work on?",
         "→",
     )[1]
-    assert isinstance(picked_idx, int)
 
-    _begin_task(dart, config, filtered_tasks[picked_idx], status_name=status_name)
+    begin_task(filtered_tasks[picked_idx].id, status_name=status_name)
 
     _log("Done.")
     return True
@@ -583,6 +631,119 @@ def _get_due_at_from_str_arg(due_at_str: Union[str, None, Unset]) -> Union[str, 
     due_at = due_at.replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=timezone.utc).isoformat()
 
     return due_at
+
+
+def create_agent(
+    name: str,
+    *,
+    execution_mode: Union[AgentExecutionMode, Unset] = UNSET,
+    instructions: Union[AgentInstructions, Unset] = UNSET,
+    forwarding: Union[AgentForwarding, Unset] = UNSET,
+    local: Union[AgentLocal, Unset] = UNSET,
+) -> Agent:
+    dart = Dart()
+    agent_create = WrappedAgentCreate(
+        item=AgentCreate(
+            name=name,
+            execution_mode=execution_mode,
+            instructions=instructions,
+            forwarding=forwarding,
+            local=local,
+        )
+    )
+    agent = dart.create_agent(agent_create).item
+    _log(f"Created agent\n\n  {agent.name}\n  ID: {agent.id}\n")
+    _log("Done.")
+    return agent
+
+
+def create_agent_interactive(*, execution_mode: AgentExecutionMode | None = None) -> Agent:
+    name = _get_required_text("Name: ")
+    if execution_mode is None:
+        execution_mode = pick(
+            list(AgentExecutionMode),
+            "Which execution mode should the agent use?",
+            "→",
+        )[0]
+
+    instructions: Union[AgentInstructions, Unset] = UNSET
+    forwarding: Union[AgentForwarding, Unset] = UNSET
+    local: Union[AgentLocal, Unset] = UNSET
+
+    if execution_mode == AgentExecutionMode.INSTRUCTIONS:
+        instructions = AgentInstructions(markdown=_get_required_text("Instructions: "))
+    elif execution_mode == AgentExecutionMode.FORWARDING:
+        url = _get_required_text("Forwarding URL: ")
+        forwarding = AgentForwarding(
+            workflows=[
+                AgentWorkflow(
+                    _make_id(),
+                    EventKind.AGENTSREQUESTED,
+                    url,
+                )
+            ]
+        )
+    elif execution_mode == AgentExecutionMode.LOCAL:
+        local_agent = pick(
+            list(LocalAgent),
+            "Which local agent should this Dart agent use?",
+            "→",
+        )[0]
+        local = AgentLocal(agent=local_agent)
+
+    return create_agent(
+        name,
+        execution_mode=execution_mode,
+        instructions=instructions,
+        forwarding=forwarding,
+        local=local,
+    )
+
+
+def update_agent(
+    id: str,
+    *,
+    name: Union[str, Unset] = UNSET,
+    execution_mode: Union[AgentExecutionMode, Unset] = UNSET,
+    instructions: Union[AgentInstructions, Unset] = UNSET,
+    forwarding: Union[AgentForwarding, Unset] = UNSET,
+    local: Union[AgentLocal, Unset] = UNSET,
+) -> Agent:
+    dart = Dart()
+    agent_update = WrappedAgentUpdate(
+        item=AgentUpdate(
+            id=id,
+            name=name,
+            execution_mode=execution_mode,
+            instructions=instructions,
+            forwarding=forwarding,
+            local=local,
+        )
+    )
+    agent = dart.update_agent(id, agent_update).item
+    _log(f"Updated agent\n\n  {agent.name}\n  ID: {agent.id}\n")
+    _log("Done.")
+    return agent
+
+
+def delete_agent(id: str) -> Agent:
+    dart = Dart()
+    agent = dart.delete_agent(id).item
+
+    _log(f"Deleted agent\n\n  {agent.name}\n  ID: {agent.id}\n")
+    _log("Done.")
+    return agent
+
+
+def connect_agent(id: str | None = None, *, quiet: bool = False) -> None:
+    if id is None:
+        id = create_agent_interactive(execution_mode=AgentExecutionMode.LOCAL).id
+
+    dart = Dart()
+    try:
+        _connect_local_agent(id, base_url=dart.get_base_url(), headers=dart.get_headers(), quiet=quiet)
+    except AgentAuthError:
+        _auth_failure_exit()
 
 
 def create_task(
@@ -615,8 +776,7 @@ def create_task(
     _log(f"Created task\n\n  {task.title}\n  {task.html_url}\n  ID: {task.id}\n")
 
     if should_begin:
-        config = dart.get_config()
-        _begin_task(dart, config, task, status_name=begin_status_name)
+        begin_task(task.id, status_name=begin_status_name)
 
     _log("Done.")
     return task
@@ -735,14 +895,14 @@ def _add_standard_task_arguments(parser: ArgumentParser) -> None:
         "-d",
         "--dartboard",
         dest="dartboard_title",
-        help="dartboard title",
+        help="task dartboard title",
         default=UNSET,
     )
     parser.add_argument(
         "-s",
         "--status",
         dest="status_title",
-        help="status title",
+        help="task status title",
         default=UNSET,
     )
     parser.add_argument(
@@ -751,7 +911,7 @@ def _add_standard_task_arguments(parser: ArgumentParser) -> None:
         dest="assignee_emails",
         nargs="*",
         action="extend",
-        help="assignee email(s)",
+        help="task assignee email(s)",
     )
     parser.add_argument(
         "-t",
@@ -759,7 +919,7 @@ def _add_standard_task_arguments(parser: ArgumentParser) -> None:
         dest="tag_titles",
         nargs="*",
         action="extend",
-        help="tag title(s)",
+        help="task tag title(s)",
     )
     parser.add_argument(
         "-p",
@@ -767,7 +927,7 @@ def _add_standard_task_arguments(parser: ArgumentParser) -> None:
         dest="priority_int",
         type=int,
         choices=_PRIORITY_MAP.keys(),
-        help="priority",
+        help="task priority",
         default=UNSET,
     )
     parser.add_argument(
@@ -776,14 +936,14 @@ def _add_standard_task_arguments(parser: ArgumentParser) -> None:
         dest="size_int",
         type=int,
         choices=_SIZES,
-        help="size",
+        help="task size",
         default=UNSET,
     )
     parser.add_argument(
         "-r",
-        "--duedate",
+        "--due-date",
         dest="due_at_str",
-        help="due date",
+        help="task due date",
         default=UNSET,
     )
 
@@ -804,6 +964,10 @@ def cli() -> None:
     metavar = ",".join(
         [
             _LOGIN_CMD,
+            _CREATE_AGENT_CMD,
+            _UPDATE_AGENT_CMD,
+            _DELETE_AGENT_CMD,
+            _CONNECT_AGENT_CMD,
             _CREATE_TASK_CMD,
             _UPDATE_TASK_CMD,
             _DELETE_TASK_CMD,
@@ -825,17 +989,67 @@ def cli() -> None:
     get_host_parser.set_defaults(func=get_host)
 
     set_host_parser = subparsers.add_parser(_SET_HOST_CMD, aliases=["hs"])
-    set_host_parser.add_argument("host", help="the new host: {prod|stag|dev|[URL]}")
+    set_host_parser.add_argument("host", help="the new host: {prod|stag|dev|local|[URL]}")
     set_host_parser.set_defaults(func=set_host)
 
     login_parser = subparsers.add_parser(_LOGIN_CMD, aliases=["l"], help="login")
     login_parser.add_argument("-t", "--token", dest="token", help="your authentication token")
     login_parser.set_defaults(func=login)
 
+    create_agent_parser = subparsers.add_parser(
+        _CREATE_AGENT_CMD, aliases=["ac"], help=_HELP_TEXT_TO_COMMAND[_CREATE_AGENT_CMD]
+    )
+    create_agent_parser.add_argument("name", help="agent name")
+    create_agent_parser.add_argument(
+        "-m",
+        "--execution-mode",
+        dest="execution_mode",
+        type=AgentExecutionMode,
+        choices=list(AgentExecutionMode),
+        help="agent execution mode",
+        default=UNSET,
+    )
+    create_agent_parser.set_defaults(func=create_agent)
+
+    update_agent_parser = subparsers.add_parser(
+        _UPDATE_AGENT_CMD, aliases=["au"], help=_HELP_TEXT_TO_COMMAND[_UPDATE_AGENT_CMD]
+    )
+    update_agent_parser.add_argument("id", help="agent ID")
+    update_agent_parser.add_argument("-n", "--name", dest="name", help="agent name", default=UNSET)
+    update_agent_parser.add_argument(
+        "-m",
+        "--execution-mode",
+        dest="execution_mode",
+        type=AgentExecutionMode,
+        choices=list(AgentExecutionMode),
+        help="agent execution mode",
+        default=UNSET,
+    )
+    update_agent_parser.set_defaults(func=update_agent)
+
+    delete_agent_parser = subparsers.add_parser(
+        _DELETE_AGENT_CMD, aliases=["ad"], help=_HELP_TEXT_TO_COMMAND[_DELETE_AGENT_CMD]
+    )
+    delete_agent_parser.add_argument("id", help="agent ID")
+    delete_agent_parser.set_defaults(func=delete_agent)
+
+    connect_agent_parser = subparsers.add_parser(
+        _CONNECT_AGENT_CMD, aliases=["ax"], help="connect a local agent to a Dart agent"
+    )
+    connect_agent_parser.add_argument("id", nargs="?", help="agent ID")
+    connect_agent_parser.add_argument(
+        "-q",
+        "--quiet",
+        dest="quiet",
+        action="store_true",
+        help="hide incoming and outgoing websocket messages",
+    )
+    connect_agent_parser.set_defaults(func=connect_agent)
+
     create_task_parser = subparsers.add_parser(
         _CREATE_TASK_CMD, aliases=["tc"], help=_HELP_TEXT_TO_COMMAND[_CREATE_TASK_CMD]
     )
-    create_task_parser.add_argument("title", help="title of the task")
+    create_task_parser.add_argument("title", help="task title")
     create_task_parser.add_argument(
         "-b",
         "--begin",
@@ -855,7 +1069,7 @@ def cli() -> None:
     update_task_parser = subparsers.add_parser(
         _UPDATE_TASK_CMD, aliases=["tu"], help=_HELP_TEXT_TO_COMMAND[_UPDATE_TASK_CMD]
     )
-    update_task_parser.add_argument("id", help="ID of the task")
+    update_task_parser.add_argument("id", help="task ID")
     update_task_parser.add_argument("-e", "--title", dest="title", help="task title", default=UNSET)
     _add_standard_task_arguments(update_task_parser)
     update_task_parser.set_defaults(func=update_task)
@@ -863,7 +1077,7 @@ def cli() -> None:
     delete_task_parser = subparsers.add_parser(
         _DELETE_TASK_CMD, aliases=["td"], help=_HELP_TEXT_TO_COMMAND[_DELETE_TASK_CMD]
     )
-    delete_task_parser.add_argument("id", help="ID of the task")
+    delete_task_parser.add_argument("id", help="task ID")
     delete_task_parser.set_defaults(func=delete_task)
 
     begin_task_parser = subparsers.add_parser(_BEGIN_TASK_CMD, aliases=["tb"], help="begin work on a task")
@@ -875,12 +1089,12 @@ def cli() -> None:
         default=_DEFAULT_BEGIN_STATUS,
     )
     begin_task_parser.add_argument("-d", "--dartboard", dest="dartboard_title", help="dartboard title", default=UNSET)
-    begin_task_parser.set_defaults(func=begin_task)
+    begin_task_parser.set_defaults(func=begin_task_interactive)
 
     create_doc_parser = subparsers.add_parser(
         _CREATE_DOC_CMD, aliases=["dc"], help=_HELP_TEXT_TO_COMMAND[_CREATE_DOC_CMD]
     )
-    create_doc_parser.add_argument("title", help="title of the doc")
+    create_doc_parser.add_argument("title", help="doc title")
     create_doc_parser.add_argument("-f", "--folder", dest="folder_title", help="doc folder title", default=UNSET)
     create_doc_parser.add_argument("-t", "--text", dest="text", help="doc text", default=UNSET)
     create_doc_parser.set_defaults(func=create_doc)
@@ -888,7 +1102,7 @@ def cli() -> None:
     update_doc_parser = subparsers.add_parser(
         _UPDATE_DOC_CMD, aliases=["du"], help=_HELP_TEXT_TO_COMMAND[_UPDATE_DOC_CMD]
     )
-    update_doc_parser.add_argument("id", help="ID of the doc")
+    update_doc_parser.add_argument("id", help="doc ID")
     update_doc_parser.add_argument("-e", "--title", dest="title", help="doc title", default=UNSET)
     update_doc_parser.add_argument("-f", "--folder", dest="folder_title", help="doc folder title", default=UNSET)
     update_doc_parser.add_argument("-t", "--text", dest="text", help="doc text", default=UNSET)
@@ -897,14 +1111,14 @@ def cli() -> None:
     delete_doc_parser = subparsers.add_parser(
         _DELETE_DOC_CMD, aliases=["dd"], help=_HELP_TEXT_TO_COMMAND[_DELETE_DOC_CMD]
     )
-    delete_doc_parser.add_argument("id", help="ID of the doc")
+    delete_doc_parser.add_argument("id", help="doc ID")
     delete_doc_parser.set_defaults(func=delete_doc)
 
     create_comment_parser = subparsers.add_parser(
         _CREATE_COMMENT_CMD, aliases=["cc"], help=_HELP_TEXT_TO_COMMAND[_CREATE_COMMENT_CMD]
     )
-    create_comment_parser.add_argument("id", help="ID of the task")
-    create_comment_parser.add_argument("text", help="text of the comment")
+    create_comment_parser.add_argument("id", help="task ID")
+    create_comment_parser.add_argument("text", help="comment text")
     create_comment_parser.set_defaults(func=create_comment)
 
     server_parser = subparsers.add_parser(

@@ -1,6 +1,6 @@
 [project]
 name = "dart-tools"
-version = "0.9.3"
+version = "0.10.0"
 description = "The Dart CLI and Python Library"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -38,6 +38,7 @@ dependencies = [
   "httpx>=0.28",
   "pick>=2.4",
   "platformdirs>=4.4",
+  "websockets>=15.0",
 ]
 
 [dependency-groups]
