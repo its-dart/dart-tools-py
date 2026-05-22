@@ -3,15 +3,11 @@
 
 """A CLI to interact with the Dart web app."""
 
-# Required for type hinting compatibility when using Python 3.9
 from __future__ import annotations
 
 import json
 import os
-import random
-import re
 import signal
-import string
 import sys
 import threading
 import time
@@ -20,7 +16,7 @@ from collections import defaultdict
 from datetime import timezone
 from functools import wraps
 from importlib.metadata import version
-from typing import Callable, NoReturn, TypeVar, Union
+from typing import Any, Callable, NoReturn, TypeVar, Union
 from webbrowser import open_new_tab
 
 import dateparser
@@ -30,6 +26,12 @@ from pick import pick
 
 from .agent import AgentAuthError
 from .agent import connect_agent as _connect_local_agent
+from .agent_process import (
+    AgentConnectionError,
+    disconnect_background_agent_connections,
+    list_background_agent_connections,
+    start_background_agent_connection,
+)
 from .exception import DartException
 from .generated import Client, api
 from .generated.models import (
@@ -72,6 +74,9 @@ from .generated.models import (
 from .generated.types import UNSET, Response, Unset
 from .server import DEFAULT_PORT as _SERVER_DEFAULT_PORT
 from .server import run_server
+from .util import get_item_count_text, make_id, slugify_str, trim_slug_str
+
+_make_id = make_id
 
 _APP = "dart-tools"
 _PROG = "dart"
@@ -92,6 +97,8 @@ _CREATE_AGENT_CMD = "agent-create"
 _UPDATE_AGENT_CMD = "agent-update"
 _DELETE_AGENT_CMD = "agent-delete"
 _CONNECT_AGENT_CMD = "agent-connect"
+_LIST_AGENT_CONNECTIONS_CMD = "agent-connections"
+_DISCONNECT_AGENT_CMD = "agent-disconnect"
 # Task commands
 _CREATE_TASK_CMD = "task-create"
 _UPDATE_TASK_CMD = "task-update"
@@ -127,9 +134,6 @@ _VERSION_CHECK_TTL_S = 24 * 60 * 60
 _VERSION_CHECK_JOIN_TIMEOUT_S = 0.5
 _PYPI_VERSION_URL = "https://pypi.org/pypi/dart-tools/json"
 
-_ID_CHARS = string.ascii_lowercase + string.ascii_uppercase + string.digits
-_NON_ALPHANUM_RE = re.compile(r"[^a-zA-Z0-9-]+")
-_REPEATED_DASH_RE = re.compile(r"-{2,}")
 _PRIORITY_MAP: dict[int, str] = {
     0: Priority.CRITICAL,
     1: Priority.HIGH,
@@ -164,28 +168,6 @@ _HELP_TEXT_TO_COMMAND = {
 }
 
 _is_cli = False
-
-
-# TODO dedupe these functions with other usages elsewhere
-def _make_id() -> str:
-    return "".join(random.choices(_ID_CHARS, k=12))
-
-
-def trim_slug_str(s: str, length: int, max_under: Union[int, None] = None) -> str:
-    max_under = max_under if max_under is not None else length // 6
-    if len(s) <= length:
-        return s
-    for i in range(1, max_under + 1):
-        if s[length - i] == "-":
-            return s[: length - i]
-    return s[:length]
-
-
-def slugify_str(s: str, lower: bool = False, trim_kwargs: Union[dict, None] = None) -> str:
-    lowered = s.lower() if lower else s
-    formatted = _NON_ALPHANUM_RE.sub("-", lowered.replace("'", ""))
-    formatted = _REPEATED_DASH_RE.sub("-", formatted).strip("-")
-    return trim_slug_str(formatted, **trim_kwargs) if trim_kwargs is not None else formatted
 
 
 def _suppress_exception(fn: Callable) -> Callable:
@@ -264,7 +246,7 @@ class _Config:
             except OSError:
                 pass
         self._content = {
-            _CLIENT_ID_KEY: _make_id(),
+            _CLIENT_ID_KEY: make_id(),
             _HOST_KEY: _DEFAULT_HOST,
             _HOSTS_KEY: {},
         } | self._content
@@ -677,7 +659,7 @@ def create_agent_interactive(*, execution_mode: AgentExecutionMode | None = None
         forwarding = AgentForwarding(
             workflows=[
                 AgentWorkflow(
-                    _make_id(),
+                    make_id(),
                     EventKind.AGENTSREQUESTED,
                     url,
                 )
@@ -735,15 +717,63 @@ def delete_agent(id: str) -> Agent:
     return agent
 
 
-def connect_agent(id: str | None = None, *, quiet: bool = False) -> None:
+def _make_agent_link(base_url: str, agent_id: str) -> str:
+    return f"{base_url.rstrip('/')}/a/{agent_id}"
+
+
+def _format_agent_connection(connection: dict[str, Any], base_url: str) -> str:
+    agent_id = connection["agentId"]
+    started_at = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(connection["startedAt"]))
+    return f"  {_make_agent_link(base_url, agent_id)}\n  ID: {agent_id}\n  Started: {started_at}"
+
+
+def connect_agent(id: str | None = None, *, quiet: bool = False, background: bool = False) -> None:
     if id is None:
         id = create_agent_interactive(execution_mode=AgentExecutionMode.LOCAL).id
 
     dart = Dart()
+    if background:
+        try:
+            connection = start_background_agent_connection(id)
+        except AgentConnectionError as ex:
+            _dart_exit(str(ex))
+        _log(f"Started background agent connection\n\n{_format_agent_connection(connection, dart.get_base_url())}\n")
+        _log("Done.")
+        return
+
+    previous_sigint_handler = signal.getsignal(signal.SIGINT) if _is_cli else None
+    if previous_sigint_handler is not None:
+        signal.signal(signal.SIGINT, signal.default_int_handler)
     try:
         _connect_local_agent(id, base_url=dart.get_base_url(), headers=dart.get_headers(), quiet=quiet)
     except AgentAuthError:
         _auth_failure_exit()
+    finally:
+        if previous_sigint_handler is not None:
+            signal.signal(signal.SIGINT, previous_sigint_handler)
+
+
+def list_agent_connections() -> list[dict[str, Any]]:
+    connections = list_background_agent_connections()
+    if not connections:
+        _log("No background agent connections.")
+        return connections
+
+    dart = Dart()
+    _log("Background agent connections\n")
+    _log("\n\n".join(_format_agent_connection(connection, dart.get_base_url()) for connection in connections))
+    _log("Done.")
+    return connections
+
+
+def disconnect_agent(id: str | None = None, *, all_connections: bool = False) -> list[dict[str, Any]]:
+    try:
+        stopped_connections = disconnect_background_agent_connections(id, all_connections=all_connections)
+    except AgentConnectionError as ex:
+        _dart_exit(str(ex))
+
+    _log(f"Stopped {get_item_count_text(len(stopped_connections), 'background agent connection')}.")
+    return stopped_connections
 
 
 def create_task(
@@ -968,6 +998,8 @@ def cli() -> None:
             _UPDATE_AGENT_CMD,
             _DELETE_AGENT_CMD,
             _CONNECT_AGENT_CMD,
+            _LIST_AGENT_CONNECTIONS_CMD,
+            _DISCONNECT_AGENT_CMD,
             _CREATE_TASK_CMD,
             _UPDATE_TASK_CMD,
             _DELETE_TASK_CMD,
@@ -1034,17 +1066,42 @@ def cli() -> None:
     delete_agent_parser.set_defaults(func=delete_agent)
 
     connect_agent_parser = subparsers.add_parser(
-        _CONNECT_AGENT_CMD, aliases=["ax"], help="connect a local agent to a Dart agent"
+        _CONNECT_AGENT_CMD, aliases=["acc"], help="connect a local agent to a Dart agent"
     )
     connect_agent_parser.add_argument("id", nargs="?", help="agent ID")
+    connect_agent_parser.add_argument(
+        "-b",
+        "--background",
+        dest="background",
+        action="store_true",
+        help="keep the agent connection running in the background",
+    )
     connect_agent_parser.add_argument(
         "-q",
         "--quiet",
         dest="quiet",
         action="store_true",
-        help="hide incoming and outgoing websocket messages",
+        help="hide incoming and outgoing messages",
     )
     connect_agent_parser.set_defaults(func=connect_agent)
+
+    list_agent_connections_parser = subparsers.add_parser(
+        _LIST_AGENT_CONNECTIONS_CMD, aliases=["acl"], help="list background agent connections"
+    )
+    list_agent_connections_parser.set_defaults(func=list_agent_connections)
+
+    disconnect_agent_parser = subparsers.add_parser(
+        _DISCONNECT_AGENT_CMD, aliases=["acd"], help="stop background agent connections"
+    )
+    disconnect_agent_parser.add_argument("id", nargs="?", help="agent ID")
+    disconnect_agent_parser.add_argument(
+        "-a",
+        "--all",
+        dest="all_connections",
+        action="store_true",
+        help="stop all background agent connections",
+    )
+    disconnect_agent_parser.set_defaults(func=disconnect_agent)
 
     create_task_parser = subparsers.add_parser(
         _CREATE_TASK_CMD, aliases=["tc"], help=_HELP_TEXT_TO_COMMAND[_CREATE_TASK_CMD]

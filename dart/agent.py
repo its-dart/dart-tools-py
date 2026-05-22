@@ -12,18 +12,24 @@ from urllib.parse import urlsplit, urlunsplit
 from websockets.asyncio.client import connect as _websocket_connect
 from websockets.exceptions import ConnectionClosed, InvalidStatus
 
-_MESSAGE_ID_KEY = "id"
+_OutputMode = Literal["json", "jsonl"]
+
+_AGENT_WEBSOCKET_PATH = "/ws/v0/local-agent"
+_AUTH_FAILURE_STATUS_CODES = (401, 403)
+_MAX_RECONNECT_DELAY_SECONDS = 15
+_RECONNECT_TIMEOUT_SECONDS = 120
+
 _LOCAL_AGENT_KEY = "localAgent"
+_MESSAGE_ID_KEY = "id"
 _MESSAGE_KEY = "message"
 _NAME_KEY = "name"
 _PROMPT_KEY = "prompt"
 _SUCCESS_KEY = "success"
 _TYPE_KEY = "type"
+
 _RESULT_TYPE = "result"
 _START_TYPE = "start"
-_AGENT_WEBSOCKET_PATH = "/ws/v0/local-agent"
-_AUTH_FAILURE_STATUS_CODES = (401, 403)
-_OutputMode = Literal["json", "jsonl"]
+_WORK_TYPE = "message"
 
 
 class AgentAuthError(Exception):
@@ -124,8 +130,6 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
     ),
 }
 _LOCAL_AGENT_SESSION_IDS: dict[tuple[str, str], str] = {}
-_RECONNECT_TIMEOUT_SECONDS = 120
-_MAX_RECONNECT_DELAY_SECONDS = 15
 
 
 def connect_agent(agent_id: str, *, base_url: str, headers: Mapping[str, str], quiet: bool = False) -> None:
@@ -213,21 +217,32 @@ async def _wait_for_stdin_eof() -> None:
         loop.remove_reader(sys.stdin.fileno())
 
 
-def _print_start_message(message: dict[str, Any]) -> None:
-    print(f"Connected {message[_NAME_KEY]} ({message[_LOCAL_AGENT_KEY]}), waiting for work", flush=True)
+def _make_agent_url(base_url: str, agent_id: str) -> str:
+    return f"{base_url.rstrip('/')}/a/{agent_id}"
 
 
-async def _handle_messages(websocket: Any, quiet: bool) -> None:
+def _print_start_message(message: dict[str, Any], agent_id: str, base_url: str) -> None:
+    agent_url = _make_agent_url(base_url, agent_id)
+    print(
+        f"Connected agent\n\n  {message[_NAME_KEY]}\n  {agent_url}\n  ID: {agent_id}\n  Local agent: {message[_LOCAL_AGENT_KEY]}\n\nWaiting for work from Dart",
+        flush=True,
+    )
+
+
+async def _handle_messages(websocket: Any, quiet: bool, agent_id: str, base_url: str) -> None:
     async for raw_message in websocket:
         message = json.loads(raw_message)
-        if message[_TYPE_KEY] == _START_TYPE:
-            _print_start_message(message)
+        message_type = message[_TYPE_KEY]
+        if message_type == _START_TYPE:
+            _print_start_message(message, agent_id, base_url)
+            continue
+        if message_type != _WORK_TYPE:
             continue
         await _handle_work(websocket, message, quiet)
 
 
-async def _run_until_closed_or_eof(websocket: Any, quiet: bool) -> bool:
-    messages_task = asyncio.create_task(_handle_messages(websocket, quiet))
+async def _run_until_closed_or_eof(websocket: Any, quiet: bool, *, agent_id: str, base_url: str) -> bool:
+    messages_task = asyncio.create_task(_handle_messages(websocket, quiet, agent_id, base_url))
     if not sys.stdin.isatty():
         await messages_task
         return True
@@ -278,7 +293,7 @@ async def _connect_agent_async(agent_id: str, *, base_url: str, headers: Mapping
                 ) as websocket:
                     reconnect_started_at = None
                     reconnect_attempt = 0
-                    if not await _run_until_closed_or_eof(websocket, quiet):
+                    if not await _run_until_closed_or_eof(websocket, quiet, agent_id=agent_id, base_url=base_url):
                         return
             except (ConnectionClosed, OSError, TimeoutError):
                 pass

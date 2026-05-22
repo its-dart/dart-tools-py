@@ -3,7 +3,6 @@
 
 """These are legacy components that still rely on private API, moved out of dart.py."""
 
-# Required for type hinting compatibility when using Python 3.9
 from __future__ import annotations
 
 from functools import wraps

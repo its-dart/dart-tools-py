@@ -1,4 +1,3 @@
-# Required for type hinting compatibility when using Python 3.9
 from __future__ import annotations
 
 from .dart import (
@@ -15,8 +14,10 @@ from .dart import (
     delete_agent,
     delete_doc,
     delete_task,
+    disconnect_agent,
     get_host,
     is_logged_in,
+    list_agent_connections,
     login,
     set_host,
     update_agent,
