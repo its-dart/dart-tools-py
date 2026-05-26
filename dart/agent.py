@@ -42,14 +42,14 @@ class _LocalAgent:
         *,
         start_command: tuple[str, ...],
         session_id_key: str,
-        response_key: str,
+        response_key: str | tuple[str, ...],
         output_mode: _OutputMode,
         resume_command: tuple[str, ...] | None = None,
         resume_suffix: tuple[str, ...] = (),
     ) -> None:
         self.start_command = start_command
         self.session_id_key = session_id_key
-        self.response_key = response_key
+        self.response_keys = (response_key,) if isinstance(response_key, str) else response_key
         self.output_mode = output_mode
         self.resume_command = resume_command
         self.resume_suffix = resume_suffix
@@ -60,17 +60,22 @@ class _LocalAgent:
         return (*self.start_command, prompt)
 
     def parse_output(self, stdout: str, stderr: str) -> tuple[str, str | None]:
-        response_parts = []
+        response_parts_by_key = {response_key: [] for response_key in self.response_keys}
         session_id: str | None = None
         for value in _load_json_values(stdout, self.output_mode):
             if not isinstance(value, dict):
                 continue
             session_id = session_id or _nested_string(value, self.session_id_key)
-            response = _nested_string(value, self.response_key)
-            if response:
-                response_parts.append(response)
+            for response_key in self.response_keys:
+                response = _nested_string(value, response_key)
+                if response:
+                    response_parts_by_key[response_key].append(response)
+                    break
 
-        response = "".join(response_parts).strip()
+        response = next(
+            ("".join(response_parts).strip() for response_parts in response_parts_by_key.values() if response_parts),
+            "",
+        )
         if response:
             return response, session_id
         if stdout.strip():
@@ -114,6 +119,30 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
         response_key="item.text",
         output_mode="jsonl",
         resume_command=("codex", "exec", "--json", "resume"),
+    ),
+    "copilot": _LocalAgent(
+        start_command=("copilot", "--output-format", "json", "-s", "--autopilot", "--no-ask-user", "--allow-all", "-p"),
+        session_id_key="sessionId",
+        response_key=("data.content", "data.summary"),
+        output_mode="jsonl",
+        resume_command=(
+            "copilot",
+            "--output-format",
+            "json",
+            "-s",
+            "--autopilot",
+            "--no-ask-user",
+            "--allow-all",
+            "--resume",
+        ),
+        resume_suffix=("-p",),
+    ),
+    "cursor": _LocalAgent(
+        start_command=("cursor-agent", "--print", "--output-format", "json"),
+        session_id_key="session_id",
+        response_key="result",
+        output_mode="json",
+        resume_command=("cursor-agent", "--print", "--output-format", "json", "--resume"),
     ),
     "gemini": _LocalAgent(
         start_command=("gemini", "--output-format", "json", "-p"),

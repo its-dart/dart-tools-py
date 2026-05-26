@@ -20,6 +20,8 @@ class AgentLocal:
     Attributes:
         agent (Union[Unset, LocalAgent]): * `claude` - CLAUDE
             * `codex` - CODEX
+            * `copilot` - COPILOT
+            * `cursor` - CURSOR
             * `gemini` - GEMINI
             * `opencode` - OPENCODE
     """
