@@ -6,12 +6,13 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 import signal
 import sys
 import threading
 import time
-from argparse import ArgumentParser
+from argparse import ArgumentParser, ArgumentTypeError
 from collections import defaultdict
 from datetime import timezone
 from functools import wraps
@@ -185,6 +186,16 @@ def _dart_exit(message: str) -> NoReturn:
     if _is_cli:
         sys.exit(message)
     raise DartException(message)
+
+
+def _nonnegative_float(value: str) -> float:
+    try:
+        parsed = float(value)
+    except ValueError:
+        raise ArgumentTypeError(f"invalid float value: {value!r}") from None
+    if not math.isfinite(parsed) or parsed < 0:
+        raise ArgumentTypeError("must be finite and greater than or equal to 0")
+    return parsed
 
 
 def _exit_gracefully(_signal_received, _frame) -> None:
@@ -909,6 +920,7 @@ def server(
     no_ngrok: bool = False,
     webhook: bool = False,
     response_str: Union[str, None] = None,
+    delay: float = 0.0,
 ) -> None:
     """Run a simple Flask server, optionally tunneled with ngrok."""
     response: Union[dict, list, str, int, float, bool, None] = None
@@ -917,7 +929,7 @@ def server(
             response = json.loads(response_str)
         except json.JSONDecodeError as ex:
             _dart_exit(f"Invalid JSON for --response: {ex}.")
-    run_server(port=port, no_ngrok=no_ngrok, webhook=webhook, response=response)
+    run_server(port=port, no_ngrok=no_ngrok, webhook=webhook, response=response, delay=delay)
 
 
 def _add_standard_task_arguments(parser: ArgumentParser) -> None:
@@ -1200,6 +1212,14 @@ def cli() -> None:
         dest="response_str",
         help='JSON to return for every request (default: {"ok": true})',
         default=None,
+    )
+    server_parser.add_argument(
+        "-d",
+        "--delay",
+        dest="delay",
+        type=_nonnegative_float,
+        default=0.0,
+        help="seconds to wait before sending each response",
     )
     server_parser.set_defaults(func=server)
 

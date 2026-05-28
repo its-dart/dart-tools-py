@@ -4,6 +4,7 @@ import asyncio
 import contextlib
 import json
 import random
+import subprocess
 import sys
 import time
 from typing import Any, Literal, Mapping
@@ -14,22 +15,38 @@ from websockets.exceptions import ConnectionClosed, InvalidStatus
 
 _OutputMode = Literal["json", "jsonl"]
 
-_AGENT_WEBSOCKET_PATH = "/ws/v0/local-agent"
+_WEBSOCKET_PATH = "/ws/v0/local-agent"
 _AUTH_FAILURE_STATUS_CODES = (401, 403)
+_RUN_TIMEOUT_SECONDS = 1800
 _MAX_RECONNECT_DELAY_SECONDS = 15
 _RECONNECT_TIMEOUT_SECONDS = 120
 
 _LOCAL_AGENT_KEY = "localAgent"
+_CHANGES_KEY = "changes"
+_EXIT_KEY = "exit"
 _MESSAGE_ID_KEY = "id"
 _MESSAGE_KEY = "message"
 _NAME_KEY = "name"
 _PROMPT_KEY = "prompt"
 _SUCCESS_KEY = "success"
+_TITLE_KEY = "title"
 _TYPE_KEY = "type"
 
 _RESULT_TYPE = "result"
 _START_TYPE = "start"
+_UPDATE_TYPE = "update"
 _WORK_TYPE = "message"
+
+_CLOSE_ERROR_UNAUTHORIZED = "unauthorized"
+_CLOSE_ERROR_IN_USE = "local_agent_in_use"
+_CLOSE_ERROR_INVALID_RESULT = "invalid_result"
+_CLOSE_ERROR_UNKNOWN_WORK = "unknown_work"
+_CLOSE_ERROR_CODES = {
+    _CLOSE_ERROR_UNAUTHORIZED,
+    _CLOSE_ERROR_IN_USE,
+    _CLOSE_ERROR_INVALID_RESULT,
+    _CLOSE_ERROR_UNKNOWN_WORK,
+}
 
 
 class AgentAuthError(Exception):
@@ -78,25 +95,43 @@ class _LocalAgent:
         )
         if response:
             return response, session_id
-        if stdout.strip():
-            return stdout.strip(), session_id
-        return stderr.strip(), session_id
+        return "\n\n".join(part for part in (stdout.strip(), stderr.strip()) if part), session_id
 
     async def run(self, prompt: str, session_id: str | None) -> tuple[bool, str, str | None]:
         command = self.make_command(session_id, prompt)
         try:
             process = await asyncio.create_subprocess_exec(
                 *command,
+                stdin=subprocess.DEVNULL,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
         except FileNotFoundError:
             return False, f"Local agent command not found: {command[0]}.", None
 
-        stdout_bytes, stderr_bytes = await process.communicate()
+        communicate_task = asyncio.create_task(process.communicate())
+        timed_out = False
+        try:
+            stdout_bytes, stderr_bytes = await asyncio.wait_for(asyncio.shield(communicate_task), _RUN_TIMEOUT_SECONDS)
+        except asyncio.TimeoutError:
+            timed_out = True
+            with contextlib.suppress(ProcessLookupError):
+                process.kill()
+            stdout_bytes, stderr_bytes = await communicate_task
+        except asyncio.CancelledError:
+            with contextlib.suppress(ProcessLookupError):
+                process.kill()
+            with contextlib.suppress(Exception):
+                await communicate_task
+            raise
+
         stdout = stdout_bytes.decode(errors="replace").strip()
         stderr = stderr_bytes.decode(errors="replace").strip()
         output = "\n\n".join(part for part in (stdout, stderr) if part)
+
+        if timed_out:
+            message = f"{command[0]} did not finish within {_RUN_TIMEOUT_SECONDS} seconds."
+            return False, "\n\n".join(part for part in (message, output) if part), None
 
         if process.returncode != 0:
             return False, output or f"{command[0]} exited with status {process.returncode}.", None
@@ -174,7 +209,10 @@ def _load_json_values(text: str, output_mode: _OutputMode) -> list[Any]:
         return []
 
     if output_mode == "json":
-        parsed = json.loads(stripped_text)
+        try:
+            parsed = json.loads(stripped_text)
+        except json.JSONDecodeError:
+            return []
         return parsed if isinstance(parsed, list) else [parsed]
 
     values = []
@@ -182,7 +220,10 @@ def _load_json_values(text: str, output_mode: _OutputMode) -> list[Any]:
         stripped_line = line.strip()
         if not stripped_line.startswith(("{", "[")):
             continue
-        parsed_line = json.loads(stripped_line)
+        try:
+            parsed_line = json.loads(stripped_line)
+        except json.JSONDecodeError:
+            continue
         if isinstance(parsed_line, list):
             values.extend(parsed_line)
         else:
@@ -258,23 +299,45 @@ def _print_start_message(message: dict[str, Any], agent_id: str, base_url: str) 
     )
 
 
-async def _handle_messages(websocket: Any, quiet: bool, agent_id: str, base_url: str) -> None:
+def _print_update(message: dict[str, Any]) -> bool:
+    title = message.get(_TITLE_KEY)
+    if not isinstance(title, str) or not title:
+        title = "Agent updated"
+
+    changes = message.get(_CHANGES_KEY)
+    if not isinstance(changes, list):
+        changes = []
+    changes = [change for change in changes if isinstance(change, str) and change]
+
+    if changes:
+        print(f"\n{title}\n\n" + "\n".join(f"  {change}" for change in changes), flush=True)
+    else:
+        print(f"\n{title}", flush=True)
+    return message.get(_EXIT_KEY) is True
+
+
+async def _handle_messages(websocket: Any, quiet: bool, agent_id: str, base_url: str) -> bool:
     async for raw_message in websocket:
         message = json.loads(raw_message)
         message_type = message[_TYPE_KEY]
         if message_type == _START_TYPE:
             _print_start_message(message, agent_id, base_url)
             continue
+        if message_type == _UPDATE_TYPE:
+            if _print_update(message):
+                await websocket.close()
+                return False
+            continue
         if message_type != _WORK_TYPE:
             continue
         await _handle_work(websocket, message, quiet)
+    return True
 
 
 async def _run_until_closed_or_eof(websocket: Any, quiet: bool, *, agent_id: str, base_url: str) -> bool:
     messages_task = asyncio.create_task(_handle_messages(websocket, quiet, agent_id, base_url))
     if not sys.stdin.isatty():
-        await messages_task
-        return True
+        return await messages_task
 
     eof_task = asyncio.create_task(_wait_for_stdin_eof())
     done, pending = await asyncio.wait({messages_task, eof_task}, return_when=asyncio.FIRST_COMPLETED)
@@ -287,14 +350,32 @@ async def _run_until_closed_or_eof(websocket: Any, quiet: bool, *, agent_id: str
     if eof_task in done:
         await websocket.close()
         return False
-    messages_task.result()
-    return True
+    return messages_task.result()
+
+
+def _get_connection_closed_error_message(ex: ConnectionClosed) -> str | None:
+    close_frame = getattr(ex, "rcvd", None)
+    reason = getattr(close_frame, "reason", "") or getattr(ex, "reason", "")
+    if not reason:
+        return None
+
+    try:
+        payload = json.loads(reason)
+    except json.JSONDecodeError:
+        return None
+
+    if not isinstance(payload, dict):
+        return None
+    if payload.get("code") not in _CLOSE_ERROR_CODES:
+        return None
+    message = payload.get("message")
+    return message if isinstance(message, str) and message else None
 
 
 def _make_websocket_url(base_url: str, agent_id: str) -> str:
     parsed_url = urlsplit(base_url)
     scheme = "wss" if parsed_url.scheme == "https" else "ws"
-    return urlunsplit((scheme, parsed_url.netloc, f"{_AGENT_WEBSOCKET_PATH}/{agent_id}", "", ""))
+    return urlunsplit((scheme, parsed_url.netloc, f"{_WEBSOCKET_PATH}/{agent_id}", "", ""))
 
 
 def _make_origin(websocket_url: str) -> str:
@@ -324,7 +405,11 @@ async def _connect_agent_async(agent_id: str, *, base_url: str, headers: Mapping
                     reconnect_attempt = 0
                     if not await _run_until_closed_or_eof(websocket, quiet, agent_id=agent_id, base_url=base_url):
                         return
-            except (ConnectionClosed, OSError, TimeoutError):
+            except ConnectionClosed as ex:
+                close_error_message = _get_connection_closed_error_message(ex)
+                if close_error_message is not None:
+                    raise SystemExit(close_error_message) from None
+            except (OSError, TimeoutError):
                 pass
 
             if reconnect_started_at is None:

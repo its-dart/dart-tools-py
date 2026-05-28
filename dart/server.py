@@ -103,7 +103,7 @@ def _handle_webhook(payload: bytes) -> bool:
     return True
 
 
-def make_app(webhook: bool = False, response: Any = None) -> Flask:
+def make_app(webhook: bool = False, response: Any = None, delay: float = 0.0) -> Flask:
     """Build a Flask app that returns ``response`` as JSON and verifies Dart webhooks."""
     payload = response if response is not None else {"ok": True}
     app = Flask(__name__)
@@ -115,6 +115,8 @@ def make_app(webhook: bool = False, response: Any = None) -> Flask:
         print(f"{datetime.now(timezone.utc).isoformat()} {request.method} /{path}")
         if webhook:
             ok = _handle_webhook(body)
+            if delay:
+                time.sleep(delay)
             return jsonify(success=ok)
 
         if body:
@@ -122,15 +124,23 @@ def make_app(webhook: bool = False, response: Any = None) -> Flask:
                 print(json.dumps(json.loads(body), indent=2))
             except (ValueError, TypeError):
                 print(body.decode("utf-8", errors="replace"))
+        if delay:
+            time.sleep(delay)
         return jsonify(payload)
 
     return app
 
 
-def run_server(port: int = DEFAULT_PORT, no_ngrok: bool = False, webhook: bool = False, response: Any = None) -> None:
+def run_server(
+    port: int = DEFAULT_PORT,
+    no_ngrok: bool = False,
+    webhook: bool = False,
+    response: Any = None,
+    delay: float = 0.0,
+) -> None:
     """Run the Flask server, optionally with an ngrok tunnel."""
     logging.getLogger("werkzeug").setLevel(logging.ERROR)
-    app = make_app(webhook=webhook, response=response)
+    app = make_app(webhook=webhook, response=response, delay=delay)
     print(
         f"Listening on http://localhost:{port} (default response: {json.dumps(response if response is not None else {'ok': True})})"
     )
