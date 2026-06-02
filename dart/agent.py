@@ -4,6 +4,7 @@ import asyncio
 import contextlib
 import json
 import random
+import shutil
 import subprocess
 import sys
 import time
@@ -12,6 +13,8 @@ from urllib.parse import urlsplit, urlunsplit
 
 from websockets.asyncio.client import connect as _websocket_connect
 from websockets.exceptions import ConnectionClosed, InvalidStatus
+
+from .exception import UNKNOWN_FAILURE_MESSAGE, AgentAuthError
 
 _OutputMode = Literal["json", "jsonl"]
 
@@ -38,18 +41,22 @@ _UPDATE_TYPE = "update"
 _WORK_TYPE = "message"
 
 _CLOSE_ERROR_UNAUTHORIZED = "unauthorized"
-_CLOSE_ERROR_IN_USE = "local_agent_in_use"
+_CLOSE_ERROR_AGENT_NOT_FOUND = "agent_not_found"
+_CLOSE_ERROR_AGENT_NOT_LOCAL = "agent_not_local"
+_CLOSE_ERROR_IN_USE = "agent_in_use"
 _CLOSE_ERROR_INVALID_RESULT = "invalid_result"
 _CLOSE_ERROR_UNKNOWN_WORK = "unknown_work"
 _CLOSE_ERROR_CODES = {
     _CLOSE_ERROR_UNAUTHORIZED,
+    _CLOSE_ERROR_AGENT_NOT_FOUND,
+    _CLOSE_ERROR_AGENT_NOT_LOCAL,
     _CLOSE_ERROR_IN_USE,
     _CLOSE_ERROR_INVALID_RESULT,
     _CLOSE_ERROR_UNKNOWN_WORK,
 }
 
 
-class AgentAuthError(Exception):
+class _LocalAgentSetupError(Exception):
     pass
 
 
@@ -75,6 +82,12 @@ class _LocalAgent:
         if session_id is not None and self.resume_command is not None:
             return (*self.resume_command, session_id, *self.resume_suffix, prompt)
         return (*self.start_command, prompt)
+
+    def executable(self) -> str:
+        return self.start_command[0]
+
+    def is_available(self) -> bool:
+        return shutil.which(self.executable()) is not None
 
     def parse_output(self, stdout: str, stderr: str) -> tuple[str, str | None]:
         response_parts_by_key = {response_key: [] for response_key in self.response_keys}
@@ -201,6 +214,8 @@ def connect_agent(agent_id: str, *, base_url: str, headers: Mapping[str, str], q
         asyncio.run(_connect_agent_async(agent_id, base_url=base_url, headers=headers, quiet=quiet))
     except KeyboardInterrupt:
         return
+    except _LocalAgentSetupError as ex:
+        raise SystemExit(str(ex)) from None
 
 
 def _load_json_values(text: str, output_mode: _OutputMode) -> list[Any]:
@@ -240,11 +255,21 @@ def _nested_string(value: dict[str, Any], path: str) -> str | None:
     return result if isinstance(result, str) and result else None
 
 
-async def _run_local_agent(local_agent_name: str, prompt: str, message_id: str) -> tuple[bool, str]:
+def _get_local_agent(local_agent_name: str) -> _LocalAgent:
     local_agent = _LOCAL_AGENTS.get(local_agent_name)
     if local_agent is None:
-        return False, f"Unknown local agent: {local_agent_name}."
+        raise _LocalAgentSetupError(f"Unknown local agent: {local_agent_name}.")
+    return local_agent
 
+
+def _validate_local_agent_available(local_agent_name: str) -> None:
+    local_agent = _get_local_agent(local_agent_name)
+    if not local_agent.is_available():
+        raise _LocalAgentSetupError(f"Local agent command not found: {local_agent.executable()}.")
+
+
+async def _run_local_agent(local_agent_name: str, prompt: str, message_id: str) -> tuple[bool, str]:
+    local_agent = _get_local_agent(local_agent_name)
     session_key = (local_agent_name, message_id)
     success, message, session_id = await local_agent.run(prompt, _LOCAL_AGENT_SESSION_IDS.get(session_key))
     if success and session_id is not None:
@@ -321,6 +346,7 @@ async def _handle_messages(websocket: Any, quiet: bool, agent_id: str, base_url:
         message = json.loads(raw_message)
         message_type = message[_TYPE_KEY]
         if message_type == _START_TYPE:
+            _validate_local_agent_available(message[_LOCAL_AGENT_KEY])
             _print_start_message(message, agent_id, base_url)
             continue
         if message_type == _UPDATE_TYPE:
@@ -353,25 +379,6 @@ async def _run_until_closed_or_eof(websocket: Any, quiet: bool, *, agent_id: str
     return messages_task.result()
 
 
-def _get_connection_closed_error_message(ex: ConnectionClosed) -> str | None:
-    close_frame = getattr(ex, "rcvd", None)
-    reason = getattr(close_frame, "reason", "") or getattr(ex, "reason", "")
-    if not reason:
-        return None
-
-    try:
-        payload = json.loads(reason)
-    except json.JSONDecodeError:
-        return None
-
-    if not isinstance(payload, dict):
-        return None
-    if payload.get("code") not in _CLOSE_ERROR_CODES:
-        return None
-    message = payload.get("message")
-    return message if isinstance(message, str) and message else None
-
-
 def _make_websocket_url(base_url: str, agent_id: str) -> str:
     parsed_url = urlsplit(base_url)
     scheme = "wss" if parsed_url.scheme == "https" else "ws"
@@ -386,6 +393,30 @@ def _make_origin(websocket_url: str) -> str:
 
 def _make_connection_headers(headers: Mapping[str, str]) -> dict[str, str]:
     return {key: value for key, value in headers.items() if key.lower() != "origin"}
+
+
+def _raise_for_connection_closed_error(ex: ConnectionClosed) -> None:
+    close_frame = getattr(ex, "rcvd", None)
+    reason = getattr(close_frame, "reason", "") or getattr(ex, "reason", "")
+    if not reason:
+        return
+
+    try:
+        payload = json.loads(reason)
+    except json.JSONDecodeError:
+        return
+
+    if not isinstance(payload, dict):
+        return
+
+    code = payload.get("code")
+    message = payload.get("message")
+    if code not in _CLOSE_ERROR_CODES or not isinstance(message, str) or not message:
+        return
+
+    if code == _CLOSE_ERROR_UNAUTHORIZED:
+        raise AgentAuthError(message) from None
+    raise SystemExit(message) from None
 
 
 async def _connect_agent_async(agent_id: str, *, base_url: str, headers: Mapping[str, str], quiet: bool) -> None:
@@ -406,16 +437,14 @@ async def _connect_agent_async(agent_id: str, *, base_url: str, headers: Mapping
                     if not await _run_until_closed_or_eof(websocket, quiet, agent_id=agent_id, base_url=base_url):
                         return
             except ConnectionClosed as ex:
-                close_error_message = _get_connection_closed_error_message(ex)
-                if close_error_message is not None:
-                    raise SystemExit(close_error_message) from None
+                _raise_for_connection_closed_error(ex)
             except (OSError, TimeoutError):
                 pass
 
             if reconnect_started_at is None:
                 reconnect_started_at = time.monotonic()
             if time.monotonic() - reconnect_started_at >= _RECONNECT_TIMEOUT_SECONDS:
-                raise SystemExit("Could not reconnect to Dart local agent.") from None
+                raise SystemExit("Could not reconnect to Dart agent.") from None
 
             reconnect_attempt += 1
             delay = min(2 ** (reconnect_attempt - 1), _MAX_RECONNECT_DELAY_SECONDS)
@@ -424,5 +453,5 @@ async def _connect_agent_async(agent_id: str, *, base_url: str, headers: Mapping
             await asyncio.sleep(delay)
     except InvalidStatus as ex:
         if ex.response.status_code in _AUTH_FAILURE_STATUS_CODES:
-            raise AgentAuthError from None
-        raise SystemExit(f"Dart rejected the local-agent connection with HTTP {ex.response.status_code}.") from None
+            raise AgentAuthError("Authentication failed, sign in again") from None
+        raise SystemExit(UNKNOWN_FAILURE_MESSAGE) from None

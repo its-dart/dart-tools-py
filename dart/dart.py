@@ -25,7 +25,6 @@ import httpx
 import platformdirs
 from pick import pick
 
-from .agent import AgentAuthError
 from .agent import connect_agent as _connect_local_agent
 from .agent_process import (
     AgentConnectionError,
@@ -33,7 +32,7 @@ from .agent_process import (
     list_background_agent_connections,
     start_background_agent_connection,
 )
-from .exception import DartException
+from .exception import UNKNOWN_FAILURE_MESSAGE, AgentAuthError, DartException
 from .generated import Client, api
 from .generated.models import (
     Agent,
@@ -458,16 +457,17 @@ def set_host(host: str) -> bool:
     return True
 
 
-def _auth_failure_exit() -> NoReturn:
-    _dart_exit(
+def _auth_failure_exit(message: str | None = None) -> NoReturn:
+    login_message = (
         f"Not logged in, run\n\n  {_PROG} {_LOGIN_CMD}\n\nto log in."
         if _is_cli
         else "Not logged in, either run\n\n  dart.login(token)\n\nor save the token into the DART_TOKEN environment variable."
     )
+    _dart_exit(f"{message}\n\n{login_message}" if message else login_message)
 
 
 def _unknown_failure_exit() -> NoReturn:
-    _dart_exit("Unknown failure, email\n\n  support@dartai.com\n\nfor help.")
+    _dart_exit(UNKNOWN_FAILURE_MESSAGE)
 
 
 def print_version() -> str:
@@ -757,8 +757,8 @@ def connect_agent(id: str | None = None, *, quiet: bool = False, background: boo
         signal.signal(signal.SIGINT, signal.default_int_handler)
     try:
         _connect_local_agent(id, base_url=dart.get_base_url(), headers=dart.get_headers(), quiet=quiet)
-    except AgentAuthError:
-        _auth_failure_exit()
+    except AgentAuthError as ex:
+        _auth_failure_exit(str(ex) or None)
     finally:
         if previous_sigint_handler is not None:
             signal.signal(signal.SIGINT, previous_sigint_handler)
