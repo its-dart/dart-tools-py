@@ -255,13 +255,16 @@ class _Config:
                     self._content = json.load(fin)
             except OSError:
                 pass
-        self._content = {
+        defaults = {
             _CLIENT_ID_KEY: make_id(),
             _HOST_KEY: _DEFAULT_HOST,
             _HOSTS_KEY: {},
-        } | self._content
+        }
+        changed = any(key not in self._content for key in defaults)
+        self._content = defaults | self._content
         self._content[_HOSTS_KEY] = defaultdict(dict, self._content[_HOSTS_KEY])
-        self._write()
+        if changed:
+            self._write()
 
     def _write(self) -> None:
         try:
@@ -346,7 +349,7 @@ class Dart:
             config = api.get_config.sync(client=self._public_api)
             if config is None:
                 return False
-        except:
+        except Exception:
             return False
         return True
 

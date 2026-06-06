@@ -19,7 +19,9 @@ from .dart import (
     _unknown_failure_exit,
 )
 from .exception import DartException
+from .generated import Client
 
+_ROOT_PRIVATE_API_URL_FRAG = "/api/v0"
 _CREATE_TRANSACTION_URL_FRAG = "/transactions/create"
 _LIST_DARTBOARDS_URL_FRAG = "/dartboards"
 _LIST_FOLDERS_URL_FRAG = "/folders"
@@ -66,6 +68,13 @@ def _parse_transaction_response_and_maybe_exit(response: dict, model_kind: str, 
 
 
 class DartOld(Dart):
+    def _init_clients(self) -> None:
+        super()._init_clients()
+        self._private_api = Client(
+            base_url=self.get_base_url() + _ROOT_PRIVATE_API_URL_FRAG,
+            headers=self.get_headers(),
+        )
+
     @_handle_api_errors
     @_handle_request_errors
     def transact(self, operations: list[dict], kind: str) -> httpx.Response:
