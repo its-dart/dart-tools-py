@@ -41,7 +41,10 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
     def test_configured_agents_extract_text_delta_from_response_keys(self) -> None:
         cases = {
             "codex": ({"item": {"text": "codex text"}}, "codex text"),
-            "copilot": ({"data": {"content": "copilot text"}}, "copilot text"),
+            "copilot": (
+                {"type": "assistant.message", "data": {"content": "copilot text", "phase": "final_answer"}},
+                "copilot text",
+            ),
             "gemini": ({"response": "gemini text"}, "gemini text"),
             "opencode": ({"part": {"text": "opencode text"}}, "opencode text"),
         }
@@ -50,6 +53,25 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
             with self.subTest(name=name):
                 events = agent._LOCAL_AGENTS[name].events_from_value(value)
                 self.assertEqual(events, [{"kind": "text_delta", "text": expected_text}])
+
+    def test_local_agent_commands_include_permission_overrides(self) -> None:
+        cases = {
+            "claude": ("--dangerously-skip-permissions",),
+            "codex": ("--dangerously-bypass-approvals-and-sandbox", "--skip-git-repo-check"),
+            "copilot": ("--no-ask-user", "--allow-all"),
+            "cursor": ("--force",),
+            "gemini": ("--approval-mode", "yolo", "--skip-trust"),
+            "opencode": ("--dangerously-skip-permissions",),
+        }
+
+        for name, expected_flags in cases.items():
+            with self.subTest(name=name):
+                local_agent = agent._LOCAL_AGENTS[name]
+                command = local_agent.make_command(None, "prompt")
+                self.assertTrue(all(flag in command for flag in expected_flags))
+                if local_agent.resume_command is not None:
+                    resume_command = local_agent.make_command("session-1", "prompt")
+                    self.assertTrue(all(flag in resume_command for flag in expected_flags))
 
     def test_claude_terminal_result_is_not_streamed_as_text_delta(self) -> None:
         local_agent = agent._LOCAL_AGENTS["claude"]
@@ -439,6 +461,84 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
                     "name": "Bash",
                     "result": {"result": {"case": "success", "value": {"exitCode": 0}}},
                 }
+            ],
+        )
+
+    def test_cursor_user_text_content_is_not_streamed_as_assistant_text(self) -> None:
+        local_agent = agent._LOCAL_AGENTS["cursor"]
+
+        events = local_agent.events_from_value(
+            {
+                "type": "user",
+                "message": {"role": "user", "content": [{"type": "text", "text": "User prompt"}]},
+                "session_id": "session-1",
+            }
+        )
+
+        self.assertEqual(events, [])
+
+    def test_copilot_uses_only_final_answer_messages_as_response_text(self) -> None:
+        local_agent = agent._LOCAL_AGENTS["copilot"]
+        output = "\n".join(
+            agent.json.dumps(value)
+            for value in (
+                {"type": "user.message", "data": {"content": "User prompt"}},
+                {"type": "assistant.message", "data": {"content": "OK", "phase": "final_answer"}},
+                {"type": "assistant.message", "data": {"content": "Finishing up.", "phase": "commentary"}},
+                {"type": "session.task_complete", "data": {"summary": "Completed."}},
+                {"type": "result", "sessionId": "session-1"},
+            )
+        )
+
+        message, session_id = local_agent.parse_output(output, "")
+        events = [
+            event
+            for value in agent._load_json_values(output, local_agent.output_mode)
+            for event in local_agent.events_from_value(value)
+        ]
+
+        self.assertEqual(message, "OK")
+        self.assertEqual(session_id, "session-1")
+        self.assertEqual(events, [{"kind": "text_delta", "text": "OK"}])
+
+    def test_copilot_tool_events_use_tool_call_id_from_data_payload(self) -> None:
+        local_agent = agent._LOCAL_AGENTS["copilot"]
+        stream_state = agent._StreamEventState()
+        values = [
+            {
+                "type": "tool.execution_start",
+                "id": "envelope-start",
+                "data": {"toolCallId": "call-1", "toolName": "task_complete", "arguments": {"summary": "done"}},
+            },
+            {
+                "type": "tool.execution_complete",
+                "id": "envelope-complete",
+                "data": {"toolCallId": "call-1", "result": {"content": "ok"}},
+            },
+        ]
+
+        events = []
+        for value in values:
+            for event in local_agent._events_from_value(value):
+                prepared_event = stream_state.prepare(event)
+                if prepared_event is not None:
+                    events.append(prepared_event)
+
+        self.assertEqual(
+            events,
+            [
+                {
+                    "kind": "tool_call",
+                    "toolCallId": "call-1",
+                    "name": "task_complete",
+                    "args": {"summary": "done"},
+                },
+                {
+                    "kind": "tool_result",
+                    "toolCallId": "call-1",
+                    "name": "task_complete",
+                    "result": {"content": "ok"},
+                },
             ],
         )
 

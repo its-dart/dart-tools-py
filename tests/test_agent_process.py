@@ -1,0 +1,63 @@
+import tempfile
+import unittest
+from pathlib import Path
+from unittest.mock import patch
+
+from dart import agent_process
+
+
+class BackgroundAgentConnectionTests(unittest.TestCase):
+    def test_write_registry_uses_sibling_state_dir_when_config_and_state_paths_collide(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            config_path = Path(tmp_dir) / "dart-tools"
+            config_path.write_text("{}", encoding="UTF-8")
+            registry_path = config_path.with_name("dart-tools-state") / "agent-connections.json"
+
+            with (
+                patch("dart.agent_process.platformdirs.user_config_path", return_value=config_path),
+                patch("dart.agent_process.platformdirs.user_state_path", return_value=config_path),
+            ):
+                agent_process._write_registry({})
+
+            self.assertEqual(config_path.read_text(encoding="UTF-8"), "{}")
+            self.assertTrue(registry_path.is_file())
+
+    def test_registry_path_uses_state_path_when_it_does_not_collide_with_config_path(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            state_path = Path(tmp_dir) / "state" / "dart-tools"
+            config_path = Path(tmp_dir) / "config" / "dart-tools"
+
+            with (
+                patch("dart.agent_process.platformdirs.user_config_path", return_value=config_path),
+                patch("dart.agent_process.platformdirs.user_state_path", return_value=state_path),
+            ):
+                self.assertEqual(agent_process._registry_path(), state_path / "agent-connections.json")
+
+    def test_start_background_agent_connection_terminates_process_when_registry_write_fails(self) -> None:
+        class FakeProcess:
+            pid = 1234
+
+            def poll(self):
+                return None
+
+        fake_process = FakeProcess()
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            log_path = Path(tmp_dir) / "agent.log"
+            with (
+                patch("dart.agent_process._load_pruned_registry", return_value={}),
+                patch("dart.agent_process._make_log_path", return_value=log_path),
+                patch("dart.agent_process.subprocess.Popen", return_value=fake_process),
+                patch("dart.agent_process.time.sleep"),
+                patch("dart.agent_process.time.time", return_value=1.0),
+                patch("dart.agent_process._write_registry", side_effect=OSError("cannot write")),
+                patch("dart.agent_process._terminate_process") as terminate_process_mock,
+            ):
+                with self.assertRaisesRegex(agent_process.AgentConnectionError, "Could not register"):
+                    agent_process.start_background_agent_connection("agent-1")
+
+        terminate_process_mock.assert_called_once_with(fake_process.pid)
+
+
+if __name__ == "__main__":
+    unittest.main()

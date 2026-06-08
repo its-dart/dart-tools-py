@@ -112,6 +112,8 @@ class _LocalAgent:
         output_mode: _OutputMode,
         resume_command: tuple[str, ...] | None = None,
         resume_suffix: tuple[str, ...] = (),
+        response_types: tuple[str, ...] | None = None,
+        response_phases: tuple[str, ...] | None = None,
         stream_response_keys: bool = True,
         deduplicate_stream_events: bool = False,
         reassemble_stream_events: bool = False,
@@ -122,6 +124,8 @@ class _LocalAgent:
         self.output_mode = output_mode
         self.resume_command = resume_command
         self.resume_suffix = resume_suffix
+        self.response_types = response_types
+        self.response_phases = response_phases
         self.stream_response_keys = stream_response_keys
         self.deduplicate_stream_events = deduplicate_stream_events
         self.reassemble_stream_events = reassemble_stream_events
@@ -144,6 +148,8 @@ class _LocalAgent:
             if not isinstance(value, dict):
                 continue
             session_id = session_id or _nested_string(value, self.session_id_key)
+            if not self._should_use_response_value(value):
+                continue
             for response_key in self.response_keys:
                 response = _nested_string(value, response_key)
                 if response:
@@ -205,7 +211,6 @@ class _LocalAgent:
                 "toolCallId",
                 "tool_call_id",
                 "call_id",
-                "id",
                 "item.toolCallId",
                 "item.tool_call_id",
                 "item.call_id",
@@ -214,6 +219,7 @@ class _LocalAgent:
                 "data.tool_call_id",
                 "data.call_id",
                 "data.id",
+                "id",
             ),
         )
         tool_name = _first_string_from_paths(
@@ -236,11 +242,12 @@ class _LocalAgent:
                 "tool_call.tool.case",
             ),
         )
-        if not tool_call_id or not tool_name:
+        if not tool_call_id:
             return []
-        tool_name = _normalized_tool_name(tool_name)
+        if tool_name:
+            tool_name = _normalized_tool_name(tool_name)
 
-        common: dict[str, Any] = {"toolCallId": tool_call_id, "name": tool_name}
+        common: dict[str, Any] = {"toolCallId": tool_call_id, "name": tool_name or "tool"}
         if summary:
             common["summary"] = summary
 
@@ -270,6 +277,8 @@ class _LocalAgent:
             return [{_KIND_KEY: _TOOL_RESULT_EVENT_KIND, **common, "result": result}]
 
         if "call" in value_types or "start" in value_types:
+            if not tool_name:
+                return []
             args = _first_dict_from_paths(
                 value,
                 (
@@ -297,11 +306,24 @@ class _LocalAgent:
         return []
 
     def _response_text_from_value(self, value: dict[str, Any]) -> str | None:
+        if not self._should_use_response_value(value):
+            return None
         for response_key in self.response_keys:
             response = _nested_string(value, response_key)
             if response:
                 return response
         return None
+
+    def _should_use_response_value(self, value: dict[str, Any]) -> bool:
+        if self.response_types is not None:
+            value_type = _nested_string(value, _TYPE_KEY)
+            if value_type not in self.response_types:
+                return False
+        if self.response_phases is not None:
+            phase = _nested_string(value, "data.phase")
+            if phase not in self.response_phases:
+                return False
+        return True
 
     async def run(
         self, prompt: str, session_id: str | None, emit_event: _LocalEventSender
@@ -384,6 +406,7 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
         start_command=(
             "claude",
             "-p",
+            "--dangerously-skip-permissions",
             "--output-format",
             "stream-json",
             "--include-partial-messages",
@@ -395,6 +418,7 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
         resume_command=(
             "claude",
             "-p",
+            "--dangerously-skip-permissions",
             "--output-format",
             "stream-json",
             "--include-partial-messages",
@@ -406,16 +430,29 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
         reassemble_stream_events=True,
     ),
     "codex": _LocalAgent(
-        start_command=("codex", "exec", "--json"),
+        start_command=(
+            "codex",
+            "exec",
+            "--json",
+            "--dangerously-bypass-approvals-and-sandbox",
+            "--skip-git-repo-check",
+        ),
         session_id_key="thread_id",
         response_key="item.text",
         output_mode="jsonl",
-        resume_command=("codex", "exec", "--json", "resume"),
+        resume_command=(
+            "codex",
+            "exec",
+            "--json",
+            "--dangerously-bypass-approvals-and-sandbox",
+            "--skip-git-repo-check",
+            "resume",
+        ),
     ),
     "copilot": _LocalAgent(
         start_command=("copilot", "--output-format", "json", "-s", "--autopilot", "--no-ask-user", "--allow-all", "-p"),
         session_id_key="sessionId",
-        response_key=("data.content", "data.summary"),
+        response_key="data.content",
         output_mode="jsonl",
         resume_command=(
             "copilot",
@@ -428,27 +465,29 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
             "--resume",
         ),
         resume_suffix=("-p",),
+        response_types=("assistant.message",),
+        response_phases=("final_answer",),
     ),
     "cursor": _LocalAgent(
-        start_command=("cursor-agent", "--print", "--output-format", "stream-json"),
+        start_command=("cursor-agent", "--print", "--force", "--output-format", "stream-json"),
         session_id_key="session_id",
         response_key="result",
         output_mode="jsonl",
-        resume_command=("cursor-agent", "--print", "--output-format", "stream-json", "--resume"),
+        resume_command=("cursor-agent", "--print", "--force", "--output-format", "stream-json", "--resume"),
         stream_response_keys=False,
     ),
     "gemini": _LocalAgent(
-        start_command=("gemini", "--output-format", "json", "-p"),
+        start_command=("gemini", "--output-format", "json", "--approval-mode", "yolo", "--skip-trust", "-p"),
         session_id_key="session_id",
         response_key="response",
         output_mode="json",
     ),
     "opencode": _LocalAgent(
-        start_command=("opencode", "run", "--format", "json"),
+        start_command=("opencode", "run", "--format", "json", "--dangerously-skip-permissions"),
         session_id_key="sessionID",
         response_key="part.text",
         output_mode="jsonl",
-        resume_command=("opencode", "run", "--format", "json", "--session"),
+        resume_command=("opencode", "run", "--format", "json", "--dangerously-skip-permissions", "--session"),
     ),
 }
 _LOCAL_AGENT_SESSION_IDS: dict[tuple[str, str], str] = {}
@@ -562,10 +601,26 @@ def _events_from_content_blocks(value: dict[str, Any], *, fallback_message_id: s
     events = []
     for source, block in _content_blocks_from_value(value, fallback_message_id=fallback_message_id):
         event = _event_from_content_block(block)
-        if event is not None:
+        if event is not None and _should_emit_content_block_event(value, event):
             event[_EVENT_SOURCE_KEY] = source
             events.append(event)
     return events
+
+
+def _should_emit_content_block_event(value: dict[str, Any], event: dict[str, Any]) -> bool:
+    if not _is_user_message_value(value):
+        return True
+    return event.get(_KIND_KEY) in {_TOOL_RESULT_EVENT_KIND, _TOOL_ERROR_EVENT_KIND}
+
+
+def _is_user_message_value(value: dict[str, Any]) -> bool:
+    for path in ("role", "message.role", "item.role", "data.role"):
+        role = _nested_string(value, path)
+        if role is not None and role.lower() == "user":
+            return True
+
+    value_type = _nested_string(value, _TYPE_KEY)
+    return value_type is not None and value_type.lower().startswith("user")
 
 
 def _content_blocks_from_value(

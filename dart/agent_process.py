@@ -52,7 +52,11 @@ def start_background_agent_connection(agent_id: str) -> dict[str, Any]:
         _LOG_PATH_KEY: str(log_path),
     }
     registry[agent_id] = connection
-    _write_registry(registry)
+    try:
+        _write_registry(registry)
+    except Exception as ex:
+        _terminate_process(process.pid)
+        raise AgentConnectionError(f"Could not register background agent connection. Log: {log_path}") from ex
     return connection
 
 
@@ -166,7 +170,11 @@ def _pid_exists(pid: Any) -> bool:
 
 
 def _registry_path() -> Path:
-    return platformdirs.user_state_path(_APP) / "agent-connections.json"
+    state_path = platformdirs.user_state_path(_APP)
+    config_path = platformdirs.user_config_path(_APP)
+    if state_path == config_path or (state_path.exists() and not state_path.is_dir()):
+        state_path = state_path.with_name(f"{state_path.name}-state")
+    return state_path / "agent-connections.json"
 
 
 def _make_log_path(agent_id: str) -> Path:
