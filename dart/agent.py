@@ -1063,11 +1063,17 @@ async def _wait_for_stdin_eof() -> None:
         if sys.stdin.readline() == "" and not future.done():
             future.set_result(None)
 
-    loop.add_reader(sys.stdin.fileno(), _on_stdin_ready)
+    try:
+        stdin_fileno = sys.stdin.fileno()
+        loop.add_reader(stdin_fileno, _on_stdin_ready)
+    except (AttributeError, NotImplementedError, OSError):
+        await future
+        return
+
     try:
         await future
     finally:
-        loop.remove_reader(sys.stdin.fileno())
+        loop.remove_reader(stdin_fileno)
 
 
 def _make_agent_url(base_url: str, agent_id: str) -> str:

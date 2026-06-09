@@ -6,6 +6,48 @@ from unittest.mock import patch
 from dart import dart as dart_cli
 
 
+class ConfigPathTests(unittest.TestCase):
+    def test_config_path_moves_existing_legacy_file(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            config_path = Path(tmp_dir) / "dart-tools" / "config.json"
+            legacy_config_path = config_path.parent / "dart-tools"
+            legacy_config_path.parent.mkdir(parents=True)
+            legacy_config_path.write_text('{"authToken": "dsa_token"}', encoding="UTF-8")
+
+            self.assertEqual(
+                dart_cli._migrate_config_fpath(config_path, legacy_config_path),
+                config_path,
+            )
+            self.assertEqual(config_path.read_text(encoding="UTF-8"), '{"authToken": "dsa_token"}')
+            self.assertFalse(legacy_config_path.exists())
+
+    def test_config_path_prefers_existing_config_file(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            config_path = Path(tmp_dir) / "dart-tools" / "config.json"
+            legacy_config_path = config_path.parent / "dart-tools"
+            legacy_config_path.parent.mkdir(parents=True)
+            legacy_config_path.write_text('{"authToken": "legacy_token"}', encoding="UTF-8")
+            config_path.write_text('{"authToken": "current_token"}', encoding="UTF-8")
+
+            self.assertEqual(
+                dart_cli._migrate_config_fpath(config_path, legacy_config_path),
+                config_path,
+            )
+            self.assertEqual(config_path.read_text(encoding="UTF-8"), '{"authToken": "current_token"}')
+            self.assertTrue(legacy_config_path.exists())
+
+    def test_config_path_uses_config_file_when_legacy_path_is_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            config_path = Path(tmp_dir) / "dart-tools" / "config.json"
+            legacy_config_path = config_path.parent / "dart-tools"
+            legacy_config_path.mkdir(parents=True)
+
+            self.assertEqual(
+                dart_cli._migrate_config_fpath(config_path, legacy_config_path),
+                config_path,
+            )
+
+
 class LoginTests(unittest.TestCase):
     def test_login_persists_token_when_config_parent_does_not_exist(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:

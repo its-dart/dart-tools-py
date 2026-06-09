@@ -17,6 +17,7 @@ from collections import defaultdict
 from datetime import timezone
 from functools import wraps
 from importlib.metadata import version
+from pathlib import Path
 from typing import Any, Callable, NoReturn, TypeVar, Union
 from webbrowser import open_new_tab
 
@@ -121,7 +122,7 @@ _DEFAULT_BEGIN_STATUS = "Doing"
 
 _AUTH_TOKEN_ENVVAR_KEY = "DART_TOKEN"
 _HOST_ENVVAR_KEY = "DART_HOST"
-_CONFIG_FPATH = platformdirs.user_config_path(_APP)
+_CONFIG_FILE_NAME = "config.json"
 _AUTH_FAILURE_STATUS_CODES = (401, 403)
 _CLIENT_ID_KEY = "clientId"
 _HOST_KEY = "host"
@@ -147,6 +148,23 @@ _VERSION = version(_APP)
 _AUTH_TOKEN_ENVVAR = os.environ.get(_AUTH_TOKEN_ENVVAR_KEY)
 _HOST_ENVVAR = os.environ.get(_HOST_ENVVAR_KEY)
 _DEFAULT_HOST = _HOST_ENVVAR or _PROD_HOST
+
+
+def _migrate_config_fpath(config_fpath: Path, legacy_config_fpath: Path) -> Path:
+    if config_fpath.exists() or not legacy_config_fpath.is_file():
+        return config_fpath
+    try:
+        config_fpath.parent.mkdir(parents=True, exist_ok=True)
+        legacy_config_fpath.replace(config_fpath)
+    except OSError:
+        pass
+    return config_fpath
+
+
+_CONFIG_FPATH = _migrate_config_fpath(
+    platformdirs.user_config_path(_APP, appauthor=False) / _CONFIG_FILE_NAME,
+    platformdirs.user_config_path(_APP),
+)
 
 
 def _get_help_text(fn: Callable) -> str:

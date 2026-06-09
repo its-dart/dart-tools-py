@@ -661,6 +661,38 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertTrue(fake_process.killed)
 
+    async def test_run_until_closed_ignores_unsupported_stdin_reader(self) -> None:
+        class Stdin:
+            def fileno(self) -> int:
+                return 0
+
+            def isatty(self) -> bool:
+                return True
+
+        class Websocket:
+            def __init__(self) -> None:
+                self.closed = False
+
+            async def close(self) -> None:
+                self.closed = True
+
+        async def handle_messages(websocket, quiet, agent_id, base_url):
+            return True
+
+        websocket = Websocket()
+        loop = asyncio.get_running_loop()
+        with (
+            patch("dart.agent.sys.stdin", new=Stdin()),
+            patch.object(loop, "add_reader", side_effect=NotImplementedError),
+            patch("dart.agent._handle_messages", new=handle_messages),
+        ):
+            result = await agent._run_until_closed_or_eof(
+                websocket, False, agent_id="agent-1", base_url="https://dart.test"
+            )
+
+        self.assertTrue(result)
+        self.assertFalse(websocket.closed)
+
 
 if __name__ == "__main__":
     unittest.main()
