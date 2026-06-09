@@ -118,10 +118,32 @@ class AgentWorkflow:
             * `usage/nlp_typeahead_accept` - USAGE_NLP_TYPEAHEAD_ACCEPT
             * `agents/requested` - AGENT_REQUESTED
             * `agents/started` - AGENT_STARTED
+            * `agents/stopped` - AGENT_STOPPED
             * `agents/check_in` - AGENT_CHECK_IN
             * `agents/succeeded` - AGENT_SUCCEEDED
             * `agents/failed` - AGENT_FAILED
             * `agents/webhook_received` - AGENT_WEBHOOK_RECEIVED
+            * `agents/create` - AGENT_CREATE
+            * `agents/update` - AGENT_UPDATE
+            * `agents/update_name` - AGENT_UPDATE_NAME
+            * `agents/update_status` - AGENT_UPDATE_STATUS
+            * `agents/update_image` - AGENT_UPDATE_IMAGE
+            * `agents/update_execution_mode` - AGENT_UPDATE_EXECUTION_MODE
+            * `agents/update_instructions` - AGENT_UPDATE_INSTRUCTIONS
+            * `agents/update_model` - AGENT_UPDATE_MODEL
+            * `agents/update_thinking_level` - AGENT_UPDATE_THINKING_LEVEL
+            * `agents/update_web_access` - AGENT_UPDATE_WEB_ACCESS
+            * `agents/update_language` - AGENT_UPDATE_LANGUAGE
+            * `agents/update_local_agent` - AGENT_UPDATE_LOCAL_AGENT
+            * `agents/update_memory_enabled` - AGENT_UPDATE_MEMORY_ENABLED
+            * `agents/update_memory_deleted` - AGENT_UPDATE_MEMORY_DELETED
+            * `agents/update_workflow` - AGENT_UPDATE_WORKFLOW
+            * `agents/update_assign_status` - AGENT_UPDATE_ASSIGN_STATUS
+            * `agents/update_complete_status` - AGENT_UPDATE_COMPLETE_STATUS
+            * `agents/update_fail_status` - AGENT_UPDATE_FAIL_STATUS
+            * `agents/update_reassign_behavior` - AGENT_UPDATE_REASSIGN_BEHAVIOR
+            * `agents/update_reassign_user` - AGENT_UPDATE_REASSIGN_USER
+            * `agents/update_config` - AGENT_UPDATE_CONFIG
             * `chats/message_received` - CHAT_MESSAGE_RECEIVED
         url (str): The URL to call when the workflow is triggered.
         headers (Union[Unset, AgentWorkflowHeaders]): Headers to include with the workflow request.

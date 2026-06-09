@@ -21,6 +21,7 @@ from .concise_task_custom_properties_type_0 import ConciseTaskCustomPropertiesTy
 from .dartboard import Dartboard
 from .doc import Doc
 from .doc_create import DocCreate
+from .doc_text_update import DocTextUpdate
 from .doc_update import DocUpdate
 from .event_kind import EventKind
 from .event_kinds_enum import EventKindsEnum
@@ -68,11 +69,14 @@ from .task import Task
 from .task_create import TaskCreate
 from .task_create_custom_properties_type_0 import TaskCreateCustomPropertiesType0
 from .task_custom_properties_type_0 import TaskCustomPropertiesType0
+from .task_description_update import TaskDescriptionUpdate
 from .task_move import TaskMove
 from .task_relationships_type_0 import TaskRelationshipsType0
 from .task_time_tracking_create import TaskTimeTrackingCreate
 from .task_update import TaskUpdate
 from .task_update_custom_properties_type_0 import TaskUpdateCustomPropertiesType0
+from .text_update import TextUpdate
+from .text_update_kind import TextUpdateKind
 from .time_tracking_entry import TimeTrackingEntry
 from .user import User
 from .user_space_configuration import UserSpaceConfiguration
@@ -154,6 +158,7 @@ __all__ = (
     "Dartboard",
     "Doc",
     "DocCreate",
+    "DocTextUpdate",
     "DocUpdate",
     "EventKind",
     "EventKindsEnum",
@@ -189,11 +194,14 @@ __all__ = (
     "TaskCreate",
     "TaskCreateCustomPropertiesType0",
     "TaskCustomPropertiesType0",
+    "TaskDescriptionUpdate",
     "TaskMove",
     "TaskRelationshipsType0",
     "TaskTimeTrackingCreate",
     "TaskUpdate",
     "TaskUpdateCustomPropertiesType0",
+    "TextUpdate",
+    "TextUpdateKind",
     "TimeTrackingEntry",
     "User",
     "UserSpaceConfiguration",

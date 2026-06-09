@@ -92,6 +92,7 @@ _VERSION_CMD = "--version"
 _GET_HOST_CMD = "host-get"
 _SET_HOST_CMD = "host-set"
 _LOGIN_CMD = "login"
+_LOGOUT_CMD = "logout"
 # Agent commands
 _CREATE_AGENT_CMD = "agent-create"
 _UPDATE_AGENT_CMD = "agent-update"
@@ -266,12 +267,19 @@ class _Config:
         if changed:
             self._write()
 
-    def _write(self) -> None:
+    def _write(self, *, raise_on_error: bool = False) -> None:
         try:
+            _CONFIG_FPATH.parent.mkdir(parents=True, exist_ok=True)
             with open(_CONFIG_FPATH, "w+", encoding="UTF-8") as fout:
                 json.dump(self._content, fout, indent=2)
         except OSError:
-            pass
+            if raise_on_error:
+                _dart_exit(
+                    "Could not save your Dart config.\n\n"
+                    f"Config path: {_CONFIG_FPATH}\n\n"
+                    "Make sure the config path can be created and written, then try again. "
+                    "Alternatively, set the DART_TOKEN environment variable."
+                )
 
     @property
     def client_id(self) -> str:
@@ -284,14 +292,22 @@ class _Config:
     @host.setter
     def host(self, v: str) -> None:
         self._content[_HOST_KEY] = v
-        self._write()
+        self._write(raise_on_error=True)
 
     def get(self, k: str) -> str | None:
         return self._content[_HOSTS_KEY][self.host].get(k)
 
     def set(self, k: str, v: str) -> None:
         self._content[_HOSTS_KEY][self.host][k] = v
+        self._write(raise_on_error=True)
+
+    def delete(self, k: str) -> bool:
+        host_content = self._content[_HOSTS_KEY].get(self.host)
+        if not isinstance(host_content, dict) or k not in host_content:
+            return False
+        del host_content[k]
         self._write()
+        return True
 
     def get_cached_latest_version(self) -> str | None:
         cache = self._content.get(_VERSION_CHECK_KEY)
@@ -550,6 +566,26 @@ def login(token: str | None = None) -> bool:
         _dart_exit("Invalid token.")
 
     _log("Logged in.")
+    return True
+
+
+def logout() -> bool:
+    config = _Config()
+    removed_saved_token = config.delete(_AUTH_TOKEN_KEY)
+
+    if _AUTH_TOKEN_ENVVAR is not None:
+        if removed_saved_token:
+            _log(
+                f"Removed saved token, but the {_AUTH_TOKEN_ENVVAR_KEY} environment variable is still set. You have to unset that to completely log out."
+            )
+            return True
+        else:
+            _log(
+                f"You are logged in with the {_AUTH_TOKEN_ENVVAR_KEY} environment variable and you have to unset that to log out."
+            )
+            return False
+
+    _log("Logged out." if removed_saved_token else "Already logged out.")
     return True
 
 
@@ -1009,6 +1045,7 @@ def cli() -> None:
     metavar = ",".join(
         [
             _LOGIN_CMD,
+            _LOGOUT_CMD,
             _CREATE_AGENT_CMD,
             _UPDATE_AGENT_CMD,
             _DELETE_AGENT_CMD,
@@ -1042,6 +1079,9 @@ def cli() -> None:
     login_parser = subparsers.add_parser(_LOGIN_CMD, aliases=["l"], help="login")
     login_parser.add_argument("-t", "--token", dest="token", help="your authentication token")
     login_parser.set_defaults(func=login)
+
+    logout_parser = subparsers.add_parser(_LOGOUT_CMD, aliases=["lo"], help="logout")
+    logout_parser.set_defaults(func=logout)
 
     create_agent_parser = subparsers.add_parser(
         _CREATE_AGENT_CMD, aliases=["ac"], help=_HELP_TEXT_TO_COMMAND[_CREATE_AGENT_CMD]

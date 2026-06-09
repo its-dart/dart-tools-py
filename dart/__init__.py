@@ -19,6 +19,7 @@ from .dart import (
     is_logged_in,
     list_agent_connections,
     login,
+    logout,
     set_host,
     update_agent,
     update_doc,

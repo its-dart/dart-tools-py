@@ -78,8 +78,8 @@ def disconnect_background_agent_connections(
         matches = [registry[agent_id]] if agent_id in registry else []
 
     if not matches:
-        target = "all agents" if all_connections else f"agent {agent_id}"
-        raise AgentConnectionError(f"No background connections found for {target}.")
+        detail = "" if all_connections else f" for agent {agent_id}"
+        raise AgentConnectionError(f"No background connections found{detail}.")
 
     stopped = []
     for connection in matches:
