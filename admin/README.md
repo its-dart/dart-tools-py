@@ -39,6 +39,6 @@
 ## Dependency updating
 
 1. Manually bump versions in `pyproject.toml`
-   1. Bump the dependencies in `dependencies` to be `>=` the lowest functional minor version
-   2. Bump the dependencies in `[dependency-groups]` to be `==` the latest patch version
+   1. Bump the dependencies in `dependencies` to be `>=` the lowest functional minor version that is older than a week
+   2. Bump the dependencies in `[dependency-groups]` to be `==` the latest patch version that is older than a week
 2. Run `make req-up-all`
