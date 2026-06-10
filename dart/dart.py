@@ -154,8 +154,14 @@ def _migrate_config_fpath(config_fpath: Path, legacy_config_fpath: Path) -> Path
     if config_fpath.exists() or not legacy_config_fpath.is_file():
         return config_fpath
     try:
-        config_fpath.parent.mkdir(parents=True, exist_ok=True)
-        legacy_config_fpath.replace(config_fpath)
+        if legacy_config_fpath == config_fpath.parent:
+            config_content = legacy_config_fpath.read_bytes()
+            legacy_config_fpath.unlink()
+            config_fpath.parent.mkdir(parents=True, exist_ok=True)
+            config_fpath.write_bytes(config_content)
+        else:
+            config_fpath.parent.mkdir(parents=True, exist_ok=True)
+            legacy_config_fpath.replace(config_fpath)
     except OSError:
         pass
     return config_fpath

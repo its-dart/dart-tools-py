@@ -10,8 +10,7 @@ class ConfigPathTests(unittest.TestCase):
     def test_config_path_moves_existing_legacy_file(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             config_path = Path(tmp_dir) / "dart-tools" / "config.json"
-            legacy_config_path = config_path.parent / "dart-tools"
-            legacy_config_path.parent.mkdir(parents=True)
+            legacy_config_path = Path(tmp_dir) / "legacy-dart-tools"
             legacy_config_path.write_text('{"authToken": "dsa_token"}', encoding="UTF-8")
 
             self.assertEqual(
@@ -21,11 +20,24 @@ class ConfigPathTests(unittest.TestCase):
             self.assertEqual(config_path.read_text(encoding="UTF-8"), '{"authToken": "dsa_token"}')
             self.assertFalse(legacy_config_path.exists())
 
+    def test_config_path_moves_existing_legacy_file_that_blocks_config_dir(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            config_path = Path(tmp_dir) / "dart-tools" / "config.json"
+            legacy_config_path = config_path.parent
+            legacy_config_path.write_text('{"authToken": "dsa_token"}', encoding="UTF-8")
+
+            self.assertEqual(
+                dart_cli._migrate_config_fpath(config_path, legacy_config_path),
+                config_path,
+            )
+            self.assertEqual(config_path.read_text(encoding="UTF-8"), '{"authToken": "dsa_token"}')
+            self.assertTrue(legacy_config_path.is_dir())
+
     def test_config_path_prefers_existing_config_file(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             config_path = Path(tmp_dir) / "dart-tools" / "config.json"
-            legacy_config_path = config_path.parent / "dart-tools"
-            legacy_config_path.parent.mkdir(parents=True)
+            legacy_config_path = Path(tmp_dir) / "legacy-dart-tools"
+            config_path.parent.mkdir(parents=True)
             legacy_config_path.write_text('{"authToken": "legacy_token"}', encoding="UTF-8")
             config_path.write_text('{"authToken": "current_token"}', encoding="UTF-8")
 
@@ -39,7 +51,7 @@ class ConfigPathTests(unittest.TestCase):
     def test_config_path_uses_config_file_when_legacy_path_is_directory(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             config_path = Path(tmp_dir) / "dart-tools" / "config.json"
-            legacy_config_path = config_path.parent / "dart-tools"
+            legacy_config_path = config_path.parent
             legacy_config_path.mkdir(parents=True)
 
             self.assertEqual(
