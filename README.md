@@ -33,7 +33,7 @@ If you have a preexisting shell command named `dart`, a quick fix is to run `whi
 
 ## Using the CLI
 
-Start off by setting up authentication with
+Commands that need authentication will prompt you to log in if needed. To set up authentication ahead of time, run
 
 ```sh
 dart login

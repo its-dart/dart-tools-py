@@ -46,7 +46,13 @@ def _handle_api_errors(fn: Callable[..., httpx.Response]) -> Callable[..., httpx
     def wrapper(*args, **kwargs):
         response = fn(*args, **kwargs)
         if response.status_code in {401, 403}:
-            _auth_failure_exit()
+            dart = args[0] if args else None
+            if not isinstance(dart, Dart):
+                _auth_failure_exit()
+            dart._login_after_cli_auth_failure()
+            response = fn(*args, **kwargs)
+            if response.status_code in {401, 403}:
+                _auth_failure_exit()
         return response
 
     return wrapper

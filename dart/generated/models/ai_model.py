@@ -3,9 +3,9 @@ from enum import Enum
 
 class AiModel(str, Enum):
     AUTO = "auto"
+    CLAUDE_FABLE_5 = "claude-fable-5"
     CLAUDE_HAIKU_4_5 = "claude-haiku-4-5"
     CLAUDE_OPUS_4_8 = "claude-opus-4-8"
-    CLAUDE_SONNET_4_6 = "claude-sonnet-4-6"
     GEMINI_3_1_FLASH_LITE = "gemini-3.1-flash-lite"
     GEMINI_3_1_PRO_PREVIEW = "gemini-3.1-pro-preview"
     GEMINI_3_5_FLASH = "gemini-3.5-flash"

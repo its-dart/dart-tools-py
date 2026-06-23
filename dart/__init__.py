@@ -21,6 +21,7 @@ from .dart import (
     login,
     logout,
     set_host,
+    token_login,
     update_agent,
     update_doc,
     update_task,

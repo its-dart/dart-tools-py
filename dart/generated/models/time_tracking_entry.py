@@ -15,17 +15,17 @@ T = TypeVar("T", bound="TimeTrackingEntry")
 class TimeTrackingEntry:
     """
     Attributes:
-        user_duid (str):
+        user_id (str):
         started_at (str):
         finished_at (Union[None, str]):
     """
 
-    user_duid: str
+    user_id: str
     started_at: str
     finished_at: Union[None, str]
 
     def to_dict(self) -> dict[str, Any]:
-        user_duid = self.user_duid
+        user_id = self.user_id
 
         started_at = self.started_at
 
@@ -36,7 +36,7 @@ class TimeTrackingEntry:
 
         field_dict.update(
             {
-                "userDuid": user_duid,
+                "userId": user_id,
                 "startedAt": started_at,
                 "finishedAt": finished_at,
             }
@@ -47,7 +47,7 @@ class TimeTrackingEntry:
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         d = dict(src_dict)
-        user_duid = d.pop("userDuid")
+        user_id = d.pop("userId")
 
         started_at = d.pop("startedAt")
 
@@ -59,7 +59,7 @@ class TimeTrackingEntry:
         finished_at = _parse_finished_at(d.pop("finishedAt"))
 
         time_tracking_entry = cls(
-            user_duid=user_duid,
+            user_id=user_id,
             started_at=started_at,
             finished_at=finished_at,
         )

@@ -30,7 +30,15 @@ def start_background_agent_connection(agent_id: str) -> dict[str, Any]:
         raise AgentConnectionError(f"Agent {agent_id} already has a background connection.")
 
     log_path = _make_log_path(agent_id)
-    command = [sys.executable, "-c", "from dart import cli; cli()", "agent-connect", agent_id, "--quiet"]
+    command = [
+        sys.executable,
+        "-c",
+        "from dart import cli; cli()",
+        "agent-connect",
+        agent_id,
+        "--quiet",
+        "--foreground",
+    ]
     with open(log_path, "ab") as log_file:
         process = subprocess.Popen(
             command,

@@ -58,6 +58,29 @@ class BackgroundAgentConnectionTests(unittest.TestCase):
 
         terminate_process_mock.assert_called_once_with(fake_process.pid)
 
+    def test_start_background_agent_connection_runs_child_in_foreground_mode(self) -> None:
+        class FakeProcess:
+            pid = 1234
+
+            def poll(self):
+                return None
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            log_path = Path(tmp_dir) / "agent.log"
+            with (
+                patch("dart.agent_process._load_pruned_registry", return_value={}),
+                patch("dart.agent_process._make_log_path", return_value=log_path),
+                patch("dart.agent_process.subprocess.Popen", return_value=FakeProcess()) as popen_mock,
+                patch("dart.agent_process.time.sleep"),
+                patch("dart.agent_process.time.time", return_value=1.0),
+                patch("dart.agent_process._write_registry"),
+            ):
+                agent_process.start_background_agent_connection("agent-1")
+
+        command = popen_mock.call_args.args[0]
+        self.assertIn("--quiet", command)
+        self.assertIn("--foreground", command)
+
 
 if __name__ == "__main__":
     unittest.main()

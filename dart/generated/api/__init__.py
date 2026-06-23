@@ -2,6 +2,7 @@
 
 from .agent import create_agent, delete_agent, get_agent, list_agents, update_agent
 from .attachment import add_task_attachment_from_url
+from .auth import get_me, token_login
 from .comment import add_task_comment, list_comments
 from .config import get_config
 from .dartboard import get_dartboard

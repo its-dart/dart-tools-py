@@ -4,15 +4,15 @@ from .agent import Agent
 from .agent_create import AgentCreate
 from .agent_execution_mode import AgentExecutionMode
 from .agent_forwarding import AgentForwarding
+from .agent_forwarding_headers import AgentForwardingHeaders
 from .agent_instructions import AgentInstructions
 from .agent_local import AgentLocal
 from .agent_update import AgentUpdate
-from .agent_workflow import AgentWorkflow
-from .agent_workflow_headers import AgentWorkflowHeaders
 from .ai_model import AiModel
 from .ai_thinking_level import AiThinkingLevel
 from .attachment import Attachment
 from .attachment_create_from_url import AttachmentCreateFromUrl
+from .authenticated_user import AuthenticatedUser
 from .comment import Comment
 from .comment_create import CommentCreate
 from .concise_doc import ConciseDoc
@@ -23,7 +23,6 @@ from .doc import Doc
 from .doc_create import DocCreate
 from .doc_text_update import DocTextUpdate
 from .doc_update import DocUpdate
-from .event_kind import EventKind
 from .event_kinds_enum import EventKindsEnum
 from .folder import Folder
 from .help_center_article import HelpCenterArticle
@@ -31,6 +30,7 @@ from .list_comments_o_item import ListCommentsOItem
 from .list_docs_o_item import ListDocsOItem
 from .list_tasks_o_item import ListTasksOItem
 from .local_agent import LocalAgent
+from .me import Me
 from .paginated_agent_list import PaginatedAgentList
 from .paginated_agent_list_meta_type_0 import PaginatedAgentListMetaType0
 from .paginated_agent_list_meta_type_0_applied_default_filters import (
@@ -78,6 +78,8 @@ from .task_update_custom_properties_type_0 import TaskUpdateCustomPropertiesType
 from .text_update import TextUpdate
 from .text_update_kind import TextUpdateKind
 from .time_tracking_entry import TimeTrackingEntry
+from .token_login_request import TokenLoginRequest
+from .token_login_response import TokenLoginResponse
 from .user import User
 from .user_space_configuration import UserSpaceConfiguration
 from .user_space_configuration_custom_property_checkbox_type_def import (
@@ -141,15 +143,15 @@ __all__ = (
     "AgentCreate",
     "AgentExecutionMode",
     "AgentForwarding",
+    "AgentForwardingHeaders",
     "AgentInstructions",
     "AgentLocal",
     "AgentUpdate",
-    "AgentWorkflow",
-    "AgentWorkflowHeaders",
     "AiModel",
     "AiThinkingLevel",
     "Attachment",
     "AttachmentCreateFromUrl",
+    "AuthenticatedUser",
     "Comment",
     "CommentCreate",
     "ConciseDoc",
@@ -160,7 +162,6 @@ __all__ = (
     "DocCreate",
     "DocTextUpdate",
     "DocUpdate",
-    "EventKind",
     "EventKindsEnum",
     "Folder",
     "HelpCenterArticle",
@@ -168,6 +169,7 @@ __all__ = (
     "ListDocsOItem",
     "ListTasksOItem",
     "LocalAgent",
+    "Me",
     "PaginatedAgentList",
     "PaginatedAgentListMetaType0",
     "PaginatedAgentListMetaType0AppliedDefaultFilters",
@@ -203,6 +205,8 @@ __all__ = (
     "TextUpdate",
     "TextUpdateKind",
     "TimeTrackingEntry",
+    "TokenLoginRequest",
+    "TokenLoginResponse",
     "User",
     "UserSpaceConfiguration",
     "UserSpaceConfigurationCustomPropertyCheckboxTypeDef",

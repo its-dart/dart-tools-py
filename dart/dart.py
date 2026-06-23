@@ -35,6 +35,7 @@ from .agent_process import (
 )
 from .exception import UNKNOWN_FAILURE_MESSAGE, AgentAuthError, DartException
 from .generated import Client, api
+from .generated.errors import UnexpectedStatus
 from .generated.models import (
     Agent,
     AgentCreate,
@@ -43,15 +44,14 @@ from .generated.models import (
     AgentInstructions,
     AgentLocal,
     AgentUpdate,
-    AgentWorkflow,
     Comment,
     CommentCreate,
     ConciseTask,
     Doc,
     DocCreate,
     DocUpdate,
-    EventKind,
     LocalAgent,
+    Me,
     PaginatedCommentList,
     PaginatedConciseDocList,
     PaginatedConciseTaskList,
@@ -59,6 +59,8 @@ from .generated.models import (
     Task,
     TaskCreate,
     TaskUpdate,
+    TokenLoginRequest,
+    TokenLoginResponse,
     UserSpaceConfiguration,
     WrappedAgent,
     WrappedAgentCreate,
@@ -93,6 +95,8 @@ _VERSION_CMD = "--version"
 _GET_HOST_CMD = "host-get"
 _SET_HOST_CMD = "host-set"
 _LOGIN_CMD = "login"
+_TOKEN_LOGIN_CMD = "token-login"
+_WHOAMI_CMD = "whoami"
 _LOGOUT_CMD = "logout"
 # Agent commands
 _CREATE_AGENT_CMD = "agent-create"
@@ -200,7 +204,7 @@ def _suppress_exception(fn: Callable) -> Callable:
     def wrapper(*args, **kwargs):
         try:
             return fn(*args, **kwargs)
-        except Exception:  # pylint: disable=broad-except
+        except Exception:
             return None
 
     return wrapper
@@ -243,10 +247,16 @@ def _get_required_text(prompt: str) -> str:
 T = TypeVar("T")
 
 
-def _get_response_parsed(response: Response[T], not_found_message="Not found.") -> T:
+def _get_response_parsed(
+    response: Response[T],
+    not_found_message="Not found.",
+    retry_on_auth_failure: Callable[[], Response[T]] | None = None,
+) -> T:
     if response.parsed is not None:
         return response.parsed
     if response.status_code in _AUTH_FAILURE_STATUS_CODES:
+        if retry_on_auth_failure is not None:
+            return _get_response_parsed(retry_on_auth_failure(), not_found_message)
         _auth_failure_exit()
     elif response.status_code == 404:
         _dart_exit(not_found_message)
@@ -357,9 +367,12 @@ class Dart:
         self._init_clients()
 
     def _init_clients(self) -> None:
-        self._public_api = Client(
+        self._public_api = self._make_public_api_client()
+
+    def _make_public_api_client(self, *, include_auth: bool = True) -> Client:
+        return Client(
             base_url=self.get_base_url() + _ROOT_PUBLIC_API_URL_FRAG,
-            headers=self.get_headers(),
+            headers=self.get_headers(include_auth=include_auth),
         )
 
     def get_base_url(self) -> str:
@@ -374,104 +387,149 @@ class Dart:
             return result
         return _AUTH_TOKEN_ENVVAR
 
-    def get_headers(self) -> dict[str, str]:
+    def get_headers(self, *, include_auth: bool = True) -> dict[str, str]:
         result = {
             "Origin": self._config.host,
             "client-duid": self.get_client_id(),
         }
-        if (auth_token := self.get_auth_token()) is not None:
+        if include_auth and (auth_token := self.get_auth_token()) is not None:
             result["Authorization"] = f"Bearer {auth_token}"
         return result
 
     def is_logged_in(self) -> bool:
         self._init_clients()
         try:
-            config = api.get_config.sync(client=self._public_api)
-            if config is None:
-                return False
-        except Exception:
+            me = api.get_me.sync(client=self._public_api)
+        except (UnexpectedStatus, httpx.RequestError, ValueError, KeyError, TypeError):
             return False
-        return True
+        return me.is_logged_in if me is not None else False
+
+    @_handle_request_errors
+    def exchange_login_token(self, token: str) -> str:
+        public_api = self._make_public_api_client(include_auth=False)
+        response = api.token_login.sync_detailed(client=public_api, body=TokenLoginRequest(token=token))
+        if isinstance(response.parsed, TokenLoginResponse):
+            return response.parsed.auth_token
+        if response.status_code in _AUTH_FAILURE_STATUS_CODES:
+            _dart_exit("Invalid token.")
+        if response.status_code != 200:
+            _unknown_failure_exit()
+        _unknown_failure_exit()
+
+    def ensure_logged_in_for_cli(self) -> None:
+        if not _is_cli or self.is_logged_in():
+            return
+        self._login_after_cli_auth_failure()
+
+    def _login_after_cli_auth_failure(self) -> None:
+        if not _is_cli:
+            _auth_failure_exit()
+        _login_with_config(self._config, check_existing=False)
+        self._init_clients()
+
+    def _retry_after_cli_auth_failure(self, request: Callable[[], Response[T]]) -> Response[T]:
+        self._login_after_cli_auth_failure()
+        return request()
+
+    def _request(self, request: Callable[[], Response[T]], *, not_found_message="Not found.") -> T:
+        response = request()
+        return _get_response_parsed(
+            response,
+            not_found_message=not_found_message,
+            retry_on_auth_failure=lambda: self._retry_after_cli_auth_failure(request),
+        )
 
     @_handle_request_errors
     def get_config(self) -> UserSpaceConfiguration:
-        response = api.get_config.sync_detailed(client=self._public_api)
-        return _get_response_parsed(response)
+        return self._request(lambda: api.get_config.sync_detailed(client=self._public_api))
+
+    @_handle_request_errors
+    def get_me(self) -> Me:
+        return self._request(lambda: api.get_me.sync_detailed(client=self._public_api))
 
     @_handle_request_errors
     def create_agent(self, body: WrappedAgentCreate) -> WrappedAgent:
-        response = api.create_agent.sync_detailed(client=self._public_api, body=body)
-        return _get_response_parsed(response)
+        return self._request(lambda: api.create_agent.sync_detailed(client=self._public_api, body=body))
 
     @_handle_request_errors
     def update_agent(self, id: str, body: WrappedAgentUpdate) -> WrappedAgent:
-        response = api.update_agent.sync_detailed(id, client=self._public_api, body=body)
-        return _get_response_parsed(response, not_found_message=f"Agent with ID {id} not found.")
+        return self._request(
+            lambda: api.update_agent.sync_detailed(id, client=self._public_api, body=body),
+            not_found_message=f"Agent with ID {id} not found.",
+        )
 
     @_handle_request_errors
     def delete_agent(self, id: str) -> WrappedAgent:
-        response = api.delete_agent.sync_detailed(id, client=self._public_api)
-        return _get_response_parsed(response, not_found_message=f"Agent with ID {id} not found.")
+        return self._request(
+            lambda: api.delete_agent.sync_detailed(id, client=self._public_api),
+            not_found_message=f"Agent with ID {id} not found.",
+        )
 
     @_handle_request_errors
     def create_task(self, body: WrappedTaskCreate) -> WrappedTask:
-        response = api.create_task.sync_detailed(client=self._public_api, body=body)
-        return _get_response_parsed(response)
+        return self._request(lambda: api.create_task.sync_detailed(client=self._public_api, body=body))
 
     @_handle_request_errors
     def retrieve_task(self, id: str) -> WrappedTask:
-        response = api.get_task.sync_detailed(id, client=self._public_api)
-        return _get_response_parsed(response, not_found_message=f"Task with ID {id} not found.")
+        return self._request(
+            lambda: api.get_task.sync_detailed(id, client=self._public_api),
+            not_found_message=f"Task with ID {id} not found.",
+        )
 
     @_handle_request_errors
     def update_task(self, id: str, body: WrappedTaskUpdate) -> WrappedTask:
-        response = api.update_task.sync_detailed(id, client=self._public_api, body=body)
-        return _get_response_parsed(response, not_found_message=f"Task with ID {id} not found.")
+        return self._request(
+            lambda: api.update_task.sync_detailed(id, client=self._public_api, body=body),
+            not_found_message=f"Task with ID {id} not found.",
+        )
 
     @_handle_request_errors
     def delete_task(self, id: str) -> WrappedTask:
-        response = api.delete_task.sync_detailed(id, client=self._public_api)
-        return _get_response_parsed(response, not_found_message=f"Task with ID {id} not found.")
+        return self._request(
+            lambda: api.delete_task.sync_detailed(id, client=self._public_api),
+            not_found_message=f"Task with ID {id} not found.",
+        )
 
     @_handle_request_errors
     def list_tasks(self, **kwargs) -> PaginatedConciseTaskList:
-        response = api.list_tasks.sync_detailed(client=self._public_api, **kwargs)
-        return _get_response_parsed(response)
+        return self._request(lambda: api.list_tasks.sync_detailed(client=self._public_api, **kwargs))
 
     @_handle_request_errors
     def create_comment(self, body: WrappedCommentCreate) -> WrappedComment:
-        response = api.add_task_comment.sync_detailed(client=self._public_api, body=body)
-        return _get_response_parsed(response)
+        return self._request(lambda: api.add_task_comment.sync_detailed(client=self._public_api, body=body))
 
     @_handle_request_errors
     def list_comments(self, **kwargs) -> PaginatedCommentList:
-        response = api.list_comments.sync_detailed(client=self._public_api, **kwargs)
-        return _get_response_parsed(response)
+        return self._request(lambda: api.list_comments.sync_detailed(client=self._public_api, **kwargs))
 
     @_handle_request_errors
     def create_doc(self, body: WrappedDocCreate) -> WrappedDoc:
-        response = api.create_doc.sync_detailed(client=self._public_api, body=body)
-        return _get_response_parsed(response)
+        return self._request(lambda: api.create_doc.sync_detailed(client=self._public_api, body=body))
 
     @_handle_request_errors
     def retrieve_doc(self, id: str) -> WrappedDoc:
-        response = api.get_doc.sync_detailed(id, client=self._public_api)
-        return _get_response_parsed(response, not_found_message=f"Doc with ID {id} not found.")
+        return self._request(
+            lambda: api.get_doc.sync_detailed(id, client=self._public_api),
+            not_found_message=f"Doc with ID {id} not found.",
+        )
 
     @_handle_request_errors
     def update_doc(self, id: str, body: WrappedDocUpdate) -> WrappedDoc:
-        response = api.update_doc.sync_detailed(id, client=self._public_api, body=body)
-        return _get_response_parsed(response, not_found_message=f"Doc with ID {id} not found.")
+        return self._request(
+            lambda: api.update_doc.sync_detailed(id, client=self._public_api, body=body),
+            not_found_message=f"Doc with ID {id} not found.",
+        )
 
     @_handle_request_errors
     def delete_doc(self, id: str) -> WrappedDoc:
-        response = api.delete_doc.sync_detailed(id, client=self._public_api)
-        return _get_response_parsed(response, not_found_message=f"Doc with ID {id} not found.")
+        return self._request(
+            lambda: api.delete_doc.sync_detailed(id, client=self._public_api),
+            not_found_message=f"Doc with ID {id} not found.",
+        )
 
     @_handle_request_errors
     def list_docs(self, **kwargs) -> PaginatedConciseDocList:
-        response = api.list_docs.sync_detailed(client=self._public_api, **kwargs)
-        return _get_response_parsed(response)
+        return self._request(lambda: api.list_docs.sync_detailed(client=self._public_api, **kwargs))
 
 
 def make_task_branch_name(email: str, task: ConciseTask | Task) -> str:
@@ -480,12 +538,15 @@ def make_task_branch_name(email: str, task: ConciseTask | Task) -> str:
     return trim_slug_str(f"{username}/{task.id}-{title}", length=60)
 
 
-def get_host() -> str:
+def get_host(log: bool = False) -> str:
     config = _Config()
 
     host = config.host
+    if log and host == _PROD_HOST:
+        return host
     _log(f"Host is {_REVERSE_HOST_MAP.get(host, host)}")
-    _log("Done.")
+    if not log:
+        _log("Done.")
     return host
 
 
@@ -507,6 +568,37 @@ def _auth_failure_exit(message: str | None = None) -> NoReturn:
         else "Not logged in, either run\n\n  dart.login(token)\n\nor save the token into the DART_TOKEN environment variable."
     )
     _dart_exit(f"{message}\n\n{login_message}" if message else login_message)
+
+
+def _login_with_config(config: _Config, token: str | None = None, *, check_existing: bool = True) -> bool:
+    dart = Dart(config=config)
+
+    if check_existing and dart.is_logged_in():
+        _log("Already logged in.")
+        return True
+
+    _log("Log in to Dart")
+    if token is None:
+        if not _is_cli:
+            _dart_exit("Login failed, token is required.")
+        _log("Dart is opening in your browser, log in if needed and copy your authentication token from the page")
+        open_new_tab(config.host + _PROFILE_SETTINGS_URL_FRAG)
+        token = input("Token: ")
+
+    config.set(_AUTH_TOKEN_KEY, token)
+
+    worked = dart.is_logged_in()
+    if not worked:
+        _dart_exit("Invalid token.")
+
+    _log("Logged in.")
+    return True
+
+
+def _make_authenticated_dart() -> Dart:
+    dart = Dart()
+    dart.ensure_logged_in_for_cli()
+    return dart
 
 
 def _unknown_failure_exit() -> NoReturn:
@@ -568,29 +660,25 @@ def is_logged_in(should_raise: bool = False) -> bool:
 
 
 def login(token: str | None = None) -> bool:
+    return _login_with_config(_Config(), token)
+
+
+def token_login(token: str) -> bool:
     config = _Config()
     dart = Dart(config=config)
-
-    if dart.is_logged_in():
-        _log("Already logged in.")
-        return True
-
-    _log("Log in to Dart")
-    if token is None:
-        if not _is_cli:
-            _dart_exit("Login failed, token is required.")
-        _log("Dart is opening in your browser, log in if needed and copy your authentication token from the page")
-        open_new_tab(config.host + _PROFILE_SETTINGS_URL_FRAG)
-        token = input("Token: ")
-
-    config.set(_AUTH_TOKEN_KEY, token)
-
-    worked = dart.is_logged_in()
-    if not worked:
-        _dart_exit("Invalid token.")
+    auth_token = dart.exchange_login_token(token)
+    config.set(_AUTH_TOKEN_KEY, auth_token)
 
     _log("Logged in.")
     return True
+
+
+def whoami() -> Any:
+    dart = _make_authenticated_dart()
+    user = dart.get_me().user
+
+    _log(f"{user.name}\n{user.email}\nID: {user.id}")
+    return user
 
 
 def logout() -> bool:
@@ -618,7 +706,7 @@ def begin_task(
     *,
     status_name: str = _DEFAULT_BEGIN_STATUS,
 ) -> bool:
-    dart = Dart()
+    dart = _make_authenticated_dart()
     config = dart.get_config()
     task = dart.retrieve_task(id).item
 
@@ -647,7 +735,7 @@ def begin_task_interactive(
     status_name: str = _DEFAULT_BEGIN_STATUS,
     dartboard_title: Union[Unset, str] = UNSET,
 ) -> bool:
-    dart = Dart()
+    dart = _make_authenticated_dart()
     config = dart.get_config()
     user = config.user
     filtered_tasks = dart.list_tasks(assignee=user.email, is_completed=False, dartboard=dartboard_title).results
@@ -697,7 +785,7 @@ def create_agent(
     forwarding: Union[AgentForwarding, Unset] = UNSET,
     local: Union[AgentLocal, Unset] = UNSET,
 ) -> Agent:
-    dart = Dart()
+    dart = _make_authenticated_dart()
     agent_create = WrappedAgentCreate(
         item=AgentCreate(
             name=name,
@@ -714,6 +802,7 @@ def create_agent(
 
 
 def create_agent_interactive(*, execution_mode: AgentExecutionMode | None = None) -> Agent:
+    _make_authenticated_dart()
     name = _get_required_text("Name: ")
     if execution_mode is None:
         execution_mode = pick(
@@ -730,15 +819,7 @@ def create_agent_interactive(*, execution_mode: AgentExecutionMode | None = None
         instructions = AgentInstructions(markdown=_get_required_text("Instructions: "))
     elif execution_mode == AgentExecutionMode.FORWARDING:
         url = _get_required_text("Forwarding URL: ")
-        forwarding = AgentForwarding(
-            workflows=[
-                AgentWorkflow(
-                    make_id(),
-                    EventKind.AGENTSREQUESTED,
-                    url,
-                )
-            ]
-        )
+        forwarding = AgentForwarding(url=url)
     elif execution_mode == AgentExecutionMode.LOCAL:
         local_agent = pick(
             list(LocalAgent),
@@ -765,7 +846,7 @@ def update_agent(
     forwarding: Union[AgentForwarding, Unset] = UNSET,
     local: Union[AgentLocal, Unset] = UNSET,
 ) -> Agent:
-    dart = Dart()
+    dart = _make_authenticated_dart()
     agent_update = WrappedAgentUpdate(
         item=AgentUpdate(
             id=id,
@@ -783,7 +864,7 @@ def update_agent(
 
 
 def delete_agent(id: str) -> Agent:
-    dart = Dart()
+    dart = _make_authenticated_dart()
     agent = dart.delete_agent(id).item
 
     _log(f"Deleted agent\n\n  {agent.name}\n  ID: {agent.id}\n")
@@ -801,11 +882,22 @@ def _format_agent_connection(connection: dict[str, Any], base_url: str) -> str:
     return f"  {_make_agent_link(base_url, agent_id)}\n  ID: {agent_id}\n  Started: {started_at}"
 
 
-def connect_agent(id: str | None = None, *, quiet: bool = False, background: bool = False) -> None:
+def _connect_local_agent_with_auth_retry(dart: Dart, id: str, quiet: bool) -> None:
+    for attempt in range(2):
+        try:
+            _connect_local_agent(id, base_url=dart.get_base_url(), headers=dart.get_headers(), quiet=quiet)
+            return
+        except AgentAuthError as ex:
+            if not _is_cli or attempt == 1:
+                _auth_failure_exit(str(ex) or None)
+            dart._login_after_cli_auth_failure()
+
+
+def connect_agent(id: str | None = None, *, quiet: bool = False, background: bool = True) -> None:
     if id is None:
         id = create_agent_interactive(execution_mode=AgentExecutionMode.LOCAL).id
 
-    dart = Dart()
+    dart = _make_authenticated_dart()
     if background:
         try:
             connection = start_background_agent_connection(id)
@@ -819,9 +911,7 @@ def connect_agent(id: str | None = None, *, quiet: bool = False, background: boo
     if previous_sigint_handler is not None:
         signal.signal(signal.SIGINT, signal.default_int_handler)
     try:
-        _connect_local_agent(id, base_url=dart.get_base_url(), headers=dart.get_headers(), quiet=quiet)
-    except AgentAuthError as ex:
-        _auth_failure_exit(str(ex) or None)
+        _connect_local_agent_with_auth_retry(dart, id, quiet)
     finally:
         if previous_sigint_handler is not None:
             signal.signal(signal.SIGINT, previous_sigint_handler)
@@ -863,7 +953,7 @@ def create_task(
     should_begin: bool = False,
     begin_status_name: str = _DEFAULT_BEGIN_STATUS,
 ) -> Task:
-    dart = Dart()
+    dart = _make_authenticated_dart()
     task_create = WrappedTaskCreate(
         item=TaskCreate(
             title,
@@ -898,7 +988,7 @@ def update_task(
     size_int: Union[int, None, Unset] = UNSET,
     due_at_str: Union[str, None, Unset] = UNSET,
 ) -> Task:
-    dart = Dart()
+    dart = _make_authenticated_dart()
     task_update = WrappedTaskUpdate(
         item=TaskUpdate(
             id,
@@ -920,7 +1010,7 @@ def update_task(
 
 
 def delete_task(id: str) -> Task:
-    dart = Dart()
+    dart = _make_authenticated_dart()
     task = dart.delete_task(id).item
 
     _log(f"Deleted task\n\n  {task.title}\n  {task.html_url}\n  ID: {task.id}\n")
@@ -934,7 +1024,7 @@ def create_doc(
     folder_title: Union[str, Unset] = UNSET,
     text: Union[str, Unset] = UNSET,
 ) -> Doc:
-    dart = Dart()
+    dart = _make_authenticated_dart()
     doc_create = WrappedDocCreate(item=DocCreate(title=title, folder=folder_title, text=text))
     doc = dart.create_doc(doc_create).item
 
@@ -950,7 +1040,7 @@ def update_doc(
     folder_title: Union[str, Unset] = UNSET,
     text: Union[str, Unset] = UNSET,
 ) -> Doc:
-    dart = Dart()
+    dart = _make_authenticated_dart()
     doc_update = WrappedDocUpdate(item=DocUpdate(id, title=title, folder=folder_title, text=text))
     doc = dart.update_doc(id, doc_update).item
 
@@ -960,7 +1050,7 @@ def update_doc(
 
 
 def delete_doc(id: str) -> Doc:
-    dart = Dart()
+    dart = _make_authenticated_dart()
     doc = dart.delete_doc(id).item
 
     _log(f"Deleted doc\n\n  {doc.title}\n  {doc.html_url}\n  ID: {doc.id}\n")
@@ -969,7 +1059,7 @@ def delete_doc(id: str) -> Doc:
 
 
 def create_comment(id: str, text: str) -> Comment:
-    dart = Dart()
+    dart = _make_authenticated_dart()
     comment_create = WrappedCommentCreate(item=CommentCreate(task_id=id, text=text))
     comment = dart.create_comment(comment_create).item
     _log(f"Created comment\n\n  {comment.html_url}\n  ID: {comment.id}\n")
@@ -1100,9 +1190,16 @@ def cli() -> None:
     set_host_parser.add_argument("host", help="the new host: {prod|stag|dev|local|[URL]}")
     set_host_parser.set_defaults(func=set_host)
 
-    login_parser = subparsers.add_parser(_LOGIN_CMD, aliases=["l"], help="login")
+    login_parser = subparsers.add_parser(_LOGIN_CMD, aliases=["l"], help="login through the web UI")
     login_parser.add_argument("-t", "--token", dest="token", help="your authentication token")
     login_parser.set_defaults(func=login)
+
+    token_login_parser = subparsers.add_parser(_TOKEN_LOGIN_CMD, aliases=["lt"])
+    token_login_parser.add_argument("token", help="your Dart login token")
+    token_login_parser.set_defaults(func=token_login)
+
+    whoami_parser = subparsers.add_parser(_WHOAMI_CMD, aliases=["lw"])
+    whoami_parser.set_defaults(func=whoami)
 
     logout_parser = subparsers.add_parser(_LOGOUT_CMD, aliases=["lo"], help="logout")
     logout_parser.set_defaults(func=logout)
@@ -1149,11 +1246,12 @@ def cli() -> None:
     )
     connect_agent_parser.add_argument("id", nargs="?", help="agent ID")
     connect_agent_parser.add_argument(
-        "-b",
-        "--background",
+        "-f",
+        "--foreground",
         dest="background",
-        action="store_true",
-        help="keep the agent connection running in the background",
+        action="store_false",
+        default=True,
+        help="keep the agent connection attached to this terminal",
     )
     connect_agent_parser.add_argument(
         "-q",
@@ -1292,6 +1390,8 @@ def cli() -> None:
 
     args = vars(parser.parse_args())
     func = args.pop("func")
+    if func not in {get_host, set_host}:
+        get_host(log=True)
     try:
         func(**args)
     finally:
