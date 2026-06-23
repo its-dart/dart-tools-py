@@ -1,4 +1,5 @@
 import io
+import subprocess
 import tempfile
 import unittest
 from http import HTTPStatus
@@ -328,6 +329,22 @@ class LoginTests(unittest.TestCase):
 
 
 class CliHostLogTests(unittest.TestCase):
+    def test_cli_update_skips_version_check_and_host_log(self) -> None:
+        with (
+            patch("sys.argv", ["dart", "update"]),
+            patch("dart.dart._start_version_check_thread") as start_version_check_mock,
+            patch("dart.dart._print_pending_version_message") as print_pending_version_mock,
+            patch("dart.dart.get_host") as get_host_mock,
+            patch("dart.dart.update_cli") as update_cli_mock,
+            patch("dart.dart._is_cli", False),
+        ):
+            dart_cli.cli()
+
+        start_version_check_mock.assert_not_called()
+        print_pending_version_mock.assert_not_called()
+        get_host_mock.assert_not_called()
+        update_cli_mock.assert_called_once_with()
+
     def test_cli_help_hides_internal_service_commands(self) -> None:
         stdout = io.StringIO()
 
@@ -429,6 +446,51 @@ class CliHostLogTests(unittest.TestCase):
                     dart_cli.cli()
 
         self.assertEqual(messages, ["Host is stag", "Done."])
+
+
+class VersionUpdateTests(unittest.TestCase):
+    def tearDown(self) -> None:
+        dart_cli._pending_version_message.clear()
+
+    def test_version_update_message_uses_update_command(self) -> None:
+        class Config:
+            def get_cached_latest_version(self):
+                return "0.10.13"
+
+        with (
+            patch("dart.dart._VERSION", "0.10.12"),
+            patch("dart.dart._cli_command", "dart"),
+        ):
+            dart_cli._check_for_version_update(Config())
+
+        self.assertEqual(
+            dart_cli._pending_version_message,
+            ["A new version of Dart Tools is available. Upgrade from 0.10.12 to 0.10.13 with\n\n  dart update\n"],
+        )
+
+
+class SelfUpdateTests(unittest.TestCase):
+    def test_update_cli_runs_pip_upgrade_with_current_python(self) -> None:
+        with (
+            patch("dart.dart.sys.executable", "/usr/bin/python3"),
+            patch("dart.dart.subprocess.run") as run_mock,
+        ):
+            self.assertTrue(dart_cli.update_cli())
+
+        run_mock.assert_called_once_with(
+            ["/usr/bin/python3", "-m", "pip", "install", "--upgrade", "dart-tools"],
+            check=True,
+        )
+
+    def test_update_cli_exits_cleanly_when_pip_fails(self) -> None:
+        with (
+            patch("dart.dart._is_cli", False),
+            patch("dart.dart.subprocess.run", side_effect=subprocess.CalledProcessError(2, ["python"])),
+            self.assertRaises(dart_cli.DartException) as ctx,
+        ):
+            dart_cli.update_cli()
+
+        self.assertEqual(str(ctx.exception), "Failed to update Dart Tools.")
 
 
 if __name__ == "__main__":

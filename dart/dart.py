@@ -9,6 +9,7 @@ import json
 import math
 import os
 import signal
+import subprocess
 import sys
 import threading
 import time
@@ -99,6 +100,7 @@ _LOGIN_CMD = "login"
 _TOKEN_LOGIN_CMD = "token-login"
 _WHOAMI_CMD = "whoami"
 _LOGOUT_CMD = "logout"
+_SELF_UPDATE_CMD = "update"
 # Agent commands
 _CREATE_AGENT_CMD = "agent-create"
 _UPDATE_AGENT_CMD = "agent-update"
@@ -608,9 +610,21 @@ def _unknown_failure_exit() -> NoReturn:
 
 
 def print_version() -> str:
-    result = f"dart-tools version {_VERSION}"
+    result = f"Dart Tools version {_VERSION}"
     _log(result)
     return result
+
+
+def update_cli() -> bool:
+    _log("Updating Dart Tools...")
+    try:
+        subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", _APP], check=True)
+    except FileNotFoundError:
+        _dart_exit("Could not find the Python executable to update Dart Tools.")
+    except subprocess.CalledProcessError as ex:
+        _dart_exit(f"Failed to update Dart Tools.")
+    _log("Done.")
+    return True
 
 
 _pending_version_message: list[str] = []
@@ -635,7 +649,7 @@ def _check_for_version_update(config: _Config) -> None:
     if [int(e) for e in latest.split(".")] <= [int(e) for e in _VERSION.split(".")]:
         return
     _pending_version_message.append(
-        f"A new version of dart-tools is available. Upgrade from {_VERSION} to {latest} with\n\n  pip install --upgrade dart-tools\n"
+        f"A new version of Dart Tools is available. Upgrade from {_VERSION} to {latest} with\n\n  {_cli_command} {_SELF_UPDATE_CMD}\n"
     )
 
 
@@ -1151,11 +1165,13 @@ def cli() -> None:
     _is_cli = True
     _cli_command = get_invoked_cli_command()
 
-    version_check_thread = _start_version_check_thread()
+    is_update_command = len(sys.argv) > 1 and sys.argv[1] == _SELF_UPDATE_CMD
+    version_check_thread = None if is_update_command else _start_version_check_thread()
 
     if _VERSION_CMD in sys.argv[1:]:
         print_version()
-        _print_pending_version_message(version_check_thread)
+        if version_check_thread is not None:
+            _print_pending_version_message(version_check_thread)
         return
 
     parser = ArgumentParser(prog=_cli_command, description="A CLI to interact with Dart")
@@ -1163,6 +1179,7 @@ def cli() -> None:
         [
             _LOGIN_CMD,
             _LOGOUT_CMD,
+            _SELF_UPDATE_CMD,
             _CREATE_AGENT_CMD,
             _UPDATE_AGENT_CMD,
             _DELETE_AGENT_CMD,
@@ -1218,6 +1235,9 @@ def cli() -> None:
 
     logout_parser = add_parser(_LOGOUT_CMD, aliases=["lo"], help="logout")
     logout_parser.set_defaults(func=logout)
+
+    self_update_parser = add_parser(_SELF_UPDATE_CMD, help="update Dart Tools")
+    self_update_parser.set_defaults(func=update_cli)
 
     create_agent_parser = add_parser(_CREATE_AGENT_CMD, aliases=["ac"], help=_HELP_TEXT_TO_COMMAND[_CREATE_AGENT_CMD])
     create_agent_parser.add_argument("name", help="agent name")
@@ -1385,9 +1405,10 @@ def cli() -> None:
 
     args = vars(parser.parse_args())
     func = args.pop("func")
-    if func not in {get_host, set_host}:
+    if func not in {get_host, set_host, update_cli}:
         get_host(log=True)
     try:
         func(**args)
     finally:
-        _print_pending_version_message(version_check_thread)
+        if version_check_thread is not None:
+            _print_pending_version_message(version_check_thread)

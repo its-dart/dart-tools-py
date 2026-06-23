@@ -9,7 +9,7 @@
 
 [Dart](https://dartai.com?nr=1) is Project Management powered by AI.
 
-`dart-tools` is the Dart CLI and Python Library. It enables direct integration with Dart through a terminal CLI or through Python. It implements client functions to the [Dart Public API](https://app.dartai.com/api/v0/public/docs/).
+`Dart Tools` is the Dart CLI and Python Library. It enables direct integration with Dart through a terminal CLI or through Python. It implements client functions to the [Dart Public API](https://app.dartai.com/api/v0/public/docs/).
 
 - [Installation](#installation)
   - [Naming conflicts](#naming-conflicts)
@@ -24,7 +24,7 @@
 In the terminal, install by running
 
 ```sh
-pip install dart-tools
+curl -fsSL https://dartai.com/install.sh | sh
 ```
 
 ### Naming conflicts
