@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import math
 import os
+import re
 import signal
 import subprocess
 import sys
@@ -86,11 +87,24 @@ _make_id = make_id
 _APP = "dart-tools"
 _PROG = DEFAULT_CLI_COMMAND
 
+_PROD_NAME = "prod"
 _PROD_HOST = "https://app.dartai.com"
+_STAG_NAME = "stag"
 _STAG_HOST = "https://stag.dartai.com"
+_DEV_NAME = "dev"
 _DEV_HOST = "http://localhost:5100"
-_HOST_MAP = {"prod": _PROD_HOST, "stag": _STAG_HOST, "dev": _DEV_HOST, "local": _DEV_HOST}
-_REVERSE_HOST_MAP = {v: k for k, v in _HOST_MAP.items()}
+_SIMPLE_HOST_MAP = {_PROD_NAME: _PROD_HOST, _STAG_NAME: _STAG_HOST, _DEV_NAME: _DEV_HOST}
+_REVERSE_HOST_MAP = {v: k for k, v in _SIMPLE_HOST_MAP.items()}
+_HOST_ALIAS_MAP = {
+    "production": _PROD_NAME,
+    "staging": _STAG_NAME,
+    "local": _DEV_NAME,
+    "development": _DEV_NAME,
+}
+_HOST_MAP = {**_SIMPLE_HOST_MAP} | {k: _SIMPLE_HOST_MAP[v] for k, v in _HOST_ALIAS_MAP.items()}
+_PREVIEW_HOST_ALIAS_RE = re.compile(r"preview-[1-9][0-9]*")
+_PREVIEW_HOST_URL_RE = re.compile(r"https://(preview-[1-9][0-9]*)\.dartai\.com")
+_HOST_OPTIONS_TEXT = f"{_PROD_NAME}, {_STAG_NAME}, preview-#, {_DEV_NAME}"
 
 # Service commands
 _VERSION_CMD = "--version"
@@ -548,7 +562,7 @@ def get_host(log: bool = False) -> str:
     host = config.host
     if log and host == _PROD_HOST:
         return host
-    _log(f"Host is {_REVERSE_HOST_MAP.get(host, host)}")
+    _log(f"Host is {_get_host_display_name(host)}")
     if not log:
         _log("Done.")
     return host
@@ -557,12 +571,29 @@ def get_host(log: bool = False) -> str:
 def set_host(host: str) -> bool:
     config = _Config()
 
-    new_host = _HOST_MAP.get(host, host)
+    new_host = _resolve_host(host)
     config.host = new_host
 
     _log(f"Set host to {new_host}")
     _log("Done.")
     return True
+
+
+def _resolve_host(host: str) -> str:
+    if host in _HOST_MAP:
+        return _HOST_MAP[host]
+    if _PREVIEW_HOST_ALIAS_RE.fullmatch(host):
+        return f"https://{host}.dartai.com"
+    _dart_exit(f"Invalid host {host}. Valid hosts are {_HOST_OPTIONS_TEXT}.")
+
+
+def _get_host_display_name(host: str) -> str:
+    return _REVERSE_HOST_MAP.get(host) or _get_preview_host_alias(host) or host
+
+
+def _get_preview_host_alias(host: str) -> str | None:
+    match = _PREVIEW_HOST_URL_RE.fullmatch(host)
+    return match.group(1) if match else None
 
 
 def _auth_failure_exit(message: str | None = None) -> NoReturn:
@@ -1219,7 +1250,7 @@ def cli() -> None:
     get_host_parser.set_defaults(func=get_host)
 
     set_host_parser = add_parser(_SET_HOST_CMD, aliases=["hs"])
-    set_host_parser.add_argument("host", help="the new host: {prod|stag|dev|local|[URL]}")
+    set_host_parser.add_argument("host", help=f"the new host, one of {_HOST_OPTIONS_TEXT}")
     set_host_parser.set_defaults(func=set_host)
 
     login_parser = add_parser(_LOGIN_CMD, aliases=["l"], help="login through the web UI")

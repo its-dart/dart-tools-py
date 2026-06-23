@@ -328,6 +328,64 @@ class LoginTests(unittest.TestCase):
         self.assertEqual(events, ["connect", "login", "connect"])
 
 
+class HostSetTests(unittest.TestCase):
+    def test_set_host_accepts_preview_alias(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            config_path = Path(tmp_dir) / "dart-tools" / "config.json"
+            messages = []
+
+            with (
+                patch("dart.dart._CONFIG_FPATH", config_path),
+                patch("dart.dart._log", side_effect=messages.append),
+                patch("dart.dart._is_cli", False),
+            ):
+                self.assertTrue(dart_cli.set_host("preview-12"))
+                self.assertEqual(dart_cli._Config().host, "https://preview-12.dartai.com")
+                self.assertEqual(messages, ["Set host to https://preview-12.dartai.com", "Done."])
+
+                messages.clear()
+                self.assertEqual(dart_cli.get_host(), "https://preview-12.dartai.com")
+
+        self.assertEqual(messages, ["Host is preview-12", "Done."])
+
+    def test_set_host_rejects_non_options(self) -> None:
+        invalid_hosts = ["https://preview-12.dartai.com", "https://example.com", "preview-alpha", "preview-١٢"]
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            config_path = Path(tmp_dir) / "dart-tools" / "config.json"
+
+            with (
+                patch("dart.dart._CONFIG_FPATH", config_path),
+                patch("dart.dart._is_cli", False),
+            ):
+                for host in invalid_hosts:
+                    with self.subTest(host=host), self.assertRaises(dart_cli.DartException) as ctx:
+                        dart_cli.set_host(host)
+
+                    self.assertEqual(
+                        str(ctx.exception),
+                        f"Invalid host {host}. Valid hosts are {dart_cli._HOST_OPTIONS_TEXT}.",
+                    )
+                    self.assertEqual(dart_cli._Config().host, dart_cli._PROD_HOST)
+
+    def test_host_set_help_lists_supported_hosts(self) -> None:
+        stdout = io.StringIO()
+
+        with (
+            patch("sys.argv", ["dart", "host-set", "--help"]),
+            patch("dart.dart._start_version_check_thread", return_value=Mock()),
+            patch("dart.dart._is_cli", False),
+            patch("sys.stdout", stdout),
+            self.assertRaises(SystemExit) as ctx,
+        ):
+            dart_cli.cli()
+
+        self.assertEqual(ctx.exception.code, 0)
+        help_text = stdout.getvalue()
+        self.assertIn(dart_cli._HOST_OPTIONS_TEXT, help_text)
+        self.assertNotIn("[URL]", help_text)
+
+
 class CliHostLogTests(unittest.TestCase):
     def test_cli_update_skips_version_check_and_host_log(self) -> None:
         with (
