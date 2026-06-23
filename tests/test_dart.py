@@ -293,7 +293,7 @@ class LoginTests(unittest.TestCase):
         def ensure_logged_in(_dart):
             events.append("login")
 
-        def start_background(agent_id):
+        def start_background(_cli_command, agent_id):
             events.append("start")
             return {"agentId": agent_id, "startedAt": 1.0}
 
@@ -346,6 +346,48 @@ class CliHostLogTests(unittest.TestCase):
         self.assertNotIn("host-get", help_text)
         self.assertNotIn("host-set", help_text)
         self.assertNotIn("token-login", help_text)
+
+    def test_cli_help_uses_invoked_command(self) -> None:
+        stdout = io.StringIO()
+
+        with (
+            patch("sys.argv", ["dartai", "--help"]),
+            patch("dart.dart._start_version_check_thread", return_value=Mock()),
+            patch("dart.dart._is_cli", False),
+            patch("sys.stdout", stdout),
+            self.assertRaises(SystemExit) as ctx,
+        ):
+            dart_cli.cli()
+
+        self.assertEqual(ctx.exception.code, 0)
+        self.assertIn("usage: dartai", stdout.getvalue())
+
+    def test_cli_subcommand_help_uses_invoked_alias(self) -> None:
+        stdout = io.StringIO()
+
+        with (
+            patch("sys.argv", ["dartai", "acc", "--help"]),
+            patch("dart.dart._start_version_check_thread", return_value=Mock()),
+            patch("dart.dart._is_cli", False),
+            patch("sys.stdout", stdout),
+            self.assertRaises(SystemExit) as ctx,
+        ):
+            dart_cli.cli()
+
+        self.assertEqual(ctx.exception.code, 0)
+        help_text = stdout.getvalue()
+        self.assertIn("usage: dartai acc", help_text)
+        self.assertNotIn("usage: dartai agent-connect", help_text)
+
+    def test_auth_failure_message_uses_stored_cli_command(self) -> None:
+        with (
+            patch("dart.dart._is_cli", True),
+            patch("dart.dart._cli_command", "dartai"),
+            self.assertRaises(SystemExit) as ctx,
+        ):
+            dart_cli._auth_failure_exit()
+
+        self.assertEqual(str(ctx.exception), "Not logged in, run\n\n  dartai login\n\nto log in.")
 
     def test_cli_logs_non_prod_host_before_command_output(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:

@@ -33,6 +33,7 @@ from .agent_process import (
     list_background_agent_connections,
     start_background_agent_connection,
 )
+from .cli_command import DEFAULT_CLI_COMMAND, get_invoked_cli_command
 from .exception import UNKNOWN_FAILURE_MESSAGE, AgentAuthError, DartException
 from .generated import Client, api
 from .generated.errors import UnexpectedStatus
@@ -82,7 +83,7 @@ from .util import get_item_count_text, make_id, slugify_str, trim_slug_str
 _make_id = make_id
 
 _APP = "dart-tools"
-_PROG = "dart"
+_PROG = DEFAULT_CLI_COMMAND
 
 _PROD_HOST = "https://app.dartai.com"
 _STAG_HOST = "https://stag.dartai.com"
@@ -197,6 +198,7 @@ _HELP_TEXT_TO_COMMAND = {
 }
 
 _is_cli = False
+_cli_command = _PROG
 
 
 def _suppress_exception(fn: Callable) -> Callable:
@@ -563,7 +565,7 @@ def set_host(host: str) -> bool:
 
 def _auth_failure_exit(message: str | None = None) -> NoReturn:
     login_message = (
-        f"Not logged in, run\n\n  {_PROG} {_LOGIN_CMD}\n\nto log in."
+        f"Not logged in, run\n\n  {_cli_command} {_LOGIN_CMD}\n\nto log in."
         if _is_cli
         else "Not logged in, either run\n\n  dart.login(token)\n\nor save the token into the DART_TOKEN environment variable."
     )
@@ -900,7 +902,7 @@ def connect_agent(id: str | None = None, *, quiet: bool = False, background: boo
     dart = _make_authenticated_dart()
     if background:
         try:
-            connection = start_background_agent_connection(id)
+            connection = start_background_agent_connection(_cli_command, id)
         except AgentConnectionError as ex:
             _dart_exit(str(ex))
         _log(f"Started background agent connection\n\n{_format_agent_connection(connection, dart.get_base_url())}\n")
@@ -1145,8 +1147,9 @@ def _add_standard_task_arguments(parser: ArgumentParser) -> None:
 
 def cli() -> None:
     signal.signal(signal.SIGINT, _exit_gracefully)
-    global _is_cli
+    global _is_cli, _cli_command
     _is_cli = True
+    _cli_command = get_invoked_cli_command()
 
     version_check_thread = _start_version_check_thread()
 
@@ -1155,7 +1158,7 @@ def cli() -> None:
         _print_pending_version_message(version_check_thread)
         return
 
-    parser = ArgumentParser(prog=_PROG, description="A CLI to interact with Dart")
+    parser = ArgumentParser(prog=_cli_command, description="A CLI to interact with Dart")
     metavar = ",".join(
         [
             _LOGIN_CMD,
@@ -1183,30 +1186,40 @@ def cli() -> None:
         metavar=f"{{{metavar}}}",
     )
 
-    get_host_parser = subparsers.add_parser(_GET_HOST_CMD, aliases=["hg"])
+    def add_parser(command: str, *, aliases: list[str] | None = None, **kwargs) -> ArgumentParser:
+        aliases = aliases or []
+        used_command = command
+        if len(sys.argv) > 1 and sys.argv[1] in {command, *aliases}:
+            used_command = sys.argv[1]
+        return subparsers.add_parser(
+            command,
+            aliases=aliases,
+            prog=f"{_cli_command} {used_command}",
+            **kwargs,
+        )
+
+    get_host_parser = add_parser(_GET_HOST_CMD, aliases=["hg"])
     get_host_parser.set_defaults(func=get_host)
 
-    set_host_parser = subparsers.add_parser(_SET_HOST_CMD, aliases=["hs"])
+    set_host_parser = add_parser(_SET_HOST_CMD, aliases=["hs"])
     set_host_parser.add_argument("host", help="the new host: {prod|stag|dev|local|[URL]}")
     set_host_parser.set_defaults(func=set_host)
 
-    login_parser = subparsers.add_parser(_LOGIN_CMD, aliases=["l"], help="login through the web UI")
+    login_parser = add_parser(_LOGIN_CMD, aliases=["l"], help="login through the web UI")
     login_parser.add_argument("-t", "--token", dest="token", help="your authentication token")
     login_parser.set_defaults(func=login)
 
-    token_login_parser = subparsers.add_parser(_TOKEN_LOGIN_CMD, aliases=["lt"])
+    token_login_parser = add_parser(_TOKEN_LOGIN_CMD, aliases=["lt"])
     token_login_parser.add_argument("token", help="your Dart login token")
     token_login_parser.set_defaults(func=token_login)
 
-    whoami_parser = subparsers.add_parser(_WHOAMI_CMD, aliases=["lw"])
+    whoami_parser = add_parser(_WHOAMI_CMD, aliases=["lw"])
     whoami_parser.set_defaults(func=whoami)
 
-    logout_parser = subparsers.add_parser(_LOGOUT_CMD, aliases=["lo"], help="logout")
+    logout_parser = add_parser(_LOGOUT_CMD, aliases=["lo"], help="logout")
     logout_parser.set_defaults(func=logout)
 
-    create_agent_parser = subparsers.add_parser(
-        _CREATE_AGENT_CMD, aliases=["ac"], help=_HELP_TEXT_TO_COMMAND[_CREATE_AGENT_CMD]
-    )
+    create_agent_parser = add_parser(_CREATE_AGENT_CMD, aliases=["ac"], help=_HELP_TEXT_TO_COMMAND[_CREATE_AGENT_CMD])
     create_agent_parser.add_argument("name", help="agent name")
     create_agent_parser.add_argument(
         "-m",
@@ -1219,9 +1232,7 @@ def cli() -> None:
     )
     create_agent_parser.set_defaults(func=create_agent)
 
-    update_agent_parser = subparsers.add_parser(
-        _UPDATE_AGENT_CMD, aliases=["au"], help=_HELP_TEXT_TO_COMMAND[_UPDATE_AGENT_CMD]
-    )
+    update_agent_parser = add_parser(_UPDATE_AGENT_CMD, aliases=["au"], help=_HELP_TEXT_TO_COMMAND[_UPDATE_AGENT_CMD])
     update_agent_parser.add_argument("id", help="agent ID")
     update_agent_parser.add_argument("-n", "--name", dest="name", help="agent name", default=UNSET)
     update_agent_parser.add_argument(
@@ -1235,15 +1246,11 @@ def cli() -> None:
     )
     update_agent_parser.set_defaults(func=update_agent)
 
-    delete_agent_parser = subparsers.add_parser(
-        _DELETE_AGENT_CMD, aliases=["ad"], help=_HELP_TEXT_TO_COMMAND[_DELETE_AGENT_CMD]
-    )
+    delete_agent_parser = add_parser(_DELETE_AGENT_CMD, aliases=["ad"], help=_HELP_TEXT_TO_COMMAND[_DELETE_AGENT_CMD])
     delete_agent_parser.add_argument("id", help="agent ID")
     delete_agent_parser.set_defaults(func=delete_agent)
 
-    connect_agent_parser = subparsers.add_parser(
-        _CONNECT_AGENT_CMD, aliases=["acc"], help="connect a local agent to a Dart agent"
-    )
+    connect_agent_parser = add_parser(_CONNECT_AGENT_CMD, aliases=["acc"], help="connect a local agent to a Dart agent")
     connect_agent_parser.add_argument("id", nargs="?", help="agent ID")
     connect_agent_parser.add_argument(
         "-f",
@@ -1262,12 +1269,12 @@ def cli() -> None:
     )
     connect_agent_parser.set_defaults(func=connect_agent)
 
-    list_agent_connections_parser = subparsers.add_parser(
+    list_agent_connections_parser = add_parser(
         _LIST_AGENT_CONNECTIONS_CMD, aliases=["acl"], help="list background agent connections"
     )
     list_agent_connections_parser.set_defaults(func=list_agent_connections)
 
-    disconnect_agent_parser = subparsers.add_parser(
+    disconnect_agent_parser = add_parser(
         _DISCONNECT_AGENT_CMD, aliases=["acd"], help="stop background agent connections"
     )
     disconnect_agent_parser.add_argument("id", nargs="?", help="agent ID")
@@ -1280,9 +1287,7 @@ def cli() -> None:
     )
     disconnect_agent_parser.set_defaults(func=disconnect_agent)
 
-    create_task_parser = subparsers.add_parser(
-        _CREATE_TASK_CMD, aliases=["tc"], help=_HELP_TEXT_TO_COMMAND[_CREATE_TASK_CMD]
-    )
+    create_task_parser = add_parser(_CREATE_TASK_CMD, aliases=["tc"], help=_HELP_TEXT_TO_COMMAND[_CREATE_TASK_CMD])
     create_task_parser.add_argument("title", help="task title")
     create_task_parser.add_argument(
         "-b",
@@ -1300,21 +1305,17 @@ def cli() -> None:
     _add_standard_task_arguments(create_task_parser)
     create_task_parser.set_defaults(func=create_task)
 
-    update_task_parser = subparsers.add_parser(
-        _UPDATE_TASK_CMD, aliases=["tu"], help=_HELP_TEXT_TO_COMMAND[_UPDATE_TASK_CMD]
-    )
+    update_task_parser = add_parser(_UPDATE_TASK_CMD, aliases=["tu"], help=_HELP_TEXT_TO_COMMAND[_UPDATE_TASK_CMD])
     update_task_parser.add_argument("id", help="task ID")
     update_task_parser.add_argument("-e", "--title", dest="title", help="task title", default=UNSET)
     _add_standard_task_arguments(update_task_parser)
     update_task_parser.set_defaults(func=update_task)
 
-    delete_task_parser = subparsers.add_parser(
-        _DELETE_TASK_CMD, aliases=["td"], help=_HELP_TEXT_TO_COMMAND[_DELETE_TASK_CMD]
-    )
+    delete_task_parser = add_parser(_DELETE_TASK_CMD, aliases=["td"], help=_HELP_TEXT_TO_COMMAND[_DELETE_TASK_CMD])
     delete_task_parser.add_argument("id", help="task ID")
     delete_task_parser.set_defaults(func=delete_task)
 
-    begin_task_parser = subparsers.add_parser(_BEGIN_TASK_CMD, aliases=["tb"], help="begin work on a task")
+    begin_task_parser = add_parser(_BEGIN_TASK_CMD, aliases=["tb"], help="begin work on a task")
     begin_task_parser.add_argument(
         "-s",
         "--status",
@@ -1325,37 +1326,31 @@ def cli() -> None:
     begin_task_parser.add_argument("-d", "--dartboard", dest="dartboard_title", help="dartboard title", default=UNSET)
     begin_task_parser.set_defaults(func=begin_task_interactive)
 
-    create_doc_parser = subparsers.add_parser(
-        _CREATE_DOC_CMD, aliases=["dc"], help=_HELP_TEXT_TO_COMMAND[_CREATE_DOC_CMD]
-    )
+    create_doc_parser = add_parser(_CREATE_DOC_CMD, aliases=["dc"], help=_HELP_TEXT_TO_COMMAND[_CREATE_DOC_CMD])
     create_doc_parser.add_argument("title", help="doc title")
     create_doc_parser.add_argument("-f", "--folder", dest="folder_title", help="doc folder title", default=UNSET)
     create_doc_parser.add_argument("-t", "--text", dest="text", help="doc text", default=UNSET)
     create_doc_parser.set_defaults(func=create_doc)
 
-    update_doc_parser = subparsers.add_parser(
-        _UPDATE_DOC_CMD, aliases=["du"], help=_HELP_TEXT_TO_COMMAND[_UPDATE_DOC_CMD]
-    )
+    update_doc_parser = add_parser(_UPDATE_DOC_CMD, aliases=["du"], help=_HELP_TEXT_TO_COMMAND[_UPDATE_DOC_CMD])
     update_doc_parser.add_argument("id", help="doc ID")
     update_doc_parser.add_argument("-e", "--title", dest="title", help="doc title", default=UNSET)
     update_doc_parser.add_argument("-f", "--folder", dest="folder_title", help="doc folder title", default=UNSET)
     update_doc_parser.add_argument("-t", "--text", dest="text", help="doc text", default=UNSET)
     update_doc_parser.set_defaults(func=update_doc)
 
-    delete_doc_parser = subparsers.add_parser(
-        _DELETE_DOC_CMD, aliases=["dd"], help=_HELP_TEXT_TO_COMMAND[_DELETE_DOC_CMD]
-    )
+    delete_doc_parser = add_parser(_DELETE_DOC_CMD, aliases=["dd"], help=_HELP_TEXT_TO_COMMAND[_DELETE_DOC_CMD])
     delete_doc_parser.add_argument("id", help="doc ID")
     delete_doc_parser.set_defaults(func=delete_doc)
 
-    create_comment_parser = subparsers.add_parser(
+    create_comment_parser = add_parser(
         _CREATE_COMMENT_CMD, aliases=["cc"], help=_HELP_TEXT_TO_COMMAND[_CREATE_COMMENT_CMD]
     )
     create_comment_parser.add_argument("id", help="task ID")
     create_comment_parser.add_argument("text", help="comment text")
     create_comment_parser.set_defaults(func=create_comment)
 
-    server_parser = subparsers.add_parser(
+    server_parser = add_parser(
         _SERVER_START_CMD, aliases=["ss"], help="run a simple HTTP server, optionally tunneled with ngrok"
     )
     server_parser.add_argument(

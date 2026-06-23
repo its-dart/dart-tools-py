@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import signal
 import subprocess
 import sys
@@ -10,6 +11,8 @@ from pathlib import Path
 from typing import Any
 
 import platformdirs
+
+from .cli_command import CLI_COMMAND_ENVVAR
 
 _APP = "dart-tools"
 _CONNECTIONS_KEY = "connections"
@@ -24,27 +27,22 @@ class AgentConnectionError(Exception):
     pass
 
 
-def start_background_agent_connection(agent_id: str) -> dict[str, Any]:
+def start_background_agent_connection(cli_command: str, agent_id: str) -> dict[str, Any]:
     registry = _load_pruned_registry()
     if agent_id in registry:
         raise AgentConnectionError(f"Agent {agent_id} already has a background connection.")
 
     log_path = _make_log_path(agent_id)
-    command = [
-        sys.executable,
-        "-c",
-        "from dart import cli; cli()",
-        "agent-connect",
-        agent_id,
-        "--quiet",
-        "--foreground",
-    ]
+    command = _make_background_agent_command(cli_command, agent_id)
+    env = os.environ.copy()
+    env[CLI_COMMAND_ENVVAR] = cli_command
     with open(log_path, "ab") as log_file:
         process = subprocess.Popen(
             command,
             stdin=subprocess.DEVNULL,
             stdout=log_file,
             stderr=subprocess.STDOUT,
+            env=env,
             creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if os.name == "nt" else 0,
             start_new_session=os.name != "nt",
         )
@@ -66,6 +64,21 @@ def start_background_agent_connection(agent_id: str) -> dict[str, Any]:
         _terminate_process(process.pid)
         raise AgentConnectionError(f"Could not register background agent connection. Log: {log_path}") from ex
     return connection
+
+
+def _make_background_agent_command(cli_command: str, agent_id: str) -> list[str]:
+    base_command = [cli_command] if _is_runnable_command(cli_command) else _python_cli_command()
+    return [*base_command, "agent-connect", agent_id, "--quiet", "--foreground"]
+
+
+def _python_cli_command() -> list[str]:
+    return [sys.executable, "-c", "from dart import cli; cli()"]
+
+
+def _is_runnable_command(command: str) -> bool:
+    if os.path.sep in command or (os.path.altsep is not None and os.path.altsep in command):
+        return Path(command).exists()
+    return shutil.which(command) is not None
 
 
 def list_background_agent_connections() -> list[dict[str, Any]]:
