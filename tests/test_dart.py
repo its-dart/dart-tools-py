@@ -1,4 +1,5 @@
 import io
+import json
 import subprocess
 import tempfile
 import unittest
@@ -70,6 +71,30 @@ class ConfigPathTests(unittest.TestCase):
             self.assertEqual(
                 dart_cli._migrate_config_fpath(config_path, legacy_config_path),
                 config_path,
+            )
+
+    def test_config_recovers_invalid_json_file(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            config_path = Path(tmp_dir) / "dart-tools" / "config.json"
+            config_path.parent.mkdir(parents=True)
+            config_path.write_text("{", encoding="UTF-8")
+            invalid_config_path = config_path.with_name("config.json.invalid-20260625-120000")
+            messages = []
+
+            with (
+                patch("dart.dart._CONFIG_FPATH", config_path),
+                patch("dart.dart.time.strftime", return_value="20260625-120000"),
+                patch("dart.dart.make_id", return_value="client-1"),
+                patch("dart.dart._log", side_effect=messages.append),
+            ):
+                config = dart_cli._Config()
+
+            self.assertEqual(invalid_config_path.read_text(encoding="UTF-8"), "{")
+            self.assertEqual(config.client_id, "client-1")
+            self.assertEqual(json.loads(config_path.read_text(encoding="UTF-8"))["clientId"], "client-1")
+            self.assertEqual(
+                messages,
+                [f"Invalid Dart config moved to {invalid_config_path}. Starting fresh."],
             )
 
 
@@ -294,17 +319,33 @@ class LoginTests(unittest.TestCase):
         def ensure_logged_in(_dart):
             events.append("login")
 
-        def start_background(_cli_command, agent_id):
+        def get_agent(_dart, agent_id):
+            events.append("get")
+            return SimpleNamespace(
+                item=SimpleNamespace(
+                    execution_mode=dart_cli.AgentExecutionMode.LOCAL,
+                    local=SimpleNamespace(agent=dart_cli.LocalAgent.CODEX),
+                )
+            )
+
+        def ensure_local_agent(local_agent_name, install):
+            events.append(f"ensure:{local_agent_name}:{install}")
+
+        def start_background(_cli_command, agent_id, install):
             events.append("start")
+            self.assertEqual(install, "auto")
             return {"agentId": agent_id, "startedAt": 1.0}
 
         with (
+            patch("dart.dart._is_cli", True),
             patch.object(dart_cli.Dart, "ensure_logged_in_for_cli", ensure_logged_in),
+            patch.object(dart_cli.Dart, "get_agent", get_agent),
+            patch("dart.dart._ensure_local_agent_available", side_effect=ensure_local_agent),
             patch("dart.dart.start_background_agent_connection", side_effect=start_background),
         ):
             dart_cli.connect_agent("agent-1")
 
-        self.assertEqual(events, ["login", "start"])
+        self.assertEqual(events, ["login", "get", "ensure:codex:auto", "start"])
 
     def test_agent_connection_auth_failure_logs_in_and_retries_once_for_cli(self) -> None:
         events = []
@@ -326,6 +367,31 @@ class LoginTests(unittest.TestCase):
             dart_cli.connect_agent("agent-1", background=False)
 
         self.assertEqual(events, ["connect", "login", "connect"])
+
+    def test_install_policy_defaults_to_prompt_for_interactive_foreground(self) -> None:
+        class Stdin:
+            def isatty(self) -> bool:
+                return True
+
+        with patch("dart.dart._is_cli", True), patch("dart.dart.sys.stdin", new=Stdin()):
+            self.assertEqual(dart_cli._resolve_agent_install_policy(None, False), "prompt")
+
+    def test_install_policy_defaults_to_auto_for_background(self) -> None:
+        class Stdin:
+            def isatty(self) -> bool:
+                return True
+
+        with patch("dart.dart._is_cli", True), patch("dart.dart.sys.stdin", new=Stdin()):
+            self.assertEqual(dart_cli._resolve_agent_install_policy(None, True), "auto")
+
+    def test_install_policy_defaults_to_never_for_python_callers(self) -> None:
+        class Stdin:
+            def isatty(self) -> bool:
+                return True
+
+        with patch("dart.dart._is_cli", False), patch("dart.dart.sys.stdin", new=Stdin()):
+            self.assertEqual(dart_cli._resolve_agent_install_policy(None, True), "never")
+            self.assertEqual(dart_cli._resolve_agent_install_policy(None, False), "never")
 
 
 class HostSetTests(unittest.TestCase):
@@ -523,7 +589,10 @@ class VersionUpdateTests(unittest.TestCase):
 
         self.assertEqual(
             dart_cli._pending_version_message,
-            ["A new version of Dart Tools is available. Upgrade from 0.10.12 to 0.10.13 with\n\n  dart update\n"],
+            [
+                f"A new version of {dart_cli._PRETTY_NAME} is available. "
+                "Upgrade from 0.10.12 to 0.10.13 with\n\n  dart update\n"
+            ],
         )
 
 
@@ -543,12 +612,46 @@ class SelfUpdateTests(unittest.TestCase):
     def test_update_cli_exits_cleanly_when_pip_fails(self) -> None:
         with (
             patch("dart.dart._is_cli", False),
+            patch("dart.dart._is_pip_missing", return_value=False),
             patch("dart.dart.subprocess.run", side_effect=subprocess.CalledProcessError(2, ["python"])),
             self.assertRaises(dart_cli.DartException) as ctx,
         ):
             dart_cli.update_cli()
 
-        self.assertEqual(str(ctx.exception), "Failed to update Dart Tools.")
+        self.assertEqual(str(ctx.exception), f"Failed to update {dart_cli._PRETTY_NAME}.")
+
+    def test_update_cli_bootstraps_pip_when_pip_is_missing(self) -> None:
+        pip_install_command = ["/usr/bin/python3", "-m", "pip", "install", "--upgrade", "dart-tools"]
+        pip_version_command = ["/usr/bin/python3", "-m", "pip", "--version"]
+        ensurepip_command = ["/usr/bin/python3", "-m", "ensurepip", "--upgrade"]
+
+        with (
+            patch("dart.dart.sys.executable", "/usr/bin/python3"),
+            patch(
+                "dart.dart.subprocess.run",
+                side_effect=[
+                    subprocess.CalledProcessError(1, pip_install_command),
+                    subprocess.CompletedProcess(
+                        pip_version_command,
+                        1,
+                        stderr="/usr/bin/python3: No module named pip\n",
+                    ),
+                    subprocess.CompletedProcess(ensurepip_command, 0),
+                    subprocess.CompletedProcess(pip_install_command, 0),
+                ],
+            ) as run_mock,
+        ):
+            self.assertTrue(dart_cli.update_cli())
+
+        self.assertEqual(
+            [call.args[0] for call in run_mock.call_args_list],
+            [
+                pip_install_command,
+                pip_version_command,
+                ensurepip_command,
+                pip_install_command,
+            ],
+        )
 
 
 if __name__ == "__main__":

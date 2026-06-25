@@ -3,12 +3,14 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import json
+import os
 import random
 import shutil
 import subprocess
 import sys
 import time
 from collections.abc import Awaitable, Callable
+from dataclasses import dataclass
 from typing import Any, Literal, Mapping
 from urllib.parse import urlsplit, urlunsplit
 
@@ -18,6 +20,8 @@ from websockets.exceptions import ConnectionClosed, InvalidStatus
 from .exception import UNKNOWN_FAILURE_MESSAGE, AgentAuthError
 
 _OutputMode = Literal["json", "jsonl"]
+AgentInstallPolicy = Literal["prompt", "auto", "never"]
+AGENT_INSTALL_POLICIES: tuple[AgentInstallPolicy, ...] = ("prompt", "auto", "never")
 
 _WEBSOCKET_PATH = "/ws/v0/local-agent"
 _AUTH_FAILURE_STATUS_CODES = (401, 403)
@@ -102,11 +106,26 @@ class _LocalAgentSetupError(Exception):
     pass
 
 
+@dataclass(frozen=True)
+class _LocalAgentInstallCommand:
+    command: tuple[str, ...]
+    display: str
+    windows_override: "_LocalAgentInstallCommand | None" = None
+
+    @property
+    def current(self) -> "_LocalAgentInstallCommand":
+        if os.name == "nt" and self.windows_override is not None:
+            return self.windows_override
+        return self
+
+
 class _LocalAgent:
     def __init__(
         self,
         *,
+        display_name: str,
         start_command: tuple[str, ...],
+        install_command: _LocalAgentInstallCommand,
         session_id_key: str,
         response_key: str | tuple[str, ...],
         output_mode: _OutputMode,
@@ -118,7 +137,9 @@ class _LocalAgent:
         deduplicate_stream_events: bool = False,
         reassemble_stream_events: bool = False,
     ) -> None:
+        self.display_name = display_name
         self.start_command = start_command
+        self.install_command = install_command
         self.session_id_key = session_id_key
         self.response_keys = (response_key,) if isinstance(response_key, str) else response_key
         self.output_mode = output_mode
@@ -401,8 +422,13 @@ class _LocalAgent:
         return True, message or "Done.", next_session_id
 
 
+def _npm_install_command(package: str) -> _LocalAgentInstallCommand:
+    return _LocalAgentInstallCommand(("npm", "install", "-g", package), f"npm install -g {package}")
+
+
 _LOCAL_AGENTS: dict[str, _LocalAgent] = {
     "claude": _LocalAgent(
+        display_name="Claude Code",
         start_command=(
             "claude",
             "-p",
@@ -412,6 +438,7 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
             "--include-partial-messages",
             "--verbose",
         ),
+        install_command=_npm_install_command("@anthropic-ai/claude-code"),
         session_id_key="session_id",
         response_key="result",
         output_mode="jsonl",
@@ -430,6 +457,7 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
         reassemble_stream_events=True,
     ),
     "codex": _LocalAgent(
+        display_name="Codex",
         start_command=(
             "codex",
             "exec",
@@ -437,6 +465,7 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
             "--dangerously-bypass-approvals-and-sandbox",
             "--skip-git-repo-check",
         ),
+        install_command=_npm_install_command("@openai/codex"),
         session_id_key="thread_id",
         response_key="item.text",
         output_mode="jsonl",
@@ -450,7 +479,9 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
         ),
     ),
     "copilot": _LocalAgent(
+        display_name="GitHub Copilot CLI",
         start_command=("copilot", "--output-format", "json", "-s", "--autopilot", "--no-ask-user", "--allow-all", "-p"),
+        install_command=_npm_install_command("@github/copilot"),
         session_id_key="sessionId",
         response_key="data.content",
         output_mode="jsonl",
@@ -469,7 +500,23 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
         response_phases=("final_answer",),
     ),
     "cursor": _LocalAgent(
+        display_name="Cursor CLI",
         start_command=("cursor-agent", "--print", "--force", "--output-format", "stream-json"),
+        install_command=_LocalAgentInstallCommand(
+            ("sh", "-c", "curl https://cursor.com/install -fsS | bash"),
+            "curl https://cursor.com/install -fsS | bash",
+            windows_override=_LocalAgentInstallCommand(
+                (
+                    "powershell",
+                    "-NoProfile",
+                    "-ExecutionPolicy",
+                    "Bypass",
+                    "-Command",
+                    "irm 'https://cursor.com/install?win32=true' | iex",
+                ),
+                "irm 'https://cursor.com/install?win32=true' | iex",
+            ),
+        ),
         session_id_key="session_id",
         response_key="result",
         output_mode="jsonl",
@@ -477,13 +524,17 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
         stream_response_keys=False,
     ),
     "gemini": _LocalAgent(
+        display_name="Gemini CLI",
         start_command=("gemini", "--output-format", "json", "--approval-mode", "yolo", "--skip-trust", "-p"),
+        install_command=_npm_install_command("@google/gemini-cli"),
         session_id_key="session_id",
         response_key="response",
         output_mode="json",
     ),
     "opencode": _LocalAgent(
+        display_name="OpenCode",
         start_command=("opencode", "run", "--format", "json", "--dangerously-skip-permissions"),
+        install_command=_npm_install_command("opencode-ai"),
         session_id_key="sessionID",
         response_key="part.text",
         output_mode="jsonl",
@@ -493,11 +544,25 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
 _LOCAL_AGENT_SESSION_IDS: dict[tuple[str, str], str] = {}
 
 
-def connect_agent(agent_id: str, *, base_url: str, headers: Mapping[str, str], quiet: bool = False) -> None:
+def connect_agent(
+    agent_id: str,
+    install: AgentInstallPolicy,
+    *,
+    base_url: str,
+    headers: Mapping[str, str],
+    quiet: bool = False,
+) -> None:
     try:
-        asyncio.run(_connect_agent_async(agent_id, base_url=base_url, headers=headers, quiet=quiet))
+        asyncio.run(_connect_agent_async(agent_id, install, base_url=base_url, headers=headers, quiet=quiet))
     except KeyboardInterrupt:
         return
+    except _LocalAgentSetupError as ex:
+        raise SystemExit(str(ex)) from None
+
+
+def ensure_local_agent_available(local_agent_name: str, install: AgentInstallPolicy) -> None:
+    try:
+        _validate_local_agent_available(local_agent_name, install)
     except _LocalAgentSetupError as ex:
         raise SystemExit(str(ex)) from None
 
@@ -793,10 +858,53 @@ def _get_local_agent(local_agent_name: str) -> _LocalAgent:
     return local_agent
 
 
-def _validate_local_agent_available(local_agent_name: str) -> None:
+def _local_agent_command_not_found_message(local_agent: _LocalAgent) -> str:
+    return f"Local agent command not found: {local_agent.executable()}."
+
+
+def _confirm_local_agent_install(local_agent: _LocalAgent) -> bool:
+    if not sys.stdin.isatty():
+        raise _LocalAgentSetupError(
+            f"Cannot prompt to install {local_agent.display_name} because stdin is not interactive."
+        )
+    response = input(
+        f"Install {local_agent.display_name} now?\n\n"
+        f"  {local_agent.install_command.current.display}\n\n"
+        "Proceed? [y/N] "
+    )
+    return response.strip().lower() in {"y", "yes"}
+
+
+def _install_local_agent(local_agent: _LocalAgent, install: AgentInstallPolicy) -> None:
+    install_command = local_agent.install_command.current
+    if install == "prompt" and not _confirm_local_agent_install(local_agent):
+        raise _LocalAgentSetupError(f"{local_agent.display_name} was not installed.")
+
+    print(f"Installing {local_agent.display_name}...", flush=True)
+    try:
+        subprocess.run(install_command.command, check=True)
+    except FileNotFoundError:
+        raise _LocalAgentSetupError(
+            f"Could not install {local_agent.display_name}: {install_command.command[0]} was not found."
+        ) from None
+    except subprocess.CalledProcessError:
+        raise _LocalAgentSetupError(
+            f"Failed to install {local_agent.display_name} with:\n\n  {install_command.display}"
+        ) from None
+
+
+def _validate_local_agent_available(local_agent_name: str, install: AgentInstallPolicy) -> None:
     local_agent = _get_local_agent(local_agent_name)
+    if local_agent.is_available():
+        return
+    if install == "never":
+        raise _LocalAgentSetupError(_local_agent_command_not_found_message(local_agent))
+
+    _install_local_agent(local_agent, install)
     if not local_agent.is_available():
-        raise _LocalAgentSetupError(f"Local agent command not found: {local_agent.executable()}.")
+        raise _LocalAgentSetupError(
+            f"Installed {local_agent.display_name}, but {local_agent.executable()} is still not on PATH."
+        )
 
 
 async def _run_local_agent(
@@ -1105,15 +1213,19 @@ def _print_update(message: dict[str, Any]) -> bool:
     return message.get(_EXIT_KEY) is True
 
 
-async def _handle_messages(websocket: Any, quiet: bool, agent_id: str, base_url: str) -> bool:
+async def _handle_messages(
+    websocket: Any, quiet: bool, agent_id: str, base_url: str, install: AgentInstallPolicy
+) -> bool:
     async for raw_message in websocket:
         message = json.loads(raw_message)
         message_type = message[_TYPE_KEY]
         if message_type == _START_TYPE:
-            _validate_local_agent_available(message[_LOCAL_AGENT_KEY])
+            _validate_local_agent_available(message[_LOCAL_AGENT_KEY], install)
             _print_start_message(message, agent_id, base_url)
             continue
         if message_type == _UPDATE_TYPE:
+            if _LOCAL_AGENT_KEY in message:
+                _validate_local_agent_available(message[_LOCAL_AGENT_KEY], install)
             if _print_update(message):
                 await websocket.close()
                 return False
@@ -1124,8 +1236,10 @@ async def _handle_messages(websocket: Any, quiet: bool, agent_id: str, base_url:
     return True
 
 
-async def _run_until_closed_or_eof(websocket: Any, quiet: bool, *, agent_id: str, base_url: str) -> bool:
-    messages_task = asyncio.create_task(_handle_messages(websocket, quiet, agent_id, base_url))
+async def _run_until_closed_or_eof(
+    websocket: Any, quiet: bool, install: AgentInstallPolicy, *, agent_id: str, base_url: str
+) -> bool:
+    messages_task = asyncio.create_task(_handle_messages(websocket, quiet, agent_id, base_url, install))
     if not sys.stdin.isatty():
         return await messages_task
 
@@ -1183,7 +1297,14 @@ def _raise_for_connection_closed_error(ex: ConnectionClosed) -> None:
     raise SystemExit(message) from None
 
 
-async def _connect_agent_async(agent_id: str, *, base_url: str, headers: Mapping[str, str], quiet: bool) -> None:
+async def _connect_agent_async(
+    agent_id: str,
+    install: AgentInstallPolicy,
+    *,
+    base_url: str,
+    headers: Mapping[str, str],
+    quiet: bool,
+) -> None:
     websocket_url = _make_websocket_url(base_url, agent_id)
     reconnect_started_at: float | None = None
     reconnect_attempt = 0
@@ -1198,7 +1319,9 @@ async def _connect_agent_async(agent_id: str, *, base_url: str, headers: Mapping
                 ) as websocket:
                     reconnect_started_at = None
                     reconnect_attempt = 0
-                    if not await _run_until_closed_or_eof(websocket, quiet, agent_id=agent_id, base_url=base_url):
+                    if not await _run_until_closed_or_eof(
+                        websocket, quiet, install, agent_id=agent_id, base_url=base_url
+                    ):
                         return
             except ConnectionClosed as ex:
                 _raise_for_connection_closed_error(ex)

@@ -34,6 +34,23 @@ class BackgroundAgentConnectionTests(unittest.TestCase):
             ):
                 self.assertEqual(agent_process._registry_path(), state_path / "agent-connections.json")
 
+    def test_start_background_agent_connection_returns_existing_live_connection(self) -> None:
+        connection = {
+            "agentId": "agent-1",
+            "pid": 1234,
+            "startedAt": 1.0,
+            "logPath": "/tmp/agent-1.log",
+        }
+
+        with (
+            patch("dart.agent_process._load_pruned_registry", return_value={"agent-1": connection}),
+            patch("dart.agent_process.subprocess.Popen") as popen_mock,
+        ):
+            result = agent_process.start_background_agent_connection(DEFAULT_CLI_COMMAND, "agent-1", "never")
+
+        self.assertIs(result, connection)
+        popen_mock.assert_not_called()
+
     def test_start_background_agent_connection_terminates_process_when_registry_write_fails(self) -> None:
         class FakeProcess:
             pid = 1234
@@ -55,7 +72,7 @@ class BackgroundAgentConnectionTests(unittest.TestCase):
                 patch("dart.agent_process._terminate_process") as terminate_process_mock,
             ):
                 with self.assertRaisesRegex(agent_process.AgentConnectionError, "Could not register"):
-                    agent_process.start_background_agent_connection(DEFAULT_CLI_COMMAND, "agent-1")
+                    agent_process.start_background_agent_connection(DEFAULT_CLI_COMMAND, "agent-1", "never")
 
         terminate_process_mock.assert_called_once_with(fake_process.pid)
 
@@ -76,11 +93,35 @@ class BackgroundAgentConnectionTests(unittest.TestCase):
                 patch("dart.agent_process.time.time", return_value=1.0),
                 patch("dart.agent_process._write_registry"),
             ):
-                agent_process.start_background_agent_connection(DEFAULT_CLI_COMMAND, "agent-1")
+                agent_process.start_background_agent_connection(DEFAULT_CLI_COMMAND, "agent-1", "never")
 
         command = popen_mock.call_args.args[0]
         self.assertIn("--quiet", command)
         self.assertIn("--foreground", command)
+        self.assertIn("--install", command)
+        self.assertIn("never", command)
+
+    def test_start_background_agent_connection_passes_install_policy_to_child(self) -> None:
+        class FakeProcess:
+            pid = 1234
+
+            def poll(self):
+                return None
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            log_path = Path(tmp_dir) / "agent.log"
+            with (
+                patch("dart.agent_process._load_pruned_registry", return_value={}),
+                patch("dart.agent_process._make_log_path", return_value=log_path),
+                patch("dart.agent_process.subprocess.Popen", return_value=FakeProcess()) as popen_mock,
+                patch("dart.agent_process.time.sleep"),
+                patch("dart.agent_process.time.time", return_value=1.0),
+                patch("dart.agent_process._write_registry"),
+            ):
+                agent_process.start_background_agent_connection(DEFAULT_CLI_COMMAND, "agent-1", "auto")
+
+        command = popen_mock.call_args.args[0]
+        self.assertEqual(command[-2:], ["--install", "auto"])
 
     def test_start_background_agent_connection_reuses_cli_command_when_available(self) -> None:
         class FakeProcess:
@@ -100,7 +141,7 @@ class BackgroundAgentConnectionTests(unittest.TestCase):
                 patch("dart.agent_process.time.time", return_value=1.0),
                 patch("dart.agent_process._write_registry"),
             ):
-                agent_process.start_background_agent_connection("dartai", "agent-1")
+                agent_process.start_background_agent_connection("dartai", "agent-1", "never")
 
         command = popen_mock.call_args.args[0]
         self.assertEqual(command[:3], ["dartai", "agent-connect", "agent-1"])

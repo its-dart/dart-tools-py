@@ -609,6 +609,73 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn(call("again", end="", flush=True), print_mock.mock_calls)
         self.assertNotIn(call("\nAssistant: hello", flush=True), print_mock.mock_calls)
 
+    async def test_handle_messages_validates_local_agent_from_update(self) -> None:
+        class Websocket:
+            def __init__(self) -> None:
+                self.messages = [
+                    agent.json.dumps(
+                        {
+                            "type": "update",
+                            "title": "Agent settings changed",
+                            "changes": ["Local agent changed from Claude Code to Codex."],
+                            "localAgent": "codex",
+                        }
+                    )
+                ]
+
+            def __aiter__(self):
+                return self
+
+            async def __anext__(self) -> str:
+                if not self.messages:
+                    raise StopAsyncIteration
+                return self.messages.pop(0)
+
+        setup_error = agent._LocalAgentSetupError("Local agent command not found: codex.")
+        with (
+            patch("dart.agent._validate_local_agent_available", side_effect=setup_error) as validate_mock,
+            patch("dart.agent._print_update") as print_update_mock,
+            self.assertRaises(agent._LocalAgentSetupError),
+        ):
+            await agent._handle_messages(Websocket(), True, "agent-1", "https://dart.test", "never")
+
+        validate_mock.assert_called_once_with("codex", "never")
+        print_update_mock.assert_not_called()
+
+    def test_validate_local_agent_available_never_preserves_missing_command_error(self) -> None:
+        with (
+            patch("dart.agent.shutil.which", return_value=None),
+            patch("dart.agent.subprocess.run") as run_mock,
+            self.assertRaisesRegex(agent._LocalAgentSetupError, "Local agent command not found: codex\\."),
+        ):
+            agent._validate_local_agent_available("codex", "never")
+
+        run_mock.assert_not_called()
+
+    def test_validate_local_agent_available_auto_installs_and_rechecks_path(self) -> None:
+        with (
+            patch("dart.agent.shutil.which", side_effect=[None, "/usr/local/bin/codex"]),
+            patch("dart.agent.subprocess.run") as run_mock,
+            patch("builtins.print"),
+        ):
+            agent._validate_local_agent_available("codex", "auto")
+
+        run_mock.assert_called_once_with(("npm", "install", "-g", "@openai/codex"), check=True)
+
+    def test_install_command_current_uses_windows_override(self) -> None:
+        install_command = agent._LocalAgentInstallCommand(
+            ("sh", "-c", "install-agent"),
+            "install-agent",
+            windows_override=agent._LocalAgentInstallCommand(
+                ("powershell", "-Command", "Install-Agent"),
+                "Install-Agent",
+            ),
+        )
+
+        with patch("dart.agent.os.name", "nt"):
+            self.assertEqual(install_command.current.command, ("powershell", "-Command", "Install-Agent"))
+            self.assertEqual(install_command.current.display, "Install-Agent")
+
     async def test_read_stream_handles_oversized_jsonl_line(self) -> None:
         reader = asyncio.StreamReader()
         payload = agent.json.dumps({"item": {"text": "x" * 70000}}) + "\n"
@@ -676,7 +743,7 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
             async def close(self) -> None:
                 self.closed = True
 
-        async def handle_messages(websocket, quiet, agent_id, base_url):
+        async def handle_messages(websocket, quiet, agent_id, base_url, install):
             return True
 
         websocket = Websocket()
@@ -687,7 +754,7 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
             patch("dart.agent._handle_messages", new=handle_messages),
         ):
             result = await agent._run_until_closed_or_eof(
-                websocket, False, agent_id="agent-1", base_url="https://dart.test"
+                websocket, False, "never", agent_id="agent-1", base_url="https://dart.test"
             )
 
         self.assertTrue(result)
