@@ -27,13 +27,14 @@ class AgentConnectionError(Exception):
     pass
 
 
-def start_background_agent_connection(cli_command: str, agent_id: str) -> dict[str, Any]:
+def start_background_agent_connection(cli_command: str, agent_id: str, install: str) -> dict[str, Any]:
     registry = _load_pruned_registry()
-    if agent_id in registry:
-        raise AgentConnectionError(f"Agent {agent_id} already has a background connection.")
+    existing_connection = registry.get(agent_id)
+    if existing_connection is not None:
+        return existing_connection
 
     log_path = _make_log_path(agent_id)
-    command = _make_background_agent_command(cli_command, agent_id)
+    command = _make_background_agent_command(cli_command, agent_id, install)
     env = os.environ.copy()
     env[CLI_COMMAND_ENVVAR] = cli_command
     with open(log_path, "ab") as log_file:
@@ -66,9 +67,9 @@ def start_background_agent_connection(cli_command: str, agent_id: str) -> dict[s
     return connection
 
 
-def _make_background_agent_command(cli_command: str, agent_id: str) -> list[str]:
+def _make_background_agent_command(cli_command: str, agent_id: str, install: str) -> list[str]:
     base_command = [cli_command] if _is_runnable_command(cli_command) else _python_cli_command()
-    return [*base_command, "agent-connect", agent_id, "--quiet", "--foreground"]
+    return [*base_command, "agent-connect", agent_id, "--quiet", "--foreground", "--install", install]
 
 
 def _python_cli_command() -> list[str]:

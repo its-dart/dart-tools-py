@@ -28,7 +28,12 @@ import httpx
 import platformdirs
 from pick import pick
 
+from .agent import (
+    AGENT_INSTALL_POLICIES,
+    AgentInstallPolicy,
+)
 from .agent import connect_agent as _connect_local_agent
+from .agent import ensure_local_agent_available as _ensure_local_agent_available
 from .agent_process import (
     AgentConnectionError,
     disconnect_background_agent_connections,
@@ -85,6 +90,7 @@ from .util import get_item_count_text, make_id, slugify_str, trim_slug_str
 _make_id = make_id
 
 _APP = "dart-tools"
+_PRETTY_NAME = "Dart Tools"
 _PROG = DEFAULT_CLI_COMMAND
 
 _PROD_NAME = "prod"
@@ -186,6 +192,21 @@ def _migrate_config_fpath(config_fpath: Path, legacy_config_fpath: Path) -> Path
     except OSError:
         pass
     return config_fpath
+
+
+def _move_invalid_config_fpath(config_fpath: Path) -> Path | None:
+    timestamp = time.strftime("%Y%m%d-%H%M%S")
+    invalid_config_fpath = config_fpath.with_name(f"{config_fpath.name}.invalid-{timestamp}")
+    counter = 1
+    while invalid_config_fpath.exists():
+        invalid_config_fpath = config_fpath.with_name(f"{config_fpath.name}.invalid-{timestamp}-{counter}")
+        counter += 1
+
+    try:
+        config_fpath.replace(invalid_config_fpath)
+    except OSError:
+        return None
+    return invalid_config_fpath
 
 
 _CONFIG_FPATH = _migrate_config_fpath(
@@ -306,6 +327,12 @@ class _Config:
             try:
                 with open(_CONFIG_FPATH, "r", encoding="UTF-8") as fin:
                     self._content = json.load(fin)
+            except json.JSONDecodeError:
+                invalid_config_fpath = _move_invalid_config_fpath(_CONFIG_FPATH)
+                if invalid_config_fpath is not None:
+                    _log(f"Invalid Dart config moved to {invalid_config_fpath}. Starting fresh.")
+                else:
+                    _log("Invalid Dart config could not be moved. Starting fresh.")
             except OSError:
                 pass
         defaults = {
@@ -468,6 +495,13 @@ class Dart:
     @_handle_request_errors
     def create_agent(self, body: WrappedAgentCreate) -> WrappedAgent:
         return self._request(lambda: api.create_agent.sync_detailed(client=self._public_api, body=body))
+
+    @_handle_request_errors
+    def get_agent(self, id: str) -> WrappedAgent:
+        return self._request(
+            lambda: api.get_agent.sync_detailed(id, client=self._public_api),
+            not_found_message=f"Agent with ID {id} not found.",
+        )
 
     @_handle_request_errors
     def update_agent(self, id: str, body: WrappedAgentUpdate) -> WrappedAgent:
@@ -641,21 +675,47 @@ def _unknown_failure_exit() -> NoReturn:
 
 
 def print_version() -> str:
-    result = f"Dart Tools version {_VERSION}"
+    result = f"{_PRETTY_NAME} version {_VERSION}"
     _log(result)
     return result
 
 
 def update_cli() -> bool:
-    _log("Updating Dart Tools...")
+    _log(f"Updating {_PRETTY_NAME}...")
     try:
-        subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", _APP], check=True)
+        _run_pip_self_update()
     except FileNotFoundError:
-        _dart_exit("Could not find the Python executable to update Dart Tools.")
-    except subprocess.CalledProcessError as ex:
-        _dart_exit(f"Failed to update Dart Tools.")
+        _dart_exit(f"Could not find the Python executable to update {_PRETTY_NAME}.")
+    except subprocess.CalledProcessError:
+        try:
+            pip_missing = _is_pip_missing()
+        except FileNotFoundError:
+            _dart_exit(f"Could not find the Python executable to update {_PRETTY_NAME}.")
+        if not pip_missing:
+            _dart_exit(f"Failed to update {_PRETTY_NAME}.")
+        try:
+            subprocess.run([sys.executable, "-m", "ensurepip", "--upgrade"], check=True)
+            _run_pip_self_update()
+        except FileNotFoundError:
+            _dart_exit(f"Could not find the Python executable to update {_PRETTY_NAME}.")
+        except subprocess.CalledProcessError:
+            _dart_exit(f"Failed to update {_PRETTY_NAME}.")
     _log("Done.")
     return True
+
+
+def _run_pip_self_update() -> None:
+    subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", _APP], check=True)
+
+
+def _is_pip_missing() -> bool:
+    result = subprocess.run(
+        [sys.executable, "-m", "pip", "--version"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    return result.returncode != 0 and "No module named pip" in (result.stderr or "")
 
 
 _pending_version_message: list[str] = []
@@ -680,7 +740,7 @@ def _check_for_version_update(config: _Config) -> None:
     if [int(e) for e in latest.split(".")] <= [int(e) for e in _VERSION.split(".")]:
         return
     _pending_version_message.append(
-        f"A new version of Dart Tools is available. Upgrade from {_VERSION} to {latest} with\n\n  {_cli_command} {_SELF_UPDATE_CMD}\n"
+        f"A new version of {_PRETTY_NAME} is available. Upgrade from {_VERSION} to {latest} with\n\n  {_cli_command} {_SELF_UPDATE_CMD}\n"
     )
 
 
@@ -929,10 +989,33 @@ def _format_agent_connection(connection: dict[str, Any], base_url: str) -> str:
     return f"  {_make_agent_link(base_url, agent_id)}\n  ID: {agent_id}\n  Started: {started_at}"
 
 
-def _connect_local_agent_with_auth_retry(dart: Dart, id: str, quiet: bool) -> None:
+def _default_agent_install_policy(background: bool) -> AgentInstallPolicy:
+    if not _is_cli:
+        return "never"
+    if background or not sys.stdin.isatty():
+        return "auto"
+    return "prompt"
+
+
+def _resolve_agent_install_policy(install: AgentInstallPolicy | None, background: bool) -> AgentInstallPolicy:
+    return install if install is not None else _default_agent_install_policy(background)
+
+
+def _get_agent_local_agent_name(dart: Dart, id: str) -> str:
+    agent = dart.get_agent(id).item
+    if agent.execution_mode != AgentExecutionMode.LOCAL:
+        _dart_exit(f"Agent with ID {id} is not configured to use a local agent.")
+
+    local_agent = agent.local.agent
+    if isinstance(local_agent, Unset):
+        _dart_exit(f"Agent with ID {id} does not have a local agent configured.")
+    return local_agent.value
+
+
+def _connect_local_agent_with_auth_retry(dart: Dart, id: str, quiet: bool, install: AgentInstallPolicy) -> None:
     for attempt in range(2):
         try:
-            _connect_local_agent(id, base_url=dart.get_base_url(), headers=dart.get_headers(), quiet=quiet)
+            _connect_local_agent(id, install, base_url=dart.get_base_url(), headers=dart.get_headers(), quiet=quiet)
             return
         except AgentAuthError as ex:
             if not _is_cli or attempt == 1:
@@ -940,14 +1023,22 @@ def _connect_local_agent_with_auth_retry(dart: Dart, id: str, quiet: bool) -> No
             dart._login_after_cli_auth_failure()
 
 
-def connect_agent(id: str | None = None, *, quiet: bool = False, background: bool = True) -> None:
+def connect_agent(
+    id: str | None = None,
+    *,
+    quiet: bool = False,
+    background: bool = True,
+    install: AgentInstallPolicy | None = None,
+) -> None:
     if id is None:
         id = create_agent_interactive(execution_mode=AgentExecutionMode.LOCAL).id
 
     dart = _make_authenticated_dart()
+    install_policy = _resolve_agent_install_policy(install, background)
     if background:
+        _ensure_local_agent_available(_get_agent_local_agent_name(dart, id), install_policy)
         try:
-            connection = start_background_agent_connection(_cli_command, id)
+            connection = start_background_agent_connection(_cli_command, id, install_policy)
         except AgentConnectionError as ex:
             _dart_exit(str(ex))
         _log(f"Started background agent connection\n\n{_format_agent_connection(connection, dart.get_base_url())}\n")
@@ -959,7 +1050,7 @@ def connect_agent(id: str | None = None, *, quiet: bool = False, background: boo
     if previous_sigint_handler is not None:
         signal.signal(signal.SIGINT, signal.default_int_handler)
     try:
-        _connect_local_agent_with_auth_retry(dart, id, quiet)
+        _connect_local_agent_with_auth_retry(dart, id, quiet, install_policy)
     finally:
         if previous_sigint_handler is not None:
             signal.signal(signal.SIGINT, previous_sigint_handler)
@@ -1268,7 +1359,7 @@ def cli() -> None:
     logout_parser = add_parser(_LOGOUT_CMD, aliases=["lo"], help="logout")
     logout_parser.set_defaults(func=logout)
 
-    self_update_parser = add_parser(_SELF_UPDATE_CMD, help="update Dart Tools")
+    self_update_parser = add_parser(_SELF_UPDATE_CMD, help=f"update {_PRETTY_NAME}")
     self_update_parser.set_defaults(func=update_cli)
 
     create_agent_parser = add_parser(_CREATE_AGENT_CMD, aliases=["ac"], help=_HELP_TEXT_TO_COMMAND[_CREATE_AGENT_CMD])
@@ -1325,6 +1416,12 @@ def cli() -> None:
         dest="quiet",
         action="store_true",
         help="hide incoming and outgoing messages",
+    )
+    connect_agent_parser.add_argument(
+        "--install",
+        choices=AGENT_INSTALL_POLICIES,
+        default=None,
+        help="control missing local-agent command installation",
     )
     connect_agent_parser.set_defaults(func=connect_agent)
 
