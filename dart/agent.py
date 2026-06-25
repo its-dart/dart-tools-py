@@ -125,6 +125,7 @@ class _LocalAgentSetupError(Exception):
     pass
 
 
+@dataclass(frozen=True)
 class _LocalAgentInstallCommand:
     command: tuple[str, ...]
     display: str

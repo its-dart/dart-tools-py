@@ -574,14 +574,18 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
             async def send(self, payload: str) -> None:
                 sent_payloads.append(payload)
 
-        async def fake_run_local_agent(local_agent_name, prompt, message_id, emit_event):
+        async def fake_run_local_agent(
+            local_agent_name, prompt, message_id, model, thinking_level, attachments, emit_event
+        ):
             await emit_event({"kind": "text_delta", "text": "hello"})
             await emit_event({"kind": "thinking", "detail": "done thinking"})
             return True, "hello"
 
         work = {"type": "message", "id": "work-1", "localAgent": "codex", "prompt": "Say hello"}
         with patch("dart.agent._run_local_agent", new=fake_run_local_agent):
-            await agent._handle_work(Websocket(), work, quiet=True)
+            await agent._handle_work(
+                Websocket(), work, quiet=True, base_url="https://dart.test", headers={}, ui=agent.AgentUI()
+            )
 
         parsed_payloads = [agent.json.loads(payload) for payload in sent_payloads]
         self.assertEqual([payload["sequence"] for payload in parsed_payloads], [1, 2, 3])
@@ -594,20 +598,52 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
             async def send(self, payload: str) -> None:
                 pass
 
-        async def fake_run_local_agent(local_agent_name, prompt, message_id, emit_event):
+        async def fake_run_local_agent(
+            local_agent_name, prompt, message_id, model, thinking_level, attachments, emit_event
+        ):
             await emit_event({"kind": "text_delta", "text": "hello"})
             await emit_event({"kind": "tool_call", "toolCallId": "toolu-1", "name": "Read", "args": {}})
             await emit_event({"kind": "text_delta", "text": "again"})
             return True, "hello"
 
-        work = {"type": "message", "id": "work-1", "localAgent": "codex", "prompt": "Say hello"}
-        with patch("dart.agent._run_local_agent", new=fake_run_local_agent), patch("builtins.print") as print_mock:
-            await agent._handle_work(Websocket(), work, quiet=False)
+        class Printer:
+            def __init__(self, quiet, ui) -> None:
+                self.calls = []
 
-        self.assertEqual(print_mock.mock_calls.count(call("\nAssistant: ", end="", flush=True)), 2)
-        self.assertIn(call("hello", end="", flush=True), print_mock.mock_calls)
-        self.assertIn(call("again", end="", flush=True), print_mock.mock_calls)
-        self.assertNotIn(call("\nAssistant: hello", flush=True), print_mock.mock_calls)
+            def start_turn(self, **kwargs) -> None:
+                pass
+
+            def start_working(self, local_agent_name) -> None:
+                pass
+
+            def append_text_delta(self, text) -> None:
+                self.calls.append(("text", text))
+
+            def append_tool_call(self, name, args) -> None:
+                self.calls.append(("tool", name, args))
+
+            def finish(self, message, *, success) -> None:
+                self.calls.append(("finish", message, success))
+
+        printer = Printer(False, agent.AgentUI())
+        work = {"type": "message", "id": "work-1", "localAgent": "codex", "prompt": "Say hello"}
+        with (
+            patch("dart.agent._run_local_agent", new=fake_run_local_agent),
+            patch("dart.agent.TerminalEventPrinter", return_value=printer),
+        ):
+            await agent._handle_work(
+                Websocket(), work, quiet=False, base_url="https://dart.test", headers={}, ui=agent.AgentUI()
+            )
+
+        self.assertEqual(
+            printer.calls,
+            [
+                ("text", "hello"),
+                ("tool", "Read", {}),
+                ("text", "again"),
+                ("finish", "hello", True),
+            ],
+        )
 
     async def test_handle_messages_validates_local_agent_from_update(self) -> None:
         class Websocket:
@@ -725,7 +761,7 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
 
         with patch("dart.agent.asyncio.create_subprocess_exec", new=fake_create_subprocess_exec):
             with self.assertRaisesRegex(RuntimeError, "send failed"):
-                await agent._LOCAL_AGENTS["codex"].run("Say hello", None, emit_event)
+                await agent._LOCAL_AGENTS["codex"].run("Say hello", None, None, None, (), emit_event)
 
         self.assertTrue(fake_process.killed)
 
