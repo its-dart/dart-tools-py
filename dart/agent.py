@@ -57,6 +57,7 @@ _THINKING_LEVEL_KEY = "thinkingLevel"
 _TITLE_KEY = "title"
 _TYPE_KEY = "type"
 _URL_KEY = "url"
+_USER_NAME_KEY = "userName"
 
 _DONE_EVENT_KIND = "done"
 _EVENT_KEY = "event"
@@ -1350,6 +1351,7 @@ async def _handle_work(
             or _DEFAULT_TEXT_EVENT_SOURCE,
             chat_title=_nested_string(work, _CHAT_TITLE_KEY),
             display_prompt=_nested_string(work, _DISPLAY_PROMPT_KEY) or prompt,
+            user_name=_nested_string(work, _USER_NAME_KEY) or "User",
         )
 
     model = _nested_string(work, _MODEL_KEY)

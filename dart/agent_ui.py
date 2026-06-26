@@ -17,6 +17,7 @@ from rich.text import Text
 @dataclass
 class _TerminalTurn:
     display_prompt: str
+    user_name: str
     activity_rows: list[Text] = field(default_factory=list)
     assistant_text: str = ""
     failure_message: str = ""
@@ -36,8 +37,8 @@ class _ChatTranscript:
         self.items.append(item)
         self.update()
 
-    def append_turn(self, display_prompt: str) -> _TerminalTurn:
-        turn = _TerminalTurn(display_prompt=display_prompt)
+    def append_turn(self, display_prompt: str, user_name: str) -> _TerminalTurn:
+        turn = _TerminalTurn(display_prompt=display_prompt, user_name=user_name)
         self.append(turn)
         return turn
 
@@ -95,7 +96,6 @@ class AgentUI:
         self.console.print(
             Panel(
                 Group(
-                    Text(name, style="default"),
                     Text(f"Local        {local_agent}", style="dim"),
                     Text(f"ID           {agent_id}", style="dim"),
                     Text(f"URL          {agent_url}", style="dim"),
@@ -112,15 +112,23 @@ class AgentUI:
                 padding=(0, 1),
             )
         )
-        self.console.print(Text("• waiting for work from Dart", style="dim"))
+        self.console.print(Text(f"• waiting for work from {name}", style="dim"))
         self.console.print()
 
     def print_update(self, title: str, changes: list[str]) -> None:
         self.close_active_chat_transcript()
         self.console.print()
-        self.console.print(Text(f"! {title}", style="yellow"))
-        for change in changes:
-            self.console.print(Text(f"  {change}", style="dim"))
+        lines = [Text(title, style="default")]
+        lines.extend(Text(change, style="dim") for change in changes)
+        self.console.print(
+            Panel(
+                Group(*lines),
+                title="Info",
+                title_align="left",
+                border_style="dim",
+                padding=(0, 1),
+            )
+        )
 
     def print_status(self, symbol: str, message: str, style: str) -> None:
         self.close_active_chat_transcript()
@@ -135,12 +143,12 @@ class TerminalEventPrinter:
         self.transcript: _ChatTranscript | None = None
         self.turn: _TerminalTurn | None = None
 
-    def start_turn(self, *, chat_key: str, chat_title: str | None, display_prompt: str) -> None:
+    def start_turn(self, *, chat_key: str, chat_title: str | None, display_prompt: str, user_name: str) -> None:
         if self.quiet:
             return
         self.transcript = self.ui.activate_chat_transcript(chat_key, chat_title)
         self._append_chat_renamed_notice(chat_key, chat_title)
-        self.turn = self.transcript.append_turn(display_prompt)
+        self.turn = self.transcript.append_turn(display_prompt, user_name)
 
     def start_working(self, local_agent_name: str) -> None:
         if self.quiet or self.turn is None or self.transcript is None:
@@ -201,7 +209,7 @@ class TerminalEventPrinter:
 
 
 def _render_turn(turn: _TerminalTurn) -> list[Any]:
-    sections = [_turn_section("DART", _LocalMarkdown(turn.display_prompt), "magenta")]
+    sections = [_turn_section(turn.user_name, _LocalMarkdown(turn.display_prompt), "magenta")]
     activity_rows = list(turn.activity_rows)
     if turn.working_spinner is not None:
         activity_rows.append(turn.working_spinner)
