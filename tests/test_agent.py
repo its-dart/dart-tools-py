@@ -1,6 +1,9 @@
 import asyncio
+import io
 import unittest
-from unittest.mock import call, patch
+from unittest.mock import Mock, patch
+
+from rich.console import Console
 
 from dart import agent
 
@@ -72,6 +75,64 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
                 if local_agent.resume_command is not None:
                     resume_command = local_agent.make_command("session-1", "prompt")
                     self.assertTrue(all(flag in resume_command for flag in expected_flags))
+
+    def test_attachment_request_headers_keep_auth_for_same_origin_urls(self) -> None:
+        headers = {
+            "Origin": "https://app.dartai.com",
+            "Authorization": "Bearer secret",
+            "client-duid": "client-1",
+            "X-Test": "ok",
+        }
+
+        self.assertEqual(
+            agent._make_attachment_request_headers(
+                "https://app.dartai.com",
+                "https://app.dartai.com/api/attachments/attachment-1",
+                headers,
+            ),
+            {
+                "Authorization": "Bearer secret",
+                "client-duid": "client-1",
+                "X-Test": "ok",
+            },
+        )
+
+    def test_attachment_request_headers_strip_auth_for_off_origin_urls(self) -> None:
+        headers = {
+            "Origin": "https://app.dartai.com",
+            "Authorization": "Bearer secret",
+            "client-duid": "client-1",
+            "X-Test": "ok",
+        }
+
+        self.assertEqual(
+            agent._make_attachment_request_headers(
+                "https://app.dartai.com",
+                "https://files.example.test/attachment-1",
+                headers,
+            ),
+            {"X-Test": "ok"},
+        )
+
+    def test_start_message_copy_includes_background_and_log_path(self) -> None:
+        ui = agent.AgentUI()
+        ui.console = Console(file=io.StringIO(), record=True, force_terminal=False, width=120)
+
+        ui.print_start_message(
+            name="Review agent",
+            local_agent="codex",
+            agent_id="agent-1",
+            agent_url="https://dart.test/a/agent-1",
+            log_path="/tmp/dart-agent.log",
+        )
+
+        output = ui.console.export_text()
+        self.assertIn(
+            "Stopping this process will disconnect the agent, rerun with --background to run in the background",
+            output,
+        )
+        self.assertNotIn("run in the background.", output)
+        self.assertIn("Writing logs to /tmp/dart-agent.log", output)
 
     def test_claude_terminal_result_is_not_streamed_as_text_delta(self) -> None:
         local_agent = agent._LOCAL_AGENTS["claude"]
@@ -678,6 +739,42 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
 
         validate_mock.assert_called_once_with("codex", "never")
         print_update_mock.assert_not_called()
+
+    async def test_handle_messages_passes_background_log_path_to_start_message(self) -> None:
+        class Websocket:
+            def __init__(self) -> None:
+                self.messages = [
+                    agent.json.dumps(
+                        {
+                            "type": "start",
+                            "name": "Review agent",
+                            "localAgent": "codex",
+                        }
+                    )
+                ]
+
+            def __aiter__(self):
+                return self
+
+            async def __anext__(self) -> str:
+                if not self.messages:
+                    raise StopAsyncIteration
+                return self.messages.pop(0)
+
+        ui = Mock()
+        with (
+            patch("dart.agent._validate_local_agent_available"),
+            patch.dict("dart.agent.os.environ", {agent.AGENT_CONNECTION_LOG_PATH_ENVVAR: "/tmp/dart-agent.log"}),
+        ):
+            await agent._handle_messages(Websocket(), True, "agent-1", "https://dart.test", {}, ui, "never")
+
+        ui.print_start_message.assert_called_once_with(
+            name="Review agent",
+            local_agent="codex",
+            agent_id="agent-1",
+            agent_url="https://dart.test/a/agent-1",
+            log_path="/tmp/dart-agent.log",
+        )
 
     def test_validate_local_agent_available_never_preserves_missing_command_error(self) -> None:
         with (

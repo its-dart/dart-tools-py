@@ -21,6 +21,7 @@ from urllib.request import Request, urlopen
 from websockets.asyncio.client import connect as _websocket_connect
 from websockets.exceptions import ConnectionClosed, InvalidStatus
 
+from .agent_process import AGENT_CONNECTION_LOG_PATH_ENVVAR
 from .agent_ui import (
     AgentUI,
     TerminalEventPrinter,
@@ -80,6 +81,7 @@ _TEXT_DELTA_DELTA_TYPE = "text_delta"
 _FILE_ATTACHMENT_TYPE = "file"
 _TEXT_ATTACHMENT_TYPE = "text"
 _ATTACHMENT_DOWNLOAD_TIMEOUT_SECONDS = 120
+_SENSITIVE_ATTACHMENT_HEADER_KEYS = {"authorization", "client-duid"}
 _CLAUDE_CONTENT_BLOCK_PATHS = (
     "message.content",
     "item.message.content",
@@ -1261,7 +1263,8 @@ def _write_file_attachment(
 
     name = _safe_attachment_filename(_nested_string(attachment, _NAME_KEY), fallback)
     path = _unique_attachment_path(directory, name)
-    request = Request(urljoin(base_url, url), headers=_make_connection_headers(headers))
+    resolved_url = urljoin(base_url, url)
+    request = Request(resolved_url, headers=_make_attachment_request_headers(base_url, resolved_url, headers))
     with urlopen(request, timeout=_ATTACHMENT_DOWNLOAD_TIMEOUT_SECONDS) as response, path.open("wb") as fout:
         shutil.copyfileobj(response, fout)
 
@@ -1449,6 +1452,7 @@ async def _handle_messages(
                 local_agent=str(message[_LOCAL_AGENT_KEY]),
                 agent_id=agent_id,
                 agent_url=_make_agent_url(base_url, agent_id),
+                log_path=os.environ.get(AGENT_CONNECTION_LOG_PATH_ENVVAR),
             )
             continue
         if message_type == _UPDATE_TYPE:
@@ -1504,6 +1508,17 @@ def _make_origin(websocket_url: str) -> str:
 
 def _make_connection_headers(headers: Mapping[str, str]) -> dict[str, str]:
     return {key: value for key, value in headers.items() if key.lower() != "origin"}
+
+
+def _make_attachment_request_headers(base_url: str, resolved_url: str, headers: Mapping[str, str]) -> dict[str, str]:
+    request_headers = _make_connection_headers(headers)
+    base = urlsplit(base_url)
+    target = urlsplit(resolved_url)
+    if base.scheme.lower() == target.scheme.lower() and base.netloc.lower() == target.netloc.lower():
+        return request_headers
+    return {
+        key: value for key, value in request_headers.items() if key.lower() not in _SENSITIVE_ATTACHMENT_HEADER_KEYS
+    }
 
 
 def _raise_for_connection_closed_error(ex: ConnectionClosed, ui: AgentUI) -> None:

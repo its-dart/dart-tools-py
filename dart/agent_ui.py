@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 from markdown_it import MarkdownIt
@@ -92,7 +93,23 @@ class AgentUI:
             self.active_chat_transcript.close()
             self.active_chat_transcript = None
 
-    def print_start_message(self, *, name: str, local_agent: str, agent_id: str, agent_url: str) -> None:
+    def print_start_message(
+        self,
+        *,
+        name: str,
+        local_agent: str,
+        agent_id: str,
+        agent_url: str,
+        log_path: str | None = None,
+    ) -> None:
+        status_lines = [
+            Text(
+                "Stopping this process will disconnect the agent, " "rerun with --background to run in the background",
+                style="dim",
+            )
+        ]
+        if log_path:
+            status_lines.append(_log_path_text(log_path))
         self.console.print(
             Panel(
                 Group(
@@ -100,11 +117,7 @@ class AgentUI:
                     Text(f"ID           {agent_id}", style="dim"),
                     Text(f"URL          {agent_url}", style="dim"),
                     Text(""),
-                    Text(
-                        "Stopping this process will disconnect the agent. "
-                        "Rerun with --background to run in the background.",
-                        style="dim",
-                    ),
+                    *status_lines,
                 ),
                 title="Info",
                 title_align="left",
@@ -233,6 +246,16 @@ def _join_turn_sections(sections: list[Group]) -> list[Any]:
             joined.append(Text(""))
         joined.append(section)
     return joined
+
+
+def _log_path_text(log_path: str) -> Text:
+    line = Text("Writing logs to ", style="dim")
+    line.append(log_path, style=f"dim link {_file_uri(log_path)}")
+    return line
+
+
+def _file_uri(path: str) -> str:
+    return Path(path).expanduser().resolve().as_uri()
 
 
 class _LocalMarkdown(Markdown):
