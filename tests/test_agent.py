@@ -76,6 +76,151 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
                     resume_command = local_agent.make_command("session-1", "prompt")
                     self.assertTrue(all(flag in resume_command for flag in expected_flags))
 
+    def test_confirmed_json_failure_parsers_extract_concise_messages(self) -> None:
+        claude_message = "Not logged in \u00b7 Please run /login"
+        codex_message = (
+            "unexpected status 401 Unauthorized: Missing bearer or basic authentication in header, "
+            "url: https://api.openai.com/v1/responses"
+        )
+        gemini_message = (
+            "Please set an Auth method in your /tmp/gemini/settings.json or specify one of the following "
+            "environment variables before running: GEMINI_API_KEY, GOOGLE_GENAI_USE_VERTEXAI, "
+            "GOOGLE_GENAI_USE_GCA"
+        )
+        opencode_message = "Unexpected server error. Check server logs for details."
+        cases = {
+            "claude": (
+                ("result",),
+                "\n".join(
+                    [
+                        agent.json.dumps({"type": "system", "subtype": "init", "apiKeySource": "none"}),
+                        agent.json.dumps(
+                            {
+                                "type": "assistant",
+                                "message": {"content": [{"type": "text", "text": claude_message}]},
+                                "error": "authentication_failed",
+                            }
+                        ),
+                        agent.json.dumps(
+                            {"type": "result", "subtype": "success", "is_error": True, "result": claude_message}
+                        ),
+                    ]
+                ),
+                "",
+                claude_message,
+            ),
+            "codex": (
+                ("error.message",),
+                "\n".join(
+                    [
+                        agent.json.dumps({"type": "thread.started", "thread_id": "thread-1"}),
+                        agent.json.dumps({"type": "error", "message": "Reconnecting... 5/5"}),
+                        agent.json.dumps({"type": "turn.failed", "error": {"message": codex_message}}),
+                    ]
+                ),
+                "WARN failed to connect to websocket: HTTP error: 401 Unauthorized",
+                codex_message,
+            ),
+            "gemini": (
+                ("error.message",),
+                agent.json.dumps(
+                    {
+                        "session_id": "session-1",
+                        "error": {"type": "Error", "message": gemini_message, "code": 41},
+                    }
+                ),
+                "YOLO mode is enabled. All tool calls will be automatically approved.",
+                gemini_message,
+            ),
+            "opencode": (
+                ("error.data.message",),
+                agent.json.dumps(
+                    {
+                        "type": "error",
+                        "timestamp": 1782530074868,
+                        "sessionID": "ses_0f8ed97f6ffeMk8cmmE9D7DGt2",
+                        "error": {
+                            "name": "UnknownError",
+                            "data": {"message": opencode_message, "ref": "err_96efda90"},
+                        },
+                    }
+                ),
+                "",
+                opencode_message,
+            ),
+        }
+
+        for name, (failure_paths, stdout, stderr, expected_message) in cases.items():
+            with self.subTest(name=name):
+                local_agent = agent._LOCAL_AGENTS[name]
+                self.assertEqual(local_agent.failure_response_keys, failure_paths)
+                self.assertEqual(local_agent.parse_failure_output(stdout, stderr), expected_message)
+
+    def test_plain_non_json_failure_output_is_compacted_and_capped(self) -> None:
+        copilot_output = "\n".join(
+            [
+                "Error: No authentication information found.",
+                "",
+                "Copilot can be authenticated with GitHub using an OAuth Token or a Fine-Grained Personal Access Token.",
+                "",
+                "To authenticate, you can use any of the following methods:",
+                "  \u2022 Start 'copilot' and run the '/login' command",
+                "  \u2022 Set the COPILOT_GITHUB_TOKEN, GH_TOKEN, or GITHUB_TOKEN environment variable",
+                "  \u2022 Run 'gh auth login' to authenticate with the GitHub CLI",
+            ]
+        )
+        cursor_output = (
+            "Error: Authentication required. Please run 'agent login' first, or set CURSOR_API_KEY environment "
+            "variable."
+        )
+
+        copilot_message = agent._LOCAL_AGENTS["copilot"].parse_failure_output("", copilot_output)
+        cursor_message = agent._LOCAL_AGENTS["cursor"].parse_failure_output("", cursor_output)
+
+        self.assertEqual(agent._LOCAL_AGENTS["copilot"].failure_response_keys, ())
+        self.assertEqual(agent._LOCAL_AGENTS["cursor"].failure_response_keys, ())
+        self.assertNotIn("\n", copilot_message)
+        self.assertLessEqual(len(copilot_message), 300)
+        self.assertTrue(copilot_message.startswith("Error: No authentication information found."))
+        self.assertTrue(copilot_message.endswith("..."))
+        self.assertEqual(cursor_message, cursor_output)
+
+    def test_unknown_json_failure_output_uses_generic_message(self) -> None:
+        cases = {
+            "codex": (
+                agent.json.dumps({"item": {"text": "normal response keys are not failure fields"}}),
+                "Codex failed. Check the local agent logs for details.",
+            ),
+            "opencode": (
+                agent.json.dumps({"type": "error", "message": "unconfirmed opencode error path"}),
+                "OpenCode failed. Check the local agent logs for details.",
+            ),
+        }
+
+        for name, (stdout, expected_message) in cases.items():
+            with self.subTest(name=name):
+                message = agent._LOCAL_AGENTS[name].parse_failure_output(stdout, "")
+                self.assertEqual(message, expected_message)
+                self.assertNotIn("{", message)
+                self.assertNotIn("unconfirmed", message)
+                self.assertNotIn("normal response", message)
+
+    def test_unknown_json_failure_output_falls_back_to_plain_output(self) -> None:
+        codex_stdout = agent.json.dumps({"type": "thread.started", "thread_id": "thread-1"})
+        codex_stderr = "fatal: authentication required"
+        cursor_stdout = "\n".join(
+            [
+                agent.json.dumps({"type": "system", "session_id": "session-1"}),
+                "Authentication required. Please run 'agent login' first.",
+            ]
+        )
+
+        self.assertEqual(agent._LOCAL_AGENTS["codex"].parse_failure_output(codex_stdout, codex_stderr), codex_stderr)
+        self.assertEqual(
+            agent._LOCAL_AGENTS["cursor"].parse_failure_output(cursor_stdout, ""),
+            "Authentication required. Please run 'agent login' first.",
+        )
+
     def test_attachment_request_headers_keep_auth_for_same_origin_urls(self) -> None:
         headers = {
             "Origin": "https://app.dartai.com",
@@ -861,6 +1006,57 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
                 await agent._LOCAL_AGENTS["codex"].run("Say hello", None, None, None, (), emit_event)
 
         self.assertTrue(fake_process.killed)
+
+    async def test_run_returns_parsed_failure_message_for_nonzero_exit(self) -> None:
+        gemini_message = (
+            "Please set an Auth method in your /tmp/gemini/settings.json or specify one of the following "
+            "environment variables before running: GEMINI_API_KEY, GOOGLE_GENAI_USE_VERTEXAI, "
+            "GOOGLE_GENAI_USE_GCA"
+        )
+
+        class FakeProcess:
+            def __init__(self) -> None:
+                self.stdout = asyncio.StreamReader()
+                self.stderr = asyncio.StreamReader()
+                self.returncode = 41
+
+                self.stdout.feed_data(
+                    agent.json.dumps(
+                        {
+                            "session_id": "session-1",
+                            "error": {"type": "Error", "message": gemini_message, "code": 41},
+                        }
+                    ).encode()
+                )
+                self.stdout.feed_eof()
+                self.stderr.feed_data(b"YOLO mode is enabled. All tool calls will be automatically approved.\n")
+                self.stderr.feed_eof()
+
+            async def wait(self) -> int:
+                return self.returncode
+
+            def kill(self) -> None:
+                pass
+
+        fake_process = FakeProcess()
+        emitted_events = []
+
+        async def fake_create_subprocess_exec(*args, **kwargs):
+            return fake_process
+
+        async def emit_event(event):
+            emitted_events.append(event)
+
+        with patch("dart.agent.asyncio.create_subprocess_exec", new=fake_create_subprocess_exec):
+            success, message, session_id = await agent._LOCAL_AGENTS["gemini"].run(
+                "Say hello", None, None, None, (), emit_event
+            )
+
+        self.assertFalse(success)
+        self.assertIsInstance(message, str)
+        self.assertEqual(message, gemini_message)
+        self.assertIsNone(session_id)
+        self.assertEqual(emitted_events, [])
 
     async def test_run_until_closed_ignores_unsupported_stdin_reader(self) -> None:
         class Stdin:

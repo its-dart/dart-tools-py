@@ -35,6 +35,7 @@ AGENT_INSTALL_POLICIES: tuple[AgentInstallPolicy, ...] = ("prompt", "auto", "nev
 _WEBSOCKET_PATH = "/ws/v0/local-agent"
 _AUTH_FAILURE_STATUS_CODES = (401, 403)
 _RUN_TIMEOUT_SECONDS = 1800
+_FAILURE_OUTPUT_MAX_LENGTH = 300
 _STREAM_READ_CHUNK_SIZE_BYTES = 65536
 _MAX_RECONNECT_DELAY_SECONDS = 15
 _RECONNECT_TIMEOUT_SECONDS = 120
@@ -160,6 +161,7 @@ class _LocalAgent:
     session_id_key: str
     response_key: str | tuple[str, ...]
     output_mode: _OutputMode
+    failure_response_keys: tuple[str, ...]
     resume_command: tuple[str, ...] | None = None
     executable_candidates: tuple[str, ...] = ()
     prompt_prefix: tuple[str, ...] = ()
@@ -292,6 +294,38 @@ class _LocalAgent:
         if response:
             return response, session_id
         return "\n\n".join(part for part in (stdout.strip(), stderr.strip()) if part), session_id
+
+    def parse_failure_output(self, stdout: str, stderr: str) -> str:
+        json_values = [
+            value
+            for text in (stdout, stderr)
+            for value in _load_json_values(text, self.output_mode)
+            if isinstance(value, dict)
+        ]
+        failure_response = self._failure_response_from_values(json_values)
+        if failure_response:
+            return failure_response
+
+        plain_output = "\n\n".join(
+            part
+            for part in (
+                _plain_failure_output(stderr, self.output_mode),
+                _plain_failure_output(stdout, self.output_mode),
+            )
+            if part
+        )
+        return _compact_failure_output(plain_output) or self._generic_failure_message()
+
+    def _failure_response_from_values(self, values: list[dict[str, Any]]) -> str | None:
+        for value in reversed(values):
+            for response_key in self.failure_response_keys:
+                response = _nested_string(value, response_key)
+                if response:
+                    return _compact_failure_output(response)
+        return None
+
+    def _generic_failure_message(self) -> str:
+        return f"{self.display_name} failed. Check the local agent logs for details."
 
     def events_from_value(self, value: dict[str, Any]) -> list[dict[str, Any]]:
         return [_strip_internal_event_keys(event) for event in self._events_from_value(value)]
@@ -534,7 +568,7 @@ class _LocalAgent:
             return False, "\n\n".join(part for part in (message, output) if part), None
 
         if process.returncode != 0:
-            return False, output or f"{command[0]} exited with status {process.returncode}.", None
+            return False, self.parse_failure_output(stdout, stderr), None
 
         message, parsed_session_id = self.parse_output(stdout, stderr)
         next_session_id = parsed_session_id or next_session_id
@@ -563,6 +597,7 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
         session_id_key="session_id",
         response_key="result",
         output_mode="jsonl",
+        failure_response_keys=("result",),
         executable_candidates=("~/.local/bin/claude",),
         resume_command=(
             "claude",
@@ -591,6 +626,7 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
         session_id_key="thread_id",
         response_key="item.text",
         output_mode="jsonl",
+        failure_response_keys=("error.message",),
         resume_command=(
             "codex",
             "exec",
@@ -612,6 +648,7 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
         session_id_key="sessionId",
         response_key="data.content",
         output_mode="jsonl",
+        failure_response_keys=(),
         prompt_prefix=("-p",),
         attachment_arg=("--attachment",),
         resume_command=(
@@ -649,6 +686,7 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
         session_id_key="session_id",
         response_key="result",
         output_mode="jsonl",
+        failure_response_keys=(),
         resume_command=("cursor-agent", "--print", "--force", "--output-format", "stream-json", "--resume"),
         attachment_prompt_style=None,
         stream_response_keys=False,
@@ -660,6 +698,7 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
         session_id_key="session_id",
         response_key="response",
         output_mode="json",
+        failure_response_keys=("error.message",),
         prompt_prefix=("-p",),
         attachment_prompt_style="gemini_at",
     ),
@@ -670,6 +709,7 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
         session_id_key="sessionID",
         response_key="part.text",
         output_mode="jsonl",
+        failure_response_keys=("error.data.message",),
         resume_command=("opencode", "run", "--format", "json", "--dangerously-skip-permissions", "--session"),
         attachment_arg=("--file",),
     ),
@@ -730,6 +770,35 @@ def _load_json_values(text: str, output_mode: _OutputMode) -> list[Any]:
         else:
             values.append(parsed_line)
     return values
+
+
+def _compact_failure_output(text: str) -> str:
+    compacted = re.sub(r"\s+", " ", text).strip()
+    if len(compacted) <= _FAILURE_OUTPUT_MAX_LENGTH:
+        return compacted
+    return compacted[: _FAILURE_OUTPUT_MAX_LENGTH - 3].rstrip() + "..."
+
+
+def _plain_failure_output(text: str, output_mode: _OutputMode) -> str:
+    stripped_text = text.strip()
+    if not stripped_text:
+        return ""
+    if not _load_json_values(stripped_text, output_mode):
+        return stripped_text
+    if output_mode == "json":
+        return ""
+
+    lines = []
+    for line in stripped_text.splitlines():
+        stripped_line = line.strip()
+        if not stripped_line.startswith(("{", "[")):
+            lines.append(stripped_line)
+            continue
+        try:
+            json.loads(stripped_line)
+        except json.JSONDecodeError:
+            lines.append(stripped_line)
+    return "\n".join(lines).strip()
 
 
 async def _read_stream(stream: asyncio.StreamReader, on_line: Callable[[str], Awaitable[None]] | None = None) -> str:
