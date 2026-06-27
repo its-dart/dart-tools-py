@@ -1042,7 +1042,7 @@ def connect_agent(
         except AgentConnectionError as ex:
             _dart_exit(str(ex))
         _log(f"Started background agent connection\n\n{_format_agent_connection(connection, dart.get_base_url())}\n")
-        _log(f"To close it, run\n\n  dart agent-disconnect {id}\n")
+        _log(f"To close it, run dart agent-disconnect {id}")
         _log("Done.")
         return
 
