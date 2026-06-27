@@ -15,6 +15,7 @@ import platformdirs
 from .cli_command import CLI_COMMAND_ENVVAR
 
 _APP = "dart-tools"
+AGENT_CONNECTION_LOG_PATH_ENVVAR = "DART_AGENT_CONNECTION_LOG_PATH"
 _CONNECTIONS_KEY = "connections"
 _AGENT_ID_KEY = "agentId"
 _PID_KEY = "pid"
@@ -37,6 +38,7 @@ def start_background_agent_connection(cli_command: str, agent_id: str, install: 
     command = _make_background_agent_command(cli_command, agent_id, install)
     env = os.environ.copy()
     env[CLI_COMMAND_ENVVAR] = cli_command
+    env[AGENT_CONNECTION_LOG_PATH_ENVVAR] = str(log_path)
     with open(log_path, "ab") as log_file:
         process = subprocess.Popen(
             command,

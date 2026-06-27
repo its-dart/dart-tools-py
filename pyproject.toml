@@ -38,6 +38,7 @@ dependencies = [
   "httpx>=0.28",
   "pick>=2.4",
   "platformdirs>=4.4",
+  "rich>=14.3",
   "websockets>=15.0",
 ]
 

@@ -5,18 +5,27 @@ import contextlib
 import json
 import os
 import random
+import re
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Literal, Mapping
-from urllib.parse import urlsplit, urlunsplit
+from urllib.parse import urljoin, urlsplit, urlunsplit
+from urllib.request import Request, urlopen
 
 from websockets.asyncio.client import connect as _websocket_connect
 from websockets.exceptions import ConnectionClosed, InvalidStatus
 
+from .agent_process import AGENT_CONNECTION_LOG_PATH_ENVVAR
+from .agent_ui import (
+    AgentUI,
+    TerminalEventPrinter,
+)
 from .exception import UNKNOWN_FAILURE_MESSAGE, AgentAuthError
 
 _OutputMode = Literal["json", "jsonl"]
@@ -29,18 +38,27 @@ _RUN_TIMEOUT_SECONDS = 1800
 _STREAM_READ_CHUNK_SIZE_BYTES = 65536
 _MAX_RECONNECT_DELAY_SECONDS = 15
 _RECONNECT_TIMEOUT_SECONDS = 120
-
 _LOCAL_AGENT_KEY = "localAgent"
+_ATTACHMENTS_KEY = "attachments"
 _CHANGES_KEY = "changes"
+_CHAT_DUID_KEY = "chatDuid"
+_CHAT_TITLE_KEY = "chatTitle"
+_CONTENT_KEY = "content"
+_DISPLAY_PROMPT_KEY = "displayPrompt"
 _EXIT_KEY = "exit"
 _KIND_KEY = "kind"
+_MEDIA_TYPE_KEY = "mediaType"
 _MESSAGE_ID_KEY = "id"
 _MESSAGE_KEY = "message"
+_MODEL_KEY = "model"
 _NAME_KEY = "name"
 _PROMPT_KEY = "prompt"
 _SUCCESS_KEY = "success"
+_THINKING_LEVEL_KEY = "thinkingLevel"
 _TITLE_KEY = "title"
 _TYPE_KEY = "type"
+_URL_KEY = "url"
+_USER_NAME_KEY = "userName"
 
 _DONE_EVENT_KIND = "done"
 _EVENT_KEY = "event"
@@ -60,6 +78,10 @@ _STREAM_EVENT_TYPE = "stream_event"
 _MESSAGE_START_EVENT_TYPE = "message_start"
 _CONTENT_BLOCK_DELTA_EVENT_TYPE = "content_block_delta"
 _TEXT_DELTA_DELTA_TYPE = "text_delta"
+_FILE_ATTACHMENT_TYPE = "file"
+_TEXT_ATTACHMENT_TYPE = "text"
+_ATTACHMENT_DOWNLOAD_TIMEOUT_SECONDS = 120
+_SENSITIVE_ATTACHMENT_HEADER_KEYS = {"authorization", "client-duid"}
 _CLAUDE_CONTENT_BLOCK_PATHS = (
     "message.content",
     "item.message.content",
@@ -119,48 +141,134 @@ class _LocalAgentInstallCommand:
         return self
 
 
-class _LocalAgent:
-    def __init__(
-        self,
-        *,
-        display_name: str,
-        start_command: tuple[str, ...],
-        install_command: _LocalAgentInstallCommand,
-        session_id_key: str,
-        response_key: str | tuple[str, ...],
-        output_mode: _OutputMode,
-        resume_command: tuple[str, ...] | None = None,
-        resume_suffix: tuple[str, ...] = (),
-        response_types: tuple[str, ...] | None = None,
-        response_phases: tuple[str, ...] | None = None,
-        stream_response_keys: bool = True,
-        deduplicate_stream_events: bool = False,
-        reassemble_stream_events: bool = False,
-    ) -> None:
-        self.display_name = display_name
-        self.start_command = start_command
-        self.install_command = install_command
-        self.session_id_key = session_id_key
-        self.response_keys = (response_key,) if isinstance(response_key, str) else response_key
-        self.output_mode = output_mode
-        self.resume_command = resume_command
-        self.resume_suffix = resume_suffix
-        self.response_types = response_types
-        self.response_phases = response_phases
-        self.stream_response_keys = stream_response_keys
-        self.deduplicate_stream_events = deduplicate_stream_events
-        self.reassemble_stream_events = reassemble_stream_events
+@dataclass(frozen=True)
+class _MaterializedAttachment:
+    path: Path
+    name: str
+    media_type: str
 
-    def make_command(self, session_id: str | None, prompt: str) -> tuple[str, ...]:
+    @property
+    def is_image(self) -> bool:
+        return self.media_type.startswith("image/")
+
+
+@dataclass(frozen=True)
+class _LocalAgent:
+    display_name: str
+    start_command: tuple[str, ...]
+    install_command: _LocalAgentInstallCommand
+    session_id_key: str
+    response_key: str | tuple[str, ...]
+    output_mode: _OutputMode
+    resume_command: tuple[str, ...] | None = None
+    executable_candidates: tuple[str, ...] = ()
+    prompt_prefix: tuple[str, ...] = ()
+    resume_suffix: tuple[str, ...] = ()
+    model_arg: tuple[str, ...] = ("--model",)
+    thinking_level_config_key: str | None = None
+    attachment_arg: tuple[str, ...] | None = None
+    image_attachment_arg: tuple[str, ...] | None = None
+    attachment_prompt_style: Literal["path", "gemini_at"] | None = "path"
+    resume_session_after_args: bool = False
+    response_types: tuple[str, ...] | None = None
+    response_phases: tuple[str, ...] | None = None
+    stream_response_keys: bool = True
+    deduplicate_stream_events: bool = False
+    reassemble_stream_events: bool = False
+
+    @property
+    def response_keys(self) -> tuple[str, ...]:
+        return (self.response_key,) if isinstance(self.response_key, str) else self.response_key
+
+    def _thinking_level_args(self, thinking_level: str | None) -> tuple[str, ...]:
+        if not thinking_level or self.thinking_level_config_key is None:
+            return ()
+        return ("-c", f'{self.thinking_level_config_key}="{thinking_level}"')
+
+    def _attachment_args(self, attachments: tuple[_MaterializedAttachment, ...]) -> tuple[str, ...]:
+        args: list[str] = []
+        for attachment in attachments:
+            arg = self._attachment_arg_for(attachment)
+            if arg is not None:
+                args.extend((*arg, str(attachment.path)))
+        return tuple(args)
+
+    def _attachment_arg_for(self, attachment: _MaterializedAttachment) -> tuple[str, ...] | None:
+        if self.attachment_arg is not None:
+            return self.attachment_arg
+        if self.image_attachment_arg is not None and attachment.is_image:
+            return self.image_attachment_arg
+        return None
+
+    def supports_attachments(self) -> bool:
+        return (
+            self.attachment_arg is not None
+            or self.image_attachment_arg is not None
+            or self.attachment_prompt_style is not None
+        )
+
+    def _prompt_with_attachments(self, prompt: str, attachments: tuple[_MaterializedAttachment, ...]) -> str:
+        if not attachments or self.attachment_prompt_style is None:
+            return prompt
+
+        lines = ["Attachments are available as local files:"]
+        for attachment in attachments:
+            if self._attachment_arg_for(attachment) is not None:
+                continue
+            reference = f"@{attachment.path}" if self.attachment_prompt_style == "gemini_at" else str(attachment.path)
+            lines.append(f"- {attachment.name} ({attachment.media_type}): {reference}")
+        return f"{prompt}\n\n" + "\n".join(lines) if len(lines) > 1 else prompt
+
+    def make_command(
+        self,
+        session_id: str | None,
+        prompt: str,
+        model: str | None = None,
+        thinking_level: str | None = None,
+        attachments: tuple[_MaterializedAttachment, ...] = (),
+    ) -> tuple[str, ...]:
+        prompt = self._prompt_with_attachments(prompt, attachments)
+        model_args = (*self.model_arg, model) if model and model != "auto" else ()
+        thinking_level_args = self._thinking_level_args(thinking_level)
+        attachment_args = self._attachment_args(attachments)
         if session_id is not None and self.resume_command is not None:
-            return (*self.resume_command, session_id, *self.resume_suffix, prompt)
-        return (*self.start_command, prompt)
+            command_args = (
+                *model_args,
+                *thinking_level_args,
+                *attachment_args,
+                *self.resume_suffix,
+            )
+            if self.resume_session_after_args:
+                return (*self.resume_command, *command_args, session_id, prompt)
+            return (*self.resume_command, session_id, *command_args, prompt)
+        return (
+            *self.start_command,
+            *model_args,
+            *thinking_level_args,
+            *attachment_args,
+            *self.prompt_prefix,
+            prompt,
+        )
 
     def executable(self) -> str:
-        return self.start_command[0]
+        return self._resolved_executable() or self.start_command[0]
 
     def is_available(self) -> bool:
-        return shutil.which(self.executable()) is not None
+        return self._resolved_executable() is not None
+
+    def _resolved_executable(self) -> str | None:
+        for executable in (self.start_command[0], *self.executable_candidates):
+            path = Path(executable).expanduser()
+            expanded = str(path)
+            if shutil.which(expanded) is not None or path.is_file():
+                return expanded
+        return None
+
+    def _resolved_command(self, command: tuple[str, ...]) -> tuple[str, ...]:
+        executable = self._resolved_executable()
+        if executable is None:
+            return command
+        return (executable, *command[1:])
 
     def parse_output(self, stdout: str, stderr: str) -> tuple[str, str | None]:
         response_parts_by_key = {response_key: [] for response_key in self.response_keys}
@@ -204,11 +312,18 @@ class _LocalAgent:
         if self.stream_response_keys and (response := self._response_text_from_value(value)):
             return [{_KIND_KEY: _TEXT_DELTA_EVENT_KIND, "text": response}]
 
+        value_type_paths = (
+            "kind",
+            "type",
+            "subtype",
+            "event",
+            "item.type",
+            "item.subtype",
+            "data.type",
+            "data.subtype",
+        )
         value_types = " ".join(
-            _string_from_paths(
-                value,
-                ("kind", "type", "subtype", "event", "item.type", "item.subtype", "data.type", "data.subtype"),
-            )
+            value_type for path in value_type_paths if (value_type := _nested_string(value, path))
         ).lower()
         summary = _summary_from_value(value)
         if "thinking" in value_types or "reasoning" in value_types:
@@ -347,9 +462,15 @@ class _LocalAgent:
         return True
 
     async def run(
-        self, prompt: str, session_id: str | None, emit_event: _LocalEventSender
+        self,
+        prompt: str,
+        session_id: str | None,
+        model: str | None,
+        thinking_level: str | None,
+        attachments: tuple[_MaterializedAttachment, ...],
+        emit_event: _LocalEventSender,
     ) -> tuple[bool, str, str | None]:
-        command = self.make_command(session_id, prompt)
+        command = self._resolved_command(self.make_command(session_id, prompt, model, thinking_level, attachments))
         try:
             process = await asyncio.create_subprocess_exec(
                 *command,
@@ -442,6 +563,7 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
         session_id_key="session_id",
         response_key="result",
         output_mode="jsonl",
+        executable_candidates=("~/.local/bin/claude",),
         resume_command=(
             "claude",
             "-p",
@@ -477,14 +599,21 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
             "--skip-git-repo-check",
             "resume",
         ),
+        thinking_level_config_key="model_reasoning_effort",
+        image_attachment_arg=("--image",),
+        prompt_prefix=("--",),
+        resume_suffix=("--",),
+        resume_session_after_args=True,
     ),
     "copilot": _LocalAgent(
         display_name="GitHub Copilot CLI",
-        start_command=("copilot", "--output-format", "json", "-s", "--autopilot", "--no-ask-user", "--allow-all", "-p"),
+        start_command=("copilot", "--output-format", "json", "-s", "--autopilot", "--no-ask-user", "--allow-all"),
         install_command=_npm_install_command("@github/copilot"),
         session_id_key="sessionId",
         response_key="data.content",
         output_mode="jsonl",
+        prompt_prefix=("-p",),
+        attachment_arg=("--attachment",),
         resume_command=(
             "copilot",
             "--output-format",
@@ -521,15 +650,18 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
         response_key="result",
         output_mode="jsonl",
         resume_command=("cursor-agent", "--print", "--force", "--output-format", "stream-json", "--resume"),
+        attachment_prompt_style=None,
         stream_response_keys=False,
     ),
     "gemini": _LocalAgent(
         display_name="Gemini CLI",
-        start_command=("gemini", "--output-format", "json", "--approval-mode", "yolo", "--skip-trust", "-p"),
+        start_command=("gemini", "--output-format", "json", "--approval-mode", "yolo", "--skip-trust"),
         install_command=_npm_install_command("@google/gemini-cli"),
         session_id_key="session_id",
         response_key="response",
         output_mode="json",
+        prompt_prefix=("-p",),
+        attachment_prompt_style="gemini_at",
     ),
     "opencode": _LocalAgent(
         display_name="OpenCode",
@@ -539,6 +671,7 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
         response_key="part.text",
         output_mode="jsonl",
         resume_command=("opencode", "run", "--format", "json", "--dangerously-skip-permissions", "--session"),
+        attachment_arg=("--file",),
     ),
 }
 _LOCAL_AGENT_SESSION_IDS: dict[tuple[str, str], str] = {}
@@ -552,12 +685,16 @@ def connect_agent(
     headers: Mapping[str, str],
     quiet: bool = False,
 ) -> None:
+    ui = AgentUI()
     try:
-        asyncio.run(_connect_agent_async(agent_id, install, base_url=base_url, headers=headers, quiet=quiet))
+        asyncio.run(_connect_agent_async(agent_id, install, base_url=base_url, headers=headers, quiet=quiet, ui=ui))
     except KeyboardInterrupt:
         return
     except _LocalAgentSetupError as ex:
-        raise SystemExit(str(ex)) from None
+        ui.print_status("!", str(ex), "yellow")
+        raise SystemExit(1) from None
+    finally:
+        ui.close_active_chat_transcript()
 
 
 def ensure_local_agent_available(local_agent_name: str, install: AgentInstallPolicy) -> None:
@@ -632,12 +769,12 @@ def _nested_string(value: dict[str, Any], path: str) -> str | None:
     return result if isinstance(result, str) and result else None
 
 
-def _string_from_paths(value: dict[str, Any], paths: tuple[str, ...]) -> list[str]:
-    return [result for path in paths if (result := _nested_string(value, path))]
-
-
 def _first_string_from_paths(value: dict[str, Any], paths: tuple[str, ...]) -> str | None:
-    return next(iter(_string_from_paths(value, paths)), None)
+    for path in paths:
+        result = _nested_string(value, path)
+        if result:
+            return result
+    return None
 
 
 def _first_dict_from_paths(value: dict[str, Any], paths: tuple[str, ...]) -> dict[str, Any] | None:
@@ -908,11 +1045,24 @@ def _validate_local_agent_available(local_agent_name: str, install: AgentInstall
 
 
 async def _run_local_agent(
-    local_agent_name: str, prompt: str, message_id: str, emit_event: _LocalEventSender
+    local_agent_name: str,
+    prompt: str,
+    message_id: str,
+    model: str | None,
+    thinking_level: str | None,
+    attachments: tuple[_MaterializedAttachment, ...],
+    emit_event: _LocalEventSender,
 ) -> tuple[bool, str]:
     local_agent = _get_local_agent(local_agent_name)
     session_key = (local_agent_name, message_id)
-    success, message, session_id = await local_agent.run(prompt, _LOCAL_AGENT_SESSION_IDS.get(session_key), emit_event)
+    success, message, session_id = await local_agent.run(
+        prompt,
+        _LOCAL_AGENT_SESSION_IDS.get(session_key),
+        model,
+        thinking_level,
+        attachments,
+        emit_event,
+    )
     if success and session_id is not None:
         _LOCAL_AGENT_SESSION_IDS[session_key] = session_id
     return success, message
@@ -995,6 +1145,7 @@ class _StreamEventState:
         source = event.pop(_EVENT_SOURCE_KEY, _DEFAULT_TEXT_EVENT_SOURCE)
         if not isinstance(source, str) or not source:
             source = _DEFAULT_TEXT_EVENT_SOURCE
+        source = _DEFAULT_TEXT_EVENT_SOURCE if self.deduplicate_cumulative_events else source
         if not self.deduplicate_cumulative_events:
             self.has_streamed_text = True
             return _strip_internal_event_keys(event)
@@ -1057,6 +1208,104 @@ def _strip_internal_event_keys(event: dict[str, Any]) -> dict[str, Any]:
     return {key: value for key, value in event.items() if key != _EVENT_SOURCE_KEY}
 
 
+def _safe_attachment_filename(name: str | None, fallback: str) -> str:
+    filename = Path(name or fallback).name.strip() or fallback
+    filename = re.sub(r"[^A-Za-z0-9._-]+", "_", filename).strip("._-")
+    filename = filename or fallback
+    if len(filename) <= 180:
+        return filename
+    path = Path(filename)
+    suffix = path.suffix[:40]
+    stem = (path.stem or fallback)[: 180 - len(suffix)]
+    return f"{stem}{suffix}"
+
+
+def _unique_attachment_path(directory: Path, filename: str) -> Path:
+    path = directory / filename
+    if not path.exists():
+        return path
+
+    stem = path.stem or "attachment"
+    suffix = path.suffix
+    index = 2
+    while True:
+        candidate = directory / f"{stem}-{index}{suffix}"
+        if not candidate.exists():
+            return candidate
+        index += 1
+
+
+def _write_text_attachment(
+    directory: Path, attachment: dict[str, Any], fallback: str
+) -> _MaterializedAttachment | None:
+    content = attachment.get(_CONTENT_KEY)
+    if not isinstance(content, str):
+        return None
+
+    name = _safe_attachment_filename(_nested_string(attachment, _NAME_KEY), fallback)
+    path = _unique_attachment_path(directory, name)
+    path.write_text(content, encoding="utf-8")
+    media_type = _nested_string(attachment, _MEDIA_TYPE_KEY) or "text/plain"
+    return _MaterializedAttachment(path=path, name=name, media_type=media_type)
+
+
+def _write_file_attachment(
+    directory: Path,
+    attachment: dict[str, Any],
+    fallback: str,
+    *,
+    base_url: str,
+    headers: Mapping[str, str],
+) -> _MaterializedAttachment | None:
+    url = _nested_string(attachment, _URL_KEY)
+    if not url:
+        return None
+
+    name = _safe_attachment_filename(_nested_string(attachment, _NAME_KEY), fallback)
+    path = _unique_attachment_path(directory, name)
+    resolved_url = urljoin(base_url, url)
+    request = Request(resolved_url, headers=_make_attachment_request_headers(base_url, resolved_url, headers))
+    with urlopen(request, timeout=_ATTACHMENT_DOWNLOAD_TIMEOUT_SECONDS) as response, path.open("wb") as fout:
+        shutil.copyfileobj(response, fout)
+
+    media_type = _nested_string(attachment, _MEDIA_TYPE_KEY) or "application/octet-stream"
+    return _MaterializedAttachment(path=path, name=name, media_type=media_type)
+
+
+def _materialize_attachments(
+    raw_attachments: Any, directory: Path, *, base_url: str, headers: Mapping[str, str]
+) -> tuple[_MaterializedAttachment, ...]:
+    if not isinstance(raw_attachments, list):
+        return ()
+
+    attachments: list[_MaterializedAttachment] = []
+    for index, attachment in enumerate(raw_attachments, start=1):
+        if not isinstance(attachment, dict):
+            continue
+        fallback = f"attachment-{index}"
+        attachment_type = _nested_string(attachment, _TYPE_KEY)
+        try:
+            if attachment_type == _TEXT_ATTACHMENT_TYPE:
+                materialized = _write_text_attachment(directory, attachment, fallback)
+            elif attachment_type == _FILE_ATTACHMENT_TYPE:
+                materialized = _write_file_attachment(
+                    directory,
+                    attachment,
+                    fallback,
+                    base_url=base_url,
+                    headers=headers,
+                )
+            else:
+                continue
+        except (OSError, ValueError, TimeoutError):
+            continue
+        if materialized is None:
+            continue
+        attachments.append(materialized)
+
+    return tuple(attachments)
+
+
 def _suffix_prefix_overlap_length(previous_text: str, text: str) -> int:
     max_overlap_length = min(len(previous_text), len(text))
     for overlap_length in range(max_overlap_length, 0, -1):
@@ -1065,101 +1314,84 @@ def _suffix_prefix_overlap_length(previous_text: str, text: str) -> int:
     return 0
 
 
-class _TerminalEventPrinter:
-    def __init__(self, quiet: bool) -> None:
-        self.quiet = quiet
-        self.has_streamed_text = False
-        self.text_block_active = False
-        self.last_print_was_text = False
-
-    def print_event(self, event: dict[str, Any]) -> None:
-        if self.quiet:
-            return
-
-        kind = event.get(_KIND_KEY)
-        if kind == _TEXT_DELTA_EVENT_KIND:
-            text = event.get("text")
-            if not isinstance(text, str) or not text:
-                return
-            if not self.text_block_active:
-                print("\nAssistant: ", end="", flush=True)
-            print(text, end="", flush=True)
-            self.has_streamed_text = True
-            self.text_block_active = True
-            self.last_print_was_text = True
-            return
-
-        if kind == _THINKING_EVENT_KIND:
-            label = _terminal_event_detail(event, ("summary", "detail"))
-            self._print_line("Thinking", label)
-            return
-
-        if kind == _TOOL_CALL_EVENT_KIND:
-            self._print_line("Tool call", _terminal_tool_label(event))
-            return
-
-        if kind == _TOOL_RESULT_EVENT_KIND:
-            self._print_line("Tool result", _terminal_tool_label(event))
-            return
-
-        if kind == _TOOL_ERROR_EVENT_KIND:
-            label = _terminal_tool_label(event)
-            error = _terminal_event_detail(event, ("error",))
-            self._print_line("Tool error", f"{label}: {error}" if error else label)
-
-    def finish(self, message: str) -> None:
-        if self.quiet:
-            return
-        if self.has_streamed_text:
-            print("", flush=True)
-        else:
-            print(f"\nAssistant: {message}", flush=True)
-
-    def _print_line(self, title: str, detail: str) -> None:
-        if self.last_print_was_text:
-            print("", flush=True)
-        print(f"\n{title}: {detail}" if detail else f"\n{title}", flush=True)
-        self.text_block_active = False
-        self.last_print_was_text = False
+def _print_terminal_event(terminal_printer: TerminalEventPrinter, event: dict[str, Any]) -> None:
+    kind = event.get(_KIND_KEY)
+    if kind == _TEXT_DELTA_EVENT_KIND:
+        text = event.get("text")
+        if isinstance(text, str):
+            terminal_printer.append_text_delta(text)
+        return
+    if kind == _THINKING_EVENT_KIND:
+        terminal_printer.append_thinking(_first_string_from_paths(event, ("summary", "detail")) or "")
+        return
+    if kind == _TOOL_CALL_EVENT_KIND:
+        terminal_printer.append_tool_call(_nested_string(event, "name") or "tool", event.get("args"))
+        return
+    if kind == _TOOL_RESULT_EVENT_KIND:
+        terminal_printer.append_tool_result()
+        return
+    if kind == _TOOL_ERROR_EVENT_KIND:
+        terminal_printer.append_tool_error(
+            _nested_string(event, "name") or "tool", _nested_string(event, "error") or ""
+        )
 
 
-def _terminal_event_detail(event: dict[str, Any], keys: tuple[str, ...]) -> str:
-    for key in keys:
-        value = event.get(key)
-        if isinstance(value, str) and value:
-            return _preview_text(value)
-    return ""
+async def _handle_work(
+    websocket: Any,
+    work: dict[str, Any],
+    quiet: bool,
+    *,
+    base_url: str,
+    headers: Mapping[str, str],
+    ui: AgentUI,
+) -> None:
+    terminal_printer = TerminalEventPrinter(quiet, ui)
+    prompt = work[_PROMPT_KEY]
+    if isinstance(prompt, str):
+        terminal_printer.start_turn(
+            chat_key=_nested_string(work, _CHAT_DUID_KEY)
+            or _nested_string(work, _MESSAGE_ID_KEY)
+            or _DEFAULT_TEXT_EVENT_SOURCE,
+            chat_title=_nested_string(work, _CHAT_TITLE_KEY),
+            display_prompt=_nested_string(work, _DISPLAY_PROMPT_KEY) or prompt,
+            user_name=_nested_string(work, _USER_NAME_KEY) or "User",
+        )
 
-
-def _terminal_tool_label(event: dict[str, Any]) -> str:
-    name = event.get("name")
-    return name if isinstance(name, str) and name else "tool"
-
-
-def _preview_text(text: str, max_length: int = 240) -> str:
-    compact_text = " ".join(text.split())
-    if len(compact_text) <= max_length:
-        return compact_text
-    return f"{compact_text[: max_length - 3]}..."
-
-
-async def _handle_work(websocket: Any, work: dict[str, Any], quiet: bool) -> None:
-    if not quiet:
-        print(f"\nUser: {work[_PROMPT_KEY]}", flush=True)
+    model = _nested_string(work, _MODEL_KEY)
+    thinking_level = _nested_string(work, _THINKING_LEVEL_KEY)
 
     sequence = 0
-    terminal_printer = _TerminalEventPrinter(quiet)
+    terminal_printer.start_working(work[_LOCAL_AGENT_KEY])
 
     async def emit_event(event: dict[str, Any]) -> None:
         nonlocal sequence
         sequence += 1
         await websocket.send(json.dumps(_make_event_payload(work, sequence, event)))
-        terminal_printer.print_event(event)
+        _print_terminal_event(terminal_printer, event)
 
-    success, message = await _run_local_agent(
-        work[_LOCAL_AGENT_KEY], work[_PROMPT_KEY], work[_MESSAGE_ID_KEY], emit_event
-    )
-    terminal_printer.finish(message)
+    local_agent = _get_local_agent(work[_LOCAL_AGENT_KEY])
+    with tempfile.TemporaryDirectory(prefix="dart-agent-attachments-") as attachment_dir:
+        attachments = (
+            await asyncio.to_thread(
+                _materialize_attachments,
+                work.get(_ATTACHMENTS_KEY),
+                Path(attachment_dir),
+                base_url=base_url,
+                headers=headers,
+            )
+            if local_agent.supports_attachments()
+            else ()
+        )
+        success, message = await _run_local_agent(
+            work[_LOCAL_AGENT_KEY],
+            work[_PROMPT_KEY],
+            work[_MESSAGE_ID_KEY],
+            model,
+            thinking_level,
+            attachments,
+            emit_event,
+        )
+    terminal_printer.finish(message, success=success)
     await emit_event({_KIND_KEY: _DONE_EVENT_KIND, _SUCCESS_KEY: success, _MESSAGE_KEY: message})
 
 
@@ -1188,15 +1420,7 @@ def _make_agent_url(base_url: str, agent_id: str) -> str:
     return f"{base_url.rstrip('/')}/a/{agent_id}"
 
 
-def _print_start_message(message: dict[str, Any], agent_id: str, base_url: str) -> None:
-    agent_url = _make_agent_url(base_url, agent_id)
-    print(
-        f"Connected agent\n\n  {message[_NAME_KEY]}\n  {agent_url}\n  ID: {agent_id}\n  Local agent: {message[_LOCAL_AGENT_KEY]}\n\nWaiting for work from Dart",
-        flush=True,
-    )
-
-
-def _print_update(message: dict[str, Any]) -> bool:
+def _print_update_message(message: dict[str, Any], ui: AgentUI) -> bool:
     title = message.get(_TITLE_KEY)
     if not isinstance(title, str) or not title:
         title = "Agent updated"
@@ -1205,41 +1429,56 @@ def _print_update(message: dict[str, Any]) -> bool:
     if not isinstance(changes, list):
         changes = []
     changes = [change for change in changes if isinstance(change, str) and change]
-
-    if changes:
-        print(f"\n{title}\n\n" + "\n".join(f"  {change}" for change in changes), flush=True)
-    else:
-        print(f"\n{title}", flush=True)
+    ui.print_update(title, changes)
     return message.get(_EXIT_KEY) is True
 
 
 async def _handle_messages(
-    websocket: Any, quiet: bool, agent_id: str, base_url: str, install: AgentInstallPolicy
+    websocket: Any,
+    quiet: bool,
+    agent_id: str,
+    base_url: str,
+    headers: Mapping[str, str],
+    ui: AgentUI,
+    install: AgentInstallPolicy,
 ) -> bool:
     async for raw_message in websocket:
         message = json.loads(raw_message)
         message_type = message[_TYPE_KEY]
         if message_type == _START_TYPE:
             _validate_local_agent_available(message[_LOCAL_AGENT_KEY], install)
-            _print_start_message(message, agent_id, base_url)
+            ui.print_start_message(
+                name=str(message[_NAME_KEY]),
+                local_agent=str(message[_LOCAL_AGENT_KEY]),
+                agent_id=agent_id,
+                agent_url=_make_agent_url(base_url, agent_id),
+                log_path=os.environ.get(AGENT_CONNECTION_LOG_PATH_ENVVAR),
+            )
             continue
         if message_type == _UPDATE_TYPE:
             if _LOCAL_AGENT_KEY in message:
                 _validate_local_agent_available(message[_LOCAL_AGENT_KEY], install)
-            if _print_update(message):
+            if _print_update_message(message, ui):
                 await websocket.close()
                 return False
             continue
         if message_type != _WORK_TYPE:
             continue
-        await _handle_work(websocket, message, quiet)
+        await _handle_work(websocket, message, quiet, base_url=base_url, headers=headers, ui=ui)
     return True
 
 
 async def _run_until_closed_or_eof(
-    websocket: Any, quiet: bool, install: AgentInstallPolicy, *, agent_id: str, base_url: str
+    websocket: Any,
+    quiet: bool,
+    install: AgentInstallPolicy,
+    *,
+    agent_id: str,
+    base_url: str,
+    headers: Mapping[str, str],
+    ui: AgentUI,
 ) -> bool:
-    messages_task = asyncio.create_task(_handle_messages(websocket, quiet, agent_id, base_url, install))
+    messages_task = asyncio.create_task(_handle_messages(websocket, quiet, agent_id, base_url, headers, ui, install))
     if not sys.stdin.isatty():
         return await messages_task
 
@@ -1247,9 +1486,7 @@ async def _run_until_closed_or_eof(
     done, pending = await asyncio.wait({messages_task, eof_task}, return_when=asyncio.FIRST_COMPLETED)
     for task in pending:
         task.cancel()
-    for task in pending:
-        with contextlib.suppress(asyncio.CancelledError):
-            await task
+    await asyncio.gather(*pending, return_exceptions=True)
 
     if eof_task in done:
         await websocket.close()
@@ -1273,7 +1510,18 @@ def _make_connection_headers(headers: Mapping[str, str]) -> dict[str, str]:
     return {key: value for key, value in headers.items() if key.lower() != "origin"}
 
 
-def _raise_for_connection_closed_error(ex: ConnectionClosed) -> None:
+def _make_attachment_request_headers(base_url: str, resolved_url: str, headers: Mapping[str, str]) -> dict[str, str]:
+    request_headers = _make_connection_headers(headers)
+    base = urlsplit(base_url)
+    target = urlsplit(resolved_url)
+    if base.scheme.lower() == target.scheme.lower() and base.netloc.lower() == target.netloc.lower():
+        return request_headers
+    return {
+        key: value for key, value in request_headers.items() if key.lower() not in _SENSITIVE_ATTACHMENT_HEADER_KEYS
+    }
+
+
+def _raise_for_connection_closed_error(ex: ConnectionClosed, ui: AgentUI) -> None:
     close_frame = getattr(ex, "rcvd", None)
     reason = getattr(close_frame, "reason", "") or getattr(ex, "reason", "")
     if not reason:
@@ -1292,9 +1540,10 @@ def _raise_for_connection_closed_error(ex: ConnectionClosed) -> None:
     if code not in _CLOSE_ERROR_CODES or not isinstance(message, str) or not message:
         return
 
+    ui.print_status("!", message, "yellow")
     if code == _CLOSE_ERROR_UNAUTHORIZED:
         raise AgentAuthError(message) from None
-    raise SystemExit(message) from None
+    raise SystemExit(1) from None
 
 
 async def _connect_agent_async(
@@ -1304,6 +1553,7 @@ async def _connect_agent_async(
     base_url: str,
     headers: Mapping[str, str],
     quiet: bool,
+    ui: AgentUI,
 ) -> None:
     websocket_url = _make_websocket_url(base_url, agent_id)
     reconnect_started_at: float | None = None
@@ -1320,25 +1570,35 @@ async def _connect_agent_async(
                     reconnect_started_at = None
                     reconnect_attempt = 0
                     if not await _run_until_closed_or_eof(
-                        websocket, quiet, install, agent_id=agent_id, base_url=base_url
+                        websocket,
+                        quiet,
+                        install,
+                        agent_id=agent_id,
+                        base_url=base_url,
+                        headers=headers,
+                        ui=ui,
                     ):
                         return
             except ConnectionClosed as ex:
-                _raise_for_connection_closed_error(ex)
+                _raise_for_connection_closed_error(ex, ui)
             except (OSError, TimeoutError):
                 pass
 
             if reconnect_started_at is None:
                 reconnect_started_at = time.monotonic()
             if time.monotonic() - reconnect_started_at >= _RECONNECT_TIMEOUT_SECONDS:
-                raise SystemExit("Could not reconnect to Dart agent.") from None
+                ui.print_status("!", "Could not reconnect to Dart agent.", "yellow")
+                raise SystemExit(1) from None
 
             reconnect_attempt += 1
             delay = min(2 ** (reconnect_attempt - 1), _MAX_RECONNECT_DELAY_SECONDS)
             delay += random.uniform(0, delay * 0.25)
-            print(f"Connection unavailable, retrying in {delay:.1f}s", flush=True)
+            ui.print_status("!", f"Connection unavailable, retrying in {delay:.1f}s", "yellow")
             await asyncio.sleep(delay)
     except InvalidStatus as ex:
         if ex.response.status_code in _AUTH_FAILURE_STATUS_CODES:
-            raise AgentAuthError("Authentication failed, sign in again") from None
-        raise SystemExit(UNKNOWN_FAILURE_MESSAGE) from None
+            message = "Authentication failed, sign in again"
+            ui.print_status("!", message, "yellow")
+            raise AgentAuthError(message) from None
+        ui.print_status("!", UNKNOWN_FAILURE_MESSAGE, "yellow")
+        raise SystemExit(1) from None

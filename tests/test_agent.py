@@ -1,6 +1,9 @@
 import asyncio
+import io
 import unittest
-from unittest.mock import call, patch
+from unittest.mock import Mock, patch
+
+from rich.console import Console
 
 from dart import agent
 
@@ -72,6 +75,64 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
                 if local_agent.resume_command is not None:
                     resume_command = local_agent.make_command("session-1", "prompt")
                     self.assertTrue(all(flag in resume_command for flag in expected_flags))
+
+    def test_attachment_request_headers_keep_auth_for_same_origin_urls(self) -> None:
+        headers = {
+            "Origin": "https://app.dartai.com",
+            "Authorization": "Bearer secret",
+            "client-duid": "client-1",
+            "X-Test": "ok",
+        }
+
+        self.assertEqual(
+            agent._make_attachment_request_headers(
+                "https://app.dartai.com",
+                "https://app.dartai.com/api/attachments/attachment-1",
+                headers,
+            ),
+            {
+                "Authorization": "Bearer secret",
+                "client-duid": "client-1",
+                "X-Test": "ok",
+            },
+        )
+
+    def test_attachment_request_headers_strip_auth_for_off_origin_urls(self) -> None:
+        headers = {
+            "Origin": "https://app.dartai.com",
+            "Authorization": "Bearer secret",
+            "client-duid": "client-1",
+            "X-Test": "ok",
+        }
+
+        self.assertEqual(
+            agent._make_attachment_request_headers(
+                "https://app.dartai.com",
+                "https://files.example.test/attachment-1",
+                headers,
+            ),
+            {"X-Test": "ok"},
+        )
+
+    def test_start_message_copy_includes_background_and_log_path(self) -> None:
+        ui = agent.AgentUI()
+        ui.console = Console(file=io.StringIO(), record=True, force_terminal=False, width=120)
+
+        ui.print_start_message(
+            name="Review agent",
+            local_agent="codex",
+            agent_id="agent-1",
+            agent_url="https://dart.test/a/agent-1",
+            log_path="/tmp/dart-agent.log",
+        )
+
+        output = ui.console.export_text()
+        self.assertIn(
+            "Stopping this process will disconnect the agent, rerun with --background to run in the background",
+            output,
+        )
+        self.assertNotIn("run in the background.", output)
+        self.assertIn("Writing logs to /tmp/dart-agent.log", output)
 
     def test_claude_terminal_result_is_not_streamed_as_text_delta(self) -> None:
         local_agent = agent._LOCAL_AGENTS["claude"]
@@ -574,14 +635,18 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
             async def send(self, payload: str) -> None:
                 sent_payloads.append(payload)
 
-        async def fake_run_local_agent(local_agent_name, prompt, message_id, emit_event):
+        async def fake_run_local_agent(
+            local_agent_name, prompt, message_id, model, thinking_level, attachments, emit_event
+        ):
             await emit_event({"kind": "text_delta", "text": "hello"})
             await emit_event({"kind": "thinking", "detail": "done thinking"})
             return True, "hello"
 
         work = {"type": "message", "id": "work-1", "localAgent": "codex", "prompt": "Say hello"}
         with patch("dart.agent._run_local_agent", new=fake_run_local_agent):
-            await agent._handle_work(Websocket(), work, quiet=True)
+            await agent._handle_work(
+                Websocket(), work, quiet=True, base_url="https://dart.test", headers={}, ui=agent.AgentUI()
+            )
 
         parsed_payloads = [agent.json.loads(payload) for payload in sent_payloads]
         self.assertEqual([payload["sequence"] for payload in parsed_payloads], [1, 2, 3])
@@ -594,20 +659,52 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
             async def send(self, payload: str) -> None:
                 pass
 
-        async def fake_run_local_agent(local_agent_name, prompt, message_id, emit_event):
+        async def fake_run_local_agent(
+            local_agent_name, prompt, message_id, model, thinking_level, attachments, emit_event
+        ):
             await emit_event({"kind": "text_delta", "text": "hello"})
             await emit_event({"kind": "tool_call", "toolCallId": "toolu-1", "name": "Read", "args": {}})
             await emit_event({"kind": "text_delta", "text": "again"})
             return True, "hello"
 
-        work = {"type": "message", "id": "work-1", "localAgent": "codex", "prompt": "Say hello"}
-        with patch("dart.agent._run_local_agent", new=fake_run_local_agent), patch("builtins.print") as print_mock:
-            await agent._handle_work(Websocket(), work, quiet=False)
+        class Printer:
+            def __init__(self, quiet, ui) -> None:
+                self.calls = []
 
-        self.assertEqual(print_mock.mock_calls.count(call("\nAssistant: ", end="", flush=True)), 2)
-        self.assertIn(call("hello", end="", flush=True), print_mock.mock_calls)
-        self.assertIn(call("again", end="", flush=True), print_mock.mock_calls)
-        self.assertNotIn(call("\nAssistant: hello", flush=True), print_mock.mock_calls)
+            def start_turn(self, **kwargs) -> None:
+                pass
+
+            def start_working(self, local_agent_name) -> None:
+                pass
+
+            def append_text_delta(self, text) -> None:
+                self.calls.append(("text", text))
+
+            def append_tool_call(self, name, args) -> None:
+                self.calls.append(("tool", name, args))
+
+            def finish(self, message, *, success) -> None:
+                self.calls.append(("finish", message, success))
+
+        printer = Printer(False, agent.AgentUI())
+        work = {"type": "message", "id": "work-1", "localAgent": "codex", "prompt": "Say hello"}
+        with (
+            patch("dart.agent._run_local_agent", new=fake_run_local_agent),
+            patch("dart.agent.TerminalEventPrinter", return_value=printer),
+        ):
+            await agent._handle_work(
+                Websocket(), work, quiet=False, base_url="https://dart.test", headers={}, ui=agent.AgentUI()
+            )
+
+        self.assertEqual(
+            printer.calls,
+            [
+                ("text", "hello"),
+                ("tool", "Read", {}),
+                ("text", "again"),
+                ("finish", "hello", True),
+            ],
+        )
 
     async def test_handle_messages_validates_local_agent_from_update(self) -> None:
         class Websocket:
@@ -632,15 +729,52 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
                 return self.messages.pop(0)
 
         setup_error = agent._LocalAgentSetupError("Local agent command not found: codex.")
+        ui = agent.AgentUI()
         with (
             patch("dart.agent._validate_local_agent_available", side_effect=setup_error) as validate_mock,
-            patch("dart.agent._print_update") as print_update_mock,
+            patch("dart.agent._print_update_message") as print_update_mock,
             self.assertRaises(agent._LocalAgentSetupError),
         ):
-            await agent._handle_messages(Websocket(), True, "agent-1", "https://dart.test", "never")
+            await agent._handle_messages(Websocket(), True, "agent-1", "https://dart.test", {}, ui, "never")
 
         validate_mock.assert_called_once_with("codex", "never")
         print_update_mock.assert_not_called()
+
+    async def test_handle_messages_passes_background_log_path_to_start_message(self) -> None:
+        class Websocket:
+            def __init__(self) -> None:
+                self.messages = [
+                    agent.json.dumps(
+                        {
+                            "type": "start",
+                            "name": "Review agent",
+                            "localAgent": "codex",
+                        }
+                    )
+                ]
+
+            def __aiter__(self):
+                return self
+
+            async def __anext__(self) -> str:
+                if not self.messages:
+                    raise StopAsyncIteration
+                return self.messages.pop(0)
+
+        ui = Mock()
+        with (
+            patch("dart.agent._validate_local_agent_available"),
+            patch.dict("dart.agent.os.environ", {agent.AGENT_CONNECTION_LOG_PATH_ENVVAR: "/tmp/dart-agent.log"}),
+        ):
+            await agent._handle_messages(Websocket(), True, "agent-1", "https://dart.test", {}, ui, "never")
+
+        ui.print_start_message.assert_called_once_with(
+            name="Review agent",
+            local_agent="codex",
+            agent_id="agent-1",
+            agent_url="https://dart.test/a/agent-1",
+            log_path="/tmp/dart-agent.log",
+        )
 
     def test_validate_local_agent_available_never_preserves_missing_command_error(self) -> None:
         with (
@@ -724,7 +858,7 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
 
         with patch("dart.agent.asyncio.create_subprocess_exec", new=fake_create_subprocess_exec):
             with self.assertRaisesRegex(RuntimeError, "send failed"):
-                await agent._LOCAL_AGENTS["codex"].run("Say hello", None, emit_event)
+                await agent._LOCAL_AGENTS["codex"].run("Say hello", None, None, None, (), emit_event)
 
         self.assertTrue(fake_process.killed)
 
@@ -743,7 +877,7 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
             async def close(self) -> None:
                 self.closed = True
 
-        async def handle_messages(websocket, quiet, agent_id, base_url, install):
+        async def handle_messages(websocket, quiet, agent_id, base_url, headers, ui, install):
             return True
 
         websocket = Websocket()
@@ -754,7 +888,13 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
             patch("dart.agent._handle_messages", new=handle_messages),
         ):
             result = await agent._run_until_closed_or_eof(
-                websocket, False, "never", agent_id="agent-1", base_url="https://dart.test"
+                websocket,
+                False,
+                "never",
+                agent_id="agent-1",
+                base_url="https://dart.test",
+                headers={},
+                ui=agent.AgentUI(),
             )
 
         self.assertTrue(result)

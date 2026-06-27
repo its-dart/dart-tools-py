@@ -100,6 +100,10 @@ class BackgroundAgentConnectionTests(unittest.TestCase):
         self.assertIn("--foreground", command)
         self.assertIn("--install", command)
         self.assertIn("never", command)
+        self.assertEqual(
+            popen_mock.call_args.kwargs["env"][agent_process.AGENT_CONNECTION_LOG_PATH_ENVVAR],
+            str(log_path),
+        )
 
     def test_start_background_agent_connection_passes_install_policy_to_child(self) -> None:
         class FakeProcess:

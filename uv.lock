@@ -147,6 +147,7 @@ dependencies = [
     { name = "pick" },
     { name = "platformdirs", version = "4.4.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "platformdirs", version = "4.5.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "rich" },
     { name = "websockets", version = "15.0.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "websockets", version = "16.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
 ]
@@ -166,6 +167,7 @@ requires-dist = [
     { name = "httpx", specifier = ">=0.28" },
     { name = "pick", specifier = ">=2.4" },
     { name = "platformdirs", specifier = ">=4.4" },
+    { name = "rich", specifier = ">=14.3" },
     { name = "websockets", specifier = ">=15.0" },
 ]
 

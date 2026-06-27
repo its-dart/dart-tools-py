@@ -1042,6 +1042,7 @@ def connect_agent(
         except AgentConnectionError as ex:
             _dart_exit(str(ex))
         _log(f"Started background agent connection\n\n{_format_agent_connection(connection, dart.get_base_url())}\n")
+        _log(f"To close it, run\n\n  dart agent-disconnect {id}\n")
         _log("Done.")
         return
 
@@ -1401,6 +1402,13 @@ def cli() -> None:
         action="store_false",
         default=True,
         help="keep the agent connection attached to this terminal",
+    )
+    connect_agent_parser.add_argument(
+        "-b",
+        "--background",
+        dest="background",
+        action="store_true",
+        help="run the agent connection in the background",
     )
     connect_agent_parser.add_argument(
         "-q",
