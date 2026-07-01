@@ -576,6 +576,22 @@ class VersionUpdateTests(unittest.TestCase):
     def tearDown(self) -> None:
         dart_cli._pending_version_message.clear()
 
+    def test_version_cache_preserves_foreground_config_changes(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            config_path = Path(tmp_dir) / "dart-tools" / "config.json"
+
+            with (
+                patch("dart.dart._CONFIG_FPATH", config_path),
+                patch("dart.dart._is_cli", False),
+            ):
+                stale_config = dart_cli._Config()
+                dart_cli.set_host("preview-12")
+                stale_config.set_cached_latest_version("0.11.1")
+
+                config = dart_cli._Config()
+                self.assertEqual(config.host, "https://preview-12.dartai.com")
+                self.assertEqual(config.get_cached_latest_version(), "0.11.1")
+
     def test_version_update_message_uses_update_command(self) -> None:
         class Config:
             def get_cached_latest_version(self):

@@ -399,6 +399,7 @@ class _Config:
         return latest if isinstance(latest, str) else None
 
     def set_cached_latest_version(self, latest: str) -> None:
+        self._content = _Config()._content
         self._content[_VERSION_CHECK_KEY] = {
             _VERSION_CHECK_LATEST_KEY: latest,
             _VERSION_CHECK_AT_KEY: time.time(),
