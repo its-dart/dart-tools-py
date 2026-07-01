@@ -31,7 +31,12 @@ class _ChatTranscript:
         self.title = title
         self.console = console
         self.items: list[_TerminalTurn | Text] = []
-        self.live: Live | None = Live(self._render(), console=self.console, refresh_per_second=12)
+        self.live: Live | None = Live(
+            self._render(),
+            console=self.console,
+            refresh_per_second=12,
+            vertical_overflow="visible",
+        )
         self.live.start()
 
     def append(self, item: _TerminalTurn | Text) -> None:
