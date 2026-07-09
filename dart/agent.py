@@ -355,6 +355,8 @@ class _LocalAgent:
             "item.subtype",
             "data.type",
             "data.subtype",
+            "msg.type",
+            "msg.subtype",
         )
         value_types = " ".join(
             value_type for path in value_type_paths if (value_type := _nested_string(value, path))
@@ -363,7 +365,17 @@ class _LocalAgent:
         if "thinking" in value_types or "reasoning" in value_types:
             detail = _first_string_from_paths(
                 value,
-                ("detail", "text", "content", "message", "item.detail", "item.text", "item.content", "data.content"),
+                (
+                    "detail",
+                    "text",
+                    "content",
+                    "message",
+                    "item.detail",
+                    "item.text",
+                    "item.content",
+                    "data.content",
+                    "msg.text",
+                ),
             )
             if detail:
                 event: dict[str, Any] = {_KIND_KEY: _THINKING_EVENT_KIND, "detail": detail}
@@ -624,7 +636,7 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
         ),
         install_command=_npm_install_command("@openai/codex"),
         session_id_key="thread_id",
-        response_key="item.text",
+        response_key=("item.text", "msg.message"),
         output_mode="jsonl",
         failure_response_keys=("error.message",),
         resume_command=(
