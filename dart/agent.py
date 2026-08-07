@@ -39,6 +39,7 @@ _FAILURE_OUTPUT_MAX_LENGTH = 300
 _STREAM_READ_CHUNK_SIZE_BYTES = 65536
 _MAX_RECONNECT_DELAY_SECONDS = 15
 _RECONNECT_TIMEOUT_SECONDS = 120
+_AUTH_POLL_INTERVAL_SECONDS = 5
 _LOCAL_AGENT_KEY = "localAgent"
 _ATTACHMENTS_KEY = "attachments"
 _CHANGES_KEY = "changes"
@@ -54,6 +55,8 @@ _MESSAGE_KEY = "message"
 _MODEL_KEY = "model"
 _NAME_KEY = "name"
 _PROMPT_KEY = "prompt"
+_PROVIDERS_KEY = "providers"
+_STATE_KEY = "state"
 _SUCCESS_KEY = "success"
 _THINKING_LEVEL_KEY = "thinkingLevel"
 _TITLE_KEY = "title"
@@ -66,6 +69,7 @@ _EVENT_KEY = "event"
 _EVENT_TYPE = "event"
 _SEQUENCE_KEY = "sequence"
 _START_TYPE = "start"
+_STATE_TYPE = "state"
 _TEXT_DELTA_EVENT_KIND = "text_delta"
 _THINKING_EVENT_KIND = "thinking"
 _TOOL_CALL_EVENT_KIND = "tool_call"
@@ -91,6 +95,7 @@ _CLAUDE_CONTENT_BLOCK_PATHS = (
     "content_block",
     "delta",
 )
+_MODEL_PROVIDERS = {"claude": "anthropic", "gemini": "google", "gpt": "openai"}
 _TOOL_NAME_ALIASES = {
     "createPlanToolCall": "Plan",
     "deleteToolCall": "Delete",
@@ -164,9 +169,11 @@ class _LocalAgent:
     failure_response_keys: tuple[str, ...]
     resume_command: tuple[str, ...] | None = None
     executable_candidates: tuple[str, ...] = ()
+    auth_path: str = ""
     prompt_prefix: tuple[str, ...] = ()
     resume_suffix: tuple[str, ...] = ()
     model_arg: tuple[str, ...] = ("--model",)
+    qualify_model_provider: bool = False
     thinking_level_config_key: str | None = None
     attachment_arg: tuple[str, ...] | None = None
     image_attachment_arg: tuple[str, ...] | None = None
@@ -186,6 +193,13 @@ class _LocalAgent:
         if not thinking_level or self.thinking_level_config_key is None:
             return ()
         return ("-c", f'{self.thinking_level_config_key}="{thinking_level}"')
+
+    def _model_args(self, model: str | None) -> tuple[str, ...]:
+        if not model or model == "auto":
+            return ()
+        if self.qualify_model_provider and (provider := _MODEL_PROVIDERS.get(model.split("-")[0])):
+            model = f"{provider}/{model}"
+        return (*self.model_arg, model)
 
     def _attachment_args(self, attachments: tuple[_MaterializedAttachment, ...]) -> tuple[str, ...]:
         args: list[str] = []
@@ -230,7 +244,7 @@ class _LocalAgent:
         attachments: tuple[_MaterializedAttachment, ...] = (),
     ) -> tuple[str, ...]:
         prompt = self._prompt_with_attachments(prompt, attachments)
-        model_args = (*self.model_arg, model) if model and model != "auto" else ()
+        model_args = self._model_args(model)
         thinking_level_args = self._thinking_level_args(thinking_level)
         attachment_args = self._attachment_args(attachments)
         if session_id is not None and self.resume_command is not None:
@@ -265,6 +279,14 @@ class _LocalAgent:
             if shutil.which(expanded) is not None or path.is_file():
                 return expanded
         return None
+
+    def authenticated_providers(self) -> list[str]:
+        data_home = os.environ.get("XDG_DATA_HOME") or "~/.local/share"
+        try:
+            with open(Path(data_home).expanduser() / self.auth_path, "r", encoding="UTF-8") as auth_file:
+                return sorted(json.load(auth_file))
+        except (OSError, json.JSONDecodeError):
+            return []
 
     def _resolved_command(self, command: tuple[str, ...]) -> tuple[str, ...]:
         executable = self._resolved_executable()
@@ -724,6 +746,8 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
         failure_response_keys=("error.data.message",),
         resume_command=("opencode", "run", "--format", "json", "--dangerously-skip-permissions", "--session"),
         attachment_arg=("--file",),
+        qualify_model_provider=True,
+        auth_path="opencode/auth.json",
     ),
 }
 _LOCAL_AGENT_SESSION_IDS: dict[tuple[str, str], str] = {}
@@ -1514,6 +1538,17 @@ def _print_update_message(message: dict[str, Any], ui: AgentUI) -> bool:
     return message.get(_EXIT_KEY) is True
 
 
+async def _stream_authenticated_providers(websocket: Any, local_agent: _LocalAgent) -> None:
+    previous: list[str] | None = None
+    while True:
+        providers = local_agent.authenticated_providers()
+        if providers != previous:
+            previous = providers
+            with contextlib.suppress(ConnectionClosed):
+                await websocket.send(json.dumps({_TYPE_KEY: _STATE_TYPE, _STATE_KEY: {_PROVIDERS_KEY: providers}}))
+        await asyncio.sleep(_AUTH_POLL_INTERVAL_SECONDS)
+
+
 async def _handle_messages(
     websocket: Any,
     quiet: bool,
@@ -1523,29 +1558,38 @@ async def _handle_messages(
     ui: AgentUI,
     install: AgentInstallPolicy,
 ) -> bool:
-    async for raw_message in websocket:
-        message = json.loads(raw_message)
-        message_type = message[_TYPE_KEY]
-        if message_type == _START_TYPE:
-            _validate_local_agent_available(message[_LOCAL_AGENT_KEY], install)
-            ui.print_start_message(
-                name=str(message[_NAME_KEY]),
-                local_agent=str(message[_LOCAL_AGENT_KEY]),
-                agent_id=agent_id,
-                agent_url=_make_agent_url(base_url, agent_id),
-                log_path=os.environ.get(AGENT_CONNECTION_LOG_PATH_ENVVAR),
-            )
-            continue
-        if message_type == _UPDATE_TYPE:
-            if _LOCAL_AGENT_KEY in message:
+    providers_task: asyncio.Task[None] | None = None
+    try:
+        async for raw_message in websocket:
+            message = json.loads(raw_message)
+            message_type = message[_TYPE_KEY]
+            if message_type == _START_TYPE:
                 _validate_local_agent_available(message[_LOCAL_AGENT_KEY], install)
-            if _print_update_message(message, ui):
-                await websocket.close()
-                return False
-            continue
-        if message_type != _WORK_TYPE:
-            continue
-        await _handle_work(websocket, message, quiet, base_url=base_url, headers=headers, ui=ui)
+                ui.print_start_message(
+                    name=str(message[_NAME_KEY]),
+                    local_agent=str(message[_LOCAL_AGENT_KEY]),
+                    agent_id=agent_id,
+                    agent_url=_make_agent_url(base_url, agent_id),
+                    log_path=os.environ.get(AGENT_CONNECTION_LOG_PATH_ENVVAR),
+                )
+                local_agent = _get_local_agent(message[_LOCAL_AGENT_KEY])
+                if local_agent.auth_path and providers_task is None:
+                    providers_task = asyncio.create_task(_stream_authenticated_providers(websocket, local_agent))
+                continue
+            if message_type == _UPDATE_TYPE:
+                if _LOCAL_AGENT_KEY in message:
+                    _validate_local_agent_available(message[_LOCAL_AGENT_KEY], install)
+                if _print_update_message(message, ui):
+                    await websocket.close()
+                    return False
+                continue
+            if message_type != _WORK_TYPE:
+                continue
+            await _handle_work(websocket, message, quiet, base_url=base_url, headers=headers, ui=ui)
+    finally:
+        if providers_task is not None:
+            providers_task.cancel()
+            await asyncio.gather(providers_task, return_exceptions=True)
     return True
 
 
