@@ -595,11 +595,10 @@ class _LocalAgent:
 
         stdout = stdout_task.result().strip()
         stderr = stderr_task.result().strip()
-        output = "\n\n".join(part for part in (stdout, stderr) if part)
 
         if timed_out:
             message = f"{command[0]} did not finish within {_RUN_TIMEOUT_SECONDS} seconds."
-            return False, "\n\n".join(part for part in (message, output) if part), None
+            return False, message, None
 
         if process.returncode != 0:
             return False, self.parse_failure_output(stdout, stderr), None
