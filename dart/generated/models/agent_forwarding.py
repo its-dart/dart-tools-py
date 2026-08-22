@@ -4,6 +4,7 @@ from typing import (
     Any,
     TypeVar,
     Union,
+    cast,
 )
 
 from attrs import define as _attrs_define
@@ -35,7 +36,11 @@ class AgentForwarding:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        url = self.url
+        url: Union[Unset, str]
+        if isinstance(self.url, Unset):
+            url = UNSET
+        else:
+            url = self.url
 
         headers: Union[Unset, dict[str, Any]] = UNSET
         if not isinstance(self.headers, Unset):
@@ -64,7 +69,13 @@ class AgentForwarding:
         from ..models.agent_forwarding_headers import AgentForwardingHeaders
 
         d = dict(src_dict)
-        url = d.pop("url", UNSET)
+
+        def _parse_url(data: object) -> Union[Unset, str]:
+            if isinstance(data, Unset):
+                return data
+            return cast(Union[Unset, str], data)
+
+        url = _parse_url(d.pop("url", UNSET))
 
         _headers = d.pop("headers", UNSET)
         headers: Union[Unset, AgentForwardingHeaders]

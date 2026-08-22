@@ -50,6 +50,20 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
             ),
             "gemini": ({"response": "gemini text"}, "gemini text"),
             "opencode": ({"part": {"text": "opencode text"}}, "opencode text"),
+            "agy": ({"event": "step_update", "step_update": {"text_delta": "agy text"}}, "agy text"),
+            "grok": ({"type": "text", "data": "grok text"}, "grok text"),
+            "muse": ({"payload": {"kind": "run_output_delta", "text": "muse text"}}, "muse text"),
+            "prime-agent": (
+                {
+                    "type": "message_end",
+                    "message": {"role": "assistant", "content": [{"type": "text", "text": "prime text"}]},
+                },
+                "prime text",
+            ),
+            "vibe": (
+                {"type": "message", "role": "assistant", "content": [{"type": "text", "text": "vibe text"}]},
+                "vibe text",
+            ),
         }
 
         for name, (value, expected_text) in cases.items():
@@ -65,6 +79,10 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
             "cursor": ("--force",),
             "gemini": ("--approval-mode", "yolo", "--skip-trust"),
             "opencode": ("--dangerously-skip-permissions",),
+            "agy": ("--dangerously-skip-permissions",),
+            "grok": ("--always-approve",),
+            "muse": ("--yolo",),
+            "vibe": ("--trust",),
         }
 
         for name, expected_flags in cases.items():

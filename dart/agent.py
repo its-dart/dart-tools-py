@@ -180,6 +180,7 @@ class _LocalAgent:
     attachment_prompt_style: Literal["path", "gemini_at"] | None = "path"
     resume_session_after_args: bool = False
     response_types: tuple[str, ...] | None = None
+    type_key: str = _TYPE_KEY
     response_phases: tuple[str, ...] | None = None
     stream_response_keys: bool = True
     deduplicate_stream_events: bool = False
@@ -520,7 +521,7 @@ class _LocalAgent:
 
     def _should_use_response_value(self, value: dict[str, Any]) -> bool:
         if self.response_types is not None:
-            value_type = _nested_string(value, _TYPE_KEY)
+            value_type = _nested_string(value, self.type_key)
             if value_type not in self.response_types:
                 return False
         if self.response_phases is not None:
@@ -614,7 +615,25 @@ def _npm_install_command(package: str) -> _LocalAgentInstallCommand:
     return _LocalAgentInstallCommand(("npm", "install", "-g", package), f"npm install -g {package}")
 
 
+def _shell_install_command(command: str) -> _LocalAgentInstallCommand:
+    return _LocalAgentInstallCommand(("sh", "-c", command), command)
+
+
 _LOCAL_AGENTS: dict[str, _LocalAgent] = {
+    "agy": _LocalAgent(
+        display_name="Antigravity CLI",
+        start_command=("agy", "--output-format", "stream-json", "--dangerously-skip-permissions"),
+        install_command=_shell_install_command("curl -fsSL https://antigravity.google/cli/install.sh | bash"),
+        session_id_key="conversation_id",
+        response_key=("step_update.text_delta", "result.response"),
+        output_mode="jsonl",
+        failure_response_keys=("result.error",),
+        resume_command=("agy", "--output-format", "stream-json", "--dangerously-skip-permissions", "--conversation"),
+        executable_candidates=("~/.local/bin/agy",),
+        prompt_prefix=("-p",),
+        resume_suffix=("-p",),
+        deduplicate_stream_events=True,
+    ),
     "claude": _LocalAgent(
         display_name="Claude Code",
         start_command=(
@@ -700,7 +719,7 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
     ),
     "cursor": _LocalAgent(
         display_name="Cursor CLI",
-        start_command=("cursor-agent", "--print", "--force", "--output-format", "stream-json"),
+        start_command=("agent", "--print", "--force", "--output-format", "stream-json"),
         install_command=_LocalAgentInstallCommand(
             ("sh", "-c", "curl https://cursor.com/install -fsS | bash"),
             "curl https://cursor.com/install -fsS | bash",
@@ -720,7 +739,7 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
         response_key="result",
         output_mode="jsonl",
         failure_response_keys=(),
-        resume_command=("cursor-agent", "--print", "--force", "--output-format", "stream-json", "--resume"),
+        resume_command=("agent", "--print", "--force", "--output-format", "stream-json", "--resume"),
         attachment_prompt_style=None,
         stream_response_keys=False,
     ),
@@ -735,6 +754,31 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
         prompt_prefix=("-p",),
         attachment_prompt_style="gemini_at",
     ),
+    "grok": _LocalAgent(
+        display_name="Grok Build",
+        start_command=("grok", "--output-format", "streaming-json", "--always-approve", "--no-alt-screen"),
+        install_command=_shell_install_command("curl -fsSL https://x.ai/cli/install.sh | bash"),
+        session_id_key="sessionId",
+        response_key="data",
+        response_types=("text",),
+        output_mode="jsonl",
+        failure_response_keys=("message",),
+        resume_command=("grok", "--output-format", "streaming-json", "--always-approve", "--no-alt-screen", "--resume"),
+        prompt_prefix=("-p",),
+        resume_suffix=("-p",),
+    ),
+    "muse": _LocalAgent(
+        display_name="Muse Code",
+        start_command=("muse", "exec", "--json", "--yolo"),
+        install_command=_shell_install_command("curl -fsSL https://dev.meta.ai/install.sh | sh"),
+        session_id_key="stream.id",
+        response_key="payload.text",
+        response_types=("run_output_delta",),
+        type_key="payload.kind",
+        output_mode="jsonl",
+        failure_response_keys=("error.message",),
+        resume_command=("muse", "exec", "--json", "--yolo", "--session-id"),
+    ),
     "opencode": _LocalAgent(
         display_name="OpenCode",
         start_command=("opencode", "run", "--format", "json", "--dangerously-skip-permissions"),
@@ -747,6 +791,29 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
         attachment_arg=("--file",),
         qualify_model_provider=True,
         auth_path="opencode/auth.json",
+    ),
+    "prime-agent": _LocalAgent(
+        display_name="Prime Agent",
+        start_command=("prime-agent", "--mode", "json"),
+        install_command=_shell_install_command("curl -fsSL https://app.primeintellect.ai/prime-agent/install.sh | sh"),
+        session_id_key="id",
+        response_key=("finalError", "errorMessage"),
+        output_mode="jsonl",
+        failure_response_keys=("finalError", "errorMessage"),
+        resume_command=("prime-agent", "--mode", "json", "--resume"),
+        deduplicate_stream_events=True,
+    ),
+    "vibe": _LocalAgent(
+        display_name="Mistral Vibe",
+        start_command=("vibe", "--output", "streaming", "--agent", "auto-approve", "--trust"),
+        install_command=_shell_install_command("curl -LsSf https://mistral.ai/vibe/install.sh | bash"),
+        session_id_key="sessionId",
+        response_key="content.text",
+        output_mode="jsonl",
+        failure_response_keys=("error.message",),
+        resume_command=("vibe", "--output", "streaming", "--agent", "auto-approve", "--trust", "--resume"),
+        prompt_prefix=("-p",),
+        resume_suffix=("-p",),
     ),
 }
 _LOCAL_AGENT_SESSION_IDS: dict[tuple[str, str], str] = {}
@@ -914,15 +981,15 @@ def _events_from_content_blocks(value: dict[str, Any], *, fallback_message_id: s
 
 
 def _should_emit_content_block_event(value: dict[str, Any], event: dict[str, Any]) -> bool:
-    if not _is_user_message_value(value):
+    if not _is_non_assistant_message_value(value):
         return True
     return event.get(_KIND_KEY) in {_TOOL_RESULT_EVENT_KIND, _TOOL_ERROR_EVENT_KIND}
 
 
-def _is_user_message_value(value: dict[str, Any]) -> bool:
+def _is_non_assistant_message_value(value: dict[str, Any]) -> bool:
     for path in ("role", "message.role", "item.role", "data.role"):
         role = _nested_string(value, path)
-        if role is not None and role.lower() == "user":
+        if role is not None and role.lower() in {"user", "toolresult"}:
             return True
 
     value_type = _nested_string(value, _TYPE_KEY)
