@@ -18,12 +18,17 @@ T = TypeVar("T", bound="AgentLocal")
 class AgentLocal:
     """
     Attributes:
-        agent (Union[Unset, LocalAgent]): * `claude` - CLAUDE
+        agent (Union[Unset, LocalAgent]): * `agy` - AGY
+            * `claude` - CLAUDE
             * `codex` - CODEX
             * `copilot` - COPILOT
             * `cursor` - CURSOR
             * `gemini` - GEMINI
+            * `grok` - GROK
+            * `muse` - MUSE
             * `opencode` - OPENCODE
+            * `prime-agent` - PRIME_AGENT
+            * `vibe` - VIBE
     """
 
     agent: Union[Unset, LocalAgent] = UNSET

@@ -2,12 +2,17 @@ from enum import Enum
 
 
 class LocalAgent(str, Enum):
+    AGY = "agy"
     CLAUDE = "claude"
     CODEX = "codex"
-    GEMINI = "gemini"
-    OPENCODE = "opencode"
-    CURSOR = "cursor"
     COPILOT = "copilot"
+    CURSOR = "cursor"
+    GEMINI = "gemini"
+    GROK = "grok"
+    MUSE = "muse"
+    OPENCODE = "opencode"
+    PRIME_AGENT = "prime-agent"
+    VIBE = "vibe"
 
     def __str__(self) -> str:
         return str(self.value)
