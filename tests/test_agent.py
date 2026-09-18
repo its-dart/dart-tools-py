@@ -1,7 +1,7 @@
 import asyncio
 import io
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 from rich.console import Console
 
@@ -915,6 +915,7 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
                         }
                     )
                 ]
+                self.sent: list[str] = []
 
             def __aiter__(self):
                 return self
@@ -924,12 +925,17 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
                     raise StopAsyncIteration
                 return self.messages.pop(0)
 
+            async def send(self, message: str) -> None:
+                self.sent.append(message)
+
         ui = Mock()
+        websocket = Websocket()
         with (
             patch("dart.agent._validate_local_agent_available"),
+            patch("dart.agent.subprocess.run", return_value=Mock(returncode=0)),
             patch.dict("dart.agent.os.environ", {agent.AGENT_CONNECTION_LOG_PATH_ENVVAR: "/tmp/dart-agent.log"}),
         ):
-            await agent._handle_messages(Websocket(), True, "agent-1", "https://dart.test", {}, ui, "never")
+            await agent._handle_messages(websocket, True, "agent-1", "https://dart.test", {}, ui, "never")
 
         ui.print_start_message.assert_called_once_with(
             name="Review agent",
@@ -958,6 +964,49 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
             agent._validate_local_agent_available("codex", "auto")
 
         run_mock.assert_called_once_with(("npm", "install", "-g", "@openai/codex"), check=True)
+
+    def test_is_logged_in_uses_status_command_then_credentials_path(self) -> None:
+        with patch("dart.agent.subprocess.run", return_value=Mock(returncode=0, stdout='{"loggedIn": false}')):
+            self.assertFalse(agent._LOCAL_AGENTS["claude"].is_logged_in())
+            self.assertTrue(agent._LOCAL_AGENTS["codex"].is_logged_in())
+
+        with patch("dart.agent.subprocess.run", return_value=Mock(returncode=1, stdout="")):
+            self.assertFalse(agent._LOCAL_AGENTS["codex"].is_logged_in())
+
+        with patch.object(agent._LocalAgent, "_has_credentials", return_value=False):
+            self.assertFalse(agent._LOCAL_AGENTS["grok"].is_logged_in())
+
+        with patch("dart.agent.subprocess.run", side_effect=FileNotFoundError):
+            self.assertIsNone(agent._LOCAL_AGENTS["copilot"].is_logged_in())
+
+    async def test_stream_local_agent_state_reports_the_login_state(self) -> None:
+        websocket = Mock()
+        websocket.send = AsyncMock()
+
+        with patch.object(agent._LocalAgent, "_has_credentials", return_value=True):
+            await agent._stream_local_agent_state(websocket, agent._LOCAL_AGENTS["grok"])
+
+        websocket.send.assert_awaited_once_with(
+            agent.json.dumps({"type": "state", "state": {"loggedIn": True, "loginCommand": "grok login"}})
+        )
+
+    def test_ensure_local_agent_logged_in_opens_login_unless_already_logged_in(self) -> None:
+        with (
+            patch.object(agent._LocalAgent, "_has_credentials", return_value=False),
+            patch.object(agent._LocalAgent, "log_in", return_value=True) as log_in_mock,
+            patch("builtins.print"),
+        ):
+            agent.ensure_local_agent_logged_in("grok")
+
+        log_in_mock.assert_called_once_with()
+
+        with (
+            patch.object(agent._LocalAgent, "_has_credentials", return_value=True),
+            patch.object(agent._LocalAgent, "log_in") as skipped_log_in_mock,
+        ):
+            agent.ensure_local_agent_logged_in("grok")
+
+        skipped_log_in_mock.assert_not_called()
 
     def test_install_command_current_uses_windows_override(self) -> None:
         install_command = agent._LocalAgentInstallCommand(

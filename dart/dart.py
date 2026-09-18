@@ -34,6 +34,7 @@ from .agent import (
 )
 from .agent import connect_agent as _connect_local_agent
 from .agent import ensure_local_agent_available as _ensure_local_agent_available
+from .agent import ensure_local_agent_logged_in as _ensure_local_agent_logged_in
 from .agent_process import (
     AgentConnectionError,
     disconnect_background_agent_connections,
@@ -1037,7 +1038,8 @@ def connect_agent(
     dart = _make_authenticated_dart()
     install_policy = _resolve_agent_install_policy(install, background)
     if background:
-        _ensure_local_agent_available(_get_agent_local_agent_name(dart, id), install_policy)
+        local_agent_name = _get_agent_local_agent_name(dart, id)
+        _ensure_local_agent_available(local_agent_name, install_policy)
         try:
             connection = start_background_agent_connection(_cli_command, id, install_policy)
         except AgentConnectionError as ex:
@@ -1045,6 +1047,7 @@ def connect_agent(
         _log(f"Started background agent connection\n\n{_format_agent_connection(connection, dart.get_base_url())}\n")
         _log(f"To disconnect it, run dart agent-disconnect {id}")
         _log("Done.")
+        _ensure_local_agent_logged_in(local_agent_name)
         return
 
     previous_sigint_handler = signal.getsignal(signal.SIGINT) if _is_cli else None
