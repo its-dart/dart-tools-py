@@ -77,6 +77,7 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
             "codex": ("--dangerously-bypass-approvals-and-sandbox", "--skip-git-repo-check"),
             "copilot": ("--no-ask-user", "--allow-all"),
             "cursor": ("--force",),
+            "devin": ("--permission-mode", "dangerous", "--respect-workspace-trust", "false"),
             "gemini": ("--approval-mode", "yolo", "--skip-trust"),
             "opencode": ("--dangerously-skip-permissions",),
             "agy": ("--dangerously-skip-permissions",),
@@ -93,6 +94,11 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
                 if local_agent.resume_command is not None:
                     resume_command = local_agent.make_command("session-1", "prompt")
                     self.assertTrue(all(flag in resume_command for flag in expected_flags))
+
+    def test_devin_uses_plain_stdout_as_response_text(self) -> None:
+        message = "Added the login page in src/routes/login.tsx."
+
+        self.assertEqual(agent._LOCAL_AGENTS["devin"].parse_output(message, ""), (message, None))
 
     def test_confirmed_json_failure_parsers_extract_concise_messages(self) -> None:
         claude_message = "Not logged in \u00b7 Please run /login"

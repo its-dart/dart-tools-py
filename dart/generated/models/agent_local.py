@@ -23,6 +23,7 @@ class AgentLocal:
             * `codex` - CODEX
             * `copilot` - COPILOT
             * `cursor` - CURSOR
+            * `devin` - DEVIN
             * `gemini` - GEMINI
             * `grok` - GROK
             * `muse` - MUSE
