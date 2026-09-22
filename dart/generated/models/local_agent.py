@@ -7,6 +7,7 @@ class LocalAgent(str, Enum):
     CODEX = "codex"
     COPILOT = "copilot"
     CURSOR = "cursor"
+    DEVIN = "devin"
     GEMINI = "gemini"
     GROK = "grok"
     MUSE = "muse"
