@@ -21,20 +21,19 @@ class AgentInstructions:
     Attributes:
         markdown (Union[Unset, str]): The agent's instructions in markdown format.
         model (Union[Unset, AiModel]): * `auto` - AUTO
-            * `gpt-5.6-sol` - GPT_5_6_SOL
-            * `gpt-5.6-terra` - GPT_5_6_TERRA
-            * `gpt-5.6-luna` - GPT_5_6_LUNA
+            * `gpt-6-astra` - GPT_6_ASTRA
+            * `gpt-6-sol` - GPT_6_SOL
+            * `gpt-6-luna` - GPT_6_LUNA
             * `claude-haiku-4-5` - CLAUDE_HAIKU_4_5
-            * `claude-fable-5` - CLAUDE_FABLE_5
-            * `claude-opus-5` - CLAUDE_OPUS_5
+            * `claude-fable-5-1` - CLAUDE_FABLE_5_1
+            * `claude-opus-5-5` - CLAUDE_OPUS_5_5
             * `gemini-3.1-flash-lite` - GEMINI_3_1_FLASH_LITE
             * `gemini-3.1-pro-preview` - GEMINI_3_1_PRO_PREVIEW
-            * `gemini-3.7-flash` - GEMINI_3_7_FLASH
-            * `grok-4.6` - GROK_4_6
+            * `gemini-3.8-flash` - GEMINI_3_8_FLASH
+            * `grok-4.7` - GROK_4_7
             * `grok-4.20` - GROK_4_20
-            * `grok-4.20-multi-agent` - GROK_4_20_MULTI_AGENT
+            * `muse-spark-1.3` - MUSE_SPARK_1_3
             * `muse-spark-1.2` - MUSE_SPARK_1_2
-            * `muse-spark-1.1` - MUSE_SPARK_1_1
             * `global.amazon.nova-2-lite-v1:0` - NOVA_2_LITE
             * `us.amazon.nova-pro-v1:0` - NOVA_PRO_1_0
             * `command-a-plus-05-2026` - COMMAND_A_PLUS

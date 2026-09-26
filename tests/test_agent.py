@@ -1103,7 +1103,7 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
         ):
             result = await agent._run_until_closed_or_eof(
                 websocket,
-                False,
+                True,
                 "never",
                 agent_id="agent-1",
                 base_url="https://dart.test",
@@ -1113,6 +1113,60 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertTrue(result)
         self.assertFalse(websocket.closed)
+
+    async def test_read_terminal_input_sends_typed_messages(self) -> None:
+        chunks = [b"hellx", b"\x7f", b"o\r", b"/b\t", b"x\r", b"/back\r"]
+        sent = []
+
+        class Websocket:
+            async def send(self, payload: str) -> None:
+                sent.append(agent.json.loads(payload))
+
+        class Stdin:
+            def fileno(self) -> int:
+                return 0
+
+        def add_reader(fileno, callback) -> None:
+            for _ in chunks:
+                callback()
+
+        ui = agent.AgentUI()
+        ui.console = Console(file=io.StringIO())
+        ui.current_chat_duid = "chat-1"
+        loop = asyncio.get_running_loop()
+        with (
+            patch("dart.agent.sys.stdin", new=Stdin()),
+            patch("dart.agent_ui.subprocess.run"),
+            patch("dart.agent.os.read", side_effect=chunks),
+            patch.object(loop, "add_reader", new=add_reader),
+        ):
+            await agent._read_terminal_input(Websocket(), ui)
+            await asyncio.sleep(0)
+            ui.close_prompt()
+
+        self.assertEqual(
+            sent,
+            [
+                {"type": "chat", "text": "hello", "chatDuid": "chat-1"},
+                {"type": "chat", "text": "/backgroundx", "chatDuid": "chat-1"},
+            ],
+        )
+
+    def test_task_transcript_prints_title_and_finished_activity(self) -> None:
+        ui = agent.AgentUI()
+        ui.console = Console(file=io.StringIO(), record=True, force_terminal=False, width=120)
+        printer = agent.TerminalEventPrinter(False, ui)
+
+        printer.start_turn(
+            chat_key="session-1", chat_title="Fix [/] login", is_task=True, display_prompt="Fix login", user_name="Anna"
+        )
+        printer.start_working("claude")
+        printer.finish("Done.", success=True)
+        ui.close_active_chat_transcript()
+
+        output = ui.console.export_text()
+        self.assertIn("Task · Fix [/] login", output)
+        self.assertIn("· finished", output)
 
 
 if __name__ == "__main__":
