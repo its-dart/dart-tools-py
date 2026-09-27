@@ -869,6 +869,34 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
             ],
         )
 
+    async def test_handle_work_fails_when_attachment_download_fails(self) -> None:
+        sent_payloads = []
+
+        class Websocket:
+            async def send(self, payload: str) -> None:
+                sent_payloads.append(payload)
+
+        work = {
+            "type": "message",
+            "id": "work-1",
+            "localAgent": "codex",
+            "prompt": "Describe the screenshot",
+            "attachments": [{"type": "file", "name": "screenshot.png", "url": "/api/attachments/attachment-1"}],
+        }
+        with (
+            patch("dart.agent._run_local_agent") as run_mock,
+            patch("dart.agent.urlopen", side_effect=TimeoutError("timed out")),
+        ):
+            await agent._handle_work(
+                Websocket(), work, quiet=True, base_url="https://dart.test", headers={}, ui=agent.AgentUI()
+            )
+
+        run_mock.assert_not_called()
+        self.assertEqual(
+            [agent.json.loads(payload)["event"] for payload in sent_payloads],
+            [{"kind": "done", "success": False, "message": "Failed to load attachments: timed out."}],
+        )
+
     async def test_handle_messages_validates_local_agent_from_update(self) -> None:
         class Websocket:
             def __init__(self) -> None:
