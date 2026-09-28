@@ -7,6 +7,7 @@ import os
 import random
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
@@ -21,11 +22,14 @@ from urllib.request import Request, urlopen
 from websockets.asyncio.client import connect as _websocket_connect
 from websockets.exceptions import ConnectionClosed, InvalidStatus
 
-from .agent_process import AGENT_CONNECTION_LOG_PATH_ENVVAR
+from .agent_process import AGENT_CONNECTION_LOG_PATH_ENVVAR, start_background_agent_connection
 from .agent_ui import (
+    BACKGROUND_COMMAND,
     AgentUI,
     TerminalEventPrinter,
+    is_background_command,
 )
+from .cli_command import get_invoked_cli_command
 from .exception import UNKNOWN_FAILURE_MESSAGE, AgentAuthError
 
 _OutputMode = Literal["json", "jsonl"]
@@ -58,12 +62,14 @@ _PROMPT_KEY = "prompt"
 _PROVIDERS_KEY = "providers"
 _STATE_KEY = "state"
 _SUCCESS_KEY = "success"
+_TEXT_KEY = "text"
 _THINKING_LEVEL_KEY = "thinkingLevel"
 _TITLE_KEY = "title"
 _TYPE_KEY = "type"
 _URL_KEY = "url"
 _USER_NAME_KEY = "userName"
 
+_CHAT_TYPE = "chat"
 _DONE_EVENT_KIND = "done"
 _EVENT_KEY = "event"
 _EVENT_TYPE = "event"
@@ -87,6 +93,7 @@ _FILE_ATTACHMENT_TYPE = "file"
 _TEXT_ATTACHMENT_TYPE = "text"
 _ATTACHMENT_DOWNLOAD_TIMEOUT_SECONDS = 120
 _SENSITIVE_ATTACHMENT_HEADER_KEYS = {"authorization", "client-duid"}
+_BACKSPACE_CHARS = "\x7f\x08"
 _CLAUDE_CONTENT_BLOCK_PATHS = (
     "message.content",
     "item.message.content",
@@ -837,6 +844,7 @@ def connect_agent(
         raise SystemExit(1) from None
     finally:
         ui.close_active_chat_transcript()
+        ui.close_prompt()
 
 
 def ensure_local_agent_available(local_agent_name: str, install: AgentInstallPolicy) -> None:
@@ -1524,6 +1532,7 @@ async def _handle_work(
             or _nested_string(work, _MESSAGE_ID_KEY)
             or _DEFAULT_TEXT_EVENT_SOURCE,
             chat_title=_nested_string(work, _CHAT_TITLE_KEY),
+            is_task=not _nested_string(work, _CHAT_DUID_KEY),
             display_prompt=_nested_string(work, _DISPLAY_PROMPT_KEY) or prompt,
             user_name=_nested_string(work, _USER_NAME_KEY) or "User",
         )
@@ -1564,6 +1573,42 @@ async def _handle_work(
         )
     terminal_printer.finish(message, success=success)
     await emit_event({_KIND_KEY: _DONE_EVENT_KIND, _SUCCESS_KEY: success, _MESSAGE_KEY: message})
+
+
+async def _read_terminal_input(websocket: Any, ui: AgentUI) -> None:
+    loop = asyncio.get_running_loop()
+    future: asyncio.Future[None] = loop.create_future()
+    stdin_fileno = sys.stdin.fileno()
+    prompt_text = ""
+
+    def _on_stdin_ready() -> None:
+        nonlocal prompt_text
+        if future.done():
+            loop.remove_reader(stdin_fileno)
+            return
+        for char in os.read(stdin_fileno, _STREAM_READ_CHUNK_SIZE_BYTES).decode(errors="replace"):
+            if char in "\r\n":
+                if ui.is_working:
+                    continue
+                text = prompt_text.strip()
+                prompt_text = ""
+                if is_background_command(text):
+                    future.set_result(None)
+                    return
+                if text:
+                    message = {_TYPE_KEY: _CHAT_TYPE, _TEXT_KEY: text, _CHAT_DUID_KEY: ui.current_chat_duid}
+                    asyncio.create_task(websocket.send(json.dumps(message)))
+            elif char == "\t" and is_background_command(prompt_text):
+                prompt_text = BACKGROUND_COMMAND
+            elif char in _BACKSPACE_CHARS:
+                prompt_text = prompt_text[:-1]
+            elif char.isprintable():
+                prompt_text += char
+        ui.update_prompt(prompt_text)
+
+    ui.activate_prompt()
+    loop.add_reader(stdin_fileno, _on_stdin_ready)
+    await future
 
 
 async def _wait_for_stdin_eof() -> None:
@@ -1669,18 +1714,27 @@ async def _run_until_closed_or_eof(
     headers: Mapping[str, str],
     ui: AgentUI,
 ) -> bool:
+    ui.is_working = False
     messages_task = asyncio.create_task(_handle_messages(websocket, quiet, agent_id, base_url, headers, ui, install))
     if not sys.stdin.isatty():
         return await messages_task
 
-    eof_task = asyncio.create_task(_wait_for_stdin_eof())
+    is_interactive = not quiet and os.name != "nt"
+    eof_task = asyncio.create_task(_read_terminal_input(websocket, ui) if is_interactive else _wait_for_stdin_eof())
+    loop = asyncio.get_running_loop()
+    if is_interactive:
+        loop.add_signal_handler(signal.SIGINT, eof_task.cancel)
     done, pending = await asyncio.wait({messages_task, eof_task}, return_when=asyncio.FIRST_COMPLETED)
+    if is_interactive:
+        loop.remove_signal_handler(signal.SIGINT)
     for task in pending:
         task.cancel()
     await asyncio.gather(*pending, return_exceptions=True)
 
     if eof_task in done:
         await websocket.close()
+        if is_interactive and not eof_task.cancelled():
+            start_background_agent_connection(get_invoked_cli_command(), agent_id, install)
         return False
     return messages_task.result()
 
