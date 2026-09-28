@@ -18,9 +18,12 @@ T = TypeVar("T", bound="TaskTimeTrackingCreate")
 class TaskTimeTrackingCreate:
     """
     Attributes:
-        started_at (str): The start timestamp for the tracked time entry in ISO 8601 format.
-        finished_at (str): The end timestamp for the tracked time entry in ISO 8601 format. Must be after the start
-            time.
+        started_at (str): The start timestamp for the tracked time entry. Use an ISO 8601 date and time with Z or a UTC
+            offset, e.g. 2026-09-09T10:00:00Z or 2026-09-09T12:00:00+02:00. A date alone or a timestamp without a timezone
+            is invalid.
+        finished_at (str): The end timestamp for the tracked time entry. Must be after the start time. Use an ISO 8601
+            date and time with Z or a UTC offset, e.g. 2026-09-09T10:00:00Z or 2026-09-09T12:00:00+02:00. A date alone or a
+            timestamp without a timezone is invalid.
         user (Union[None, Unset, str]): The name or email of the user to attribute the tracked time to or null to use
             the current user.
         custom_property_name (Union[None, Unset, str]): The time tracking custom property name listed in config

@@ -18,7 +18,7 @@ def _get_kwargs(
     ids: Union[Unset, str] = UNSET,
     in_trash: Union[Unset, bool] = UNSET,
     limit: Union[Unset, int] = UNSET,
-    no_defaults: Union[Unset, bool] = False,
+    no_defaults: Union[Unset, bool] = True,
     o: Union[Unset, list[ListDocsOItem]] = UNSET,
     offset: Union[Unset, int] = UNSET,
     s: Union[Unset, str] = UNSET,
@@ -103,7 +103,7 @@ def sync_detailed(
     ids: Union[Unset, str] = UNSET,
     in_trash: Union[Unset, bool] = UNSET,
     limit: Union[Unset, int] = UNSET,
-    no_defaults: Union[Unset, bool] = False,
+    no_defaults: Union[Unset, bool] = True,
     o: Union[Unset, list[ListDocsOItem]] = UNSET,
     offset: Union[Unset, int] = UNSET,
     s: Union[Unset, str] = UNSET,
@@ -120,7 +120,7 @@ def sync_detailed(
         ids (Union[Unset, str]):
         in_trash (Union[Unset, bool]):
         limit (Union[Unset, int]):
-        no_defaults (Union[Unset, bool]):  Default: False.
+        no_defaults (Union[Unset, bool]):  Default: True.
         o (Union[Unset, list[ListDocsOItem]]):
         offset (Union[Unset, int]):
         s (Union[Unset, str]):
@@ -166,7 +166,7 @@ def sync(
     ids: Union[Unset, str] = UNSET,
     in_trash: Union[Unset, bool] = UNSET,
     limit: Union[Unset, int] = UNSET,
-    no_defaults: Union[Unset, bool] = False,
+    no_defaults: Union[Unset, bool] = True,
     o: Union[Unset, list[ListDocsOItem]] = UNSET,
     offset: Union[Unset, int] = UNSET,
     s: Union[Unset, str] = UNSET,
@@ -183,7 +183,7 @@ def sync(
         ids (Union[Unset, str]):
         in_trash (Union[Unset, bool]):
         limit (Union[Unset, int]):
-        no_defaults (Union[Unset, bool]):  Default: False.
+        no_defaults (Union[Unset, bool]):  Default: True.
         o (Union[Unset, list[ListDocsOItem]]):
         offset (Union[Unset, int]):
         s (Union[Unset, str]):
@@ -224,7 +224,7 @@ async def asyncio_detailed(
     ids: Union[Unset, str] = UNSET,
     in_trash: Union[Unset, bool] = UNSET,
     limit: Union[Unset, int] = UNSET,
-    no_defaults: Union[Unset, bool] = False,
+    no_defaults: Union[Unset, bool] = True,
     o: Union[Unset, list[ListDocsOItem]] = UNSET,
     offset: Union[Unset, int] = UNSET,
     s: Union[Unset, str] = UNSET,
@@ -241,7 +241,7 @@ async def asyncio_detailed(
         ids (Union[Unset, str]):
         in_trash (Union[Unset, bool]):
         limit (Union[Unset, int]):
-        no_defaults (Union[Unset, bool]):  Default: False.
+        no_defaults (Union[Unset, bool]):  Default: True.
         o (Union[Unset, list[ListDocsOItem]]):
         offset (Union[Unset, int]):
         s (Union[Unset, str]):
@@ -285,7 +285,7 @@ async def asyncio(
     ids: Union[Unset, str] = UNSET,
     in_trash: Union[Unset, bool] = UNSET,
     limit: Union[Unset, int] = UNSET,
-    no_defaults: Union[Unset, bool] = False,
+    no_defaults: Union[Unset, bool] = True,
     o: Union[Unset, list[ListDocsOItem]] = UNSET,
     offset: Union[Unset, int] = UNSET,
     s: Union[Unset, str] = UNSET,
@@ -302,7 +302,7 @@ async def asyncio(
         ids (Union[Unset, str]):
         in_trash (Union[Unset, bool]):
         limit (Union[Unset, int]):
-        no_defaults (Union[Unset, bool]):  Default: False.
+        no_defaults (Union[Unset, bool]):  Default: True.
         o (Union[Unset, list[ListDocsOItem]]):
         offset (Union[Unset, int]):
         s (Union[Unset, str]):

@@ -14,8 +14,10 @@ T = TypeVar("T", bound="TaskUpdateCustomPropertiesType0")
 
 @_attrs_define
 class TaskUpdateCustomPropertiesType0:
-    """Custom properties as a dict mapping property NAME to value. Use exact property names from workspace config (e.g.,
-    {"customCheckboxProperty": true, "customTextProperty": "Some text"}). Property names are case-sensitive.
+    """Custom properties as a dict mapping the exact, case-sensitive name values from workspace config customProperties to
+    values. These are generated keys, not display titles or IDs (e.g., {"customCheckboxProperty": true,
+    "customTextProperty": "Some text"}). Only supplied properties change. Null clears all custom properties; a null
+    entry clears that property when its type accepts null.
 
         Example:
             {'customCheckboxProperty': True, 'customDatesProperty': '2025-05-10', 'customDatesPropertyWithRange':

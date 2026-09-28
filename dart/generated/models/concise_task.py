@@ -42,17 +42,16 @@ class ConciseTask:
         updated_at (datetime.datetime): The date and time when the task was last updated in ISO format.
         completed_at (Union[None, datetime.datetime]): The date and time when the task was completed in ISO format. Null
             if the task is not completed.
-        assignees (Union[None, Unset, list[str]]): The names or emails of the users that the task is assigned to. Either
-            this or assignee must be included, depending on whether the workspaces allows multiple assignees or not.
-        assignee (Union[None, Unset, str]): The name or email of the user that the task is assigned to. Either this or
-            assignees must be included, depending on whether the workspaces allows multiple assignees or not.
-        reviewers (Union[None, Unset, list[str]]): The names or emails of the users that are reviewing the task. Either
-            this or reviewer must be included, depending on whether the workspace allows multiple reviewers or not.
-        reviewer (Union[None, Unset, str]): The name or email of the user that is reviewing the task. Either this or
-            reviewers must be included, depending on whether the workspace allows multiple reviewers or not.
-        tags (Union[Unset, list[str]]): Any tags that should be applied to the task, which can be used to filter and
-            search for tasks. Tags are also known as labels or components and are strings that can be anything, but should
-            be short and descriptive. This list can be empty.
+        assignees (Union[None, Unset, list[str]]): Names or emails replacing all assignees for a workspace allowing
+            multiple assignees. An empty array clears them.
+        assignee (Union[None, Unset, str]): The assignee's name or email for a workspace using a single assignee. Null
+            clears the assignee.
+        reviewers (Union[None, Unset, list[str]]): Names or emails replacing all reviewers for a workspace allowing
+            multiple reviewers. An empty array clears them.
+        reviewer (Union[None, Unset, str]): The reviewer's name or email for a workspace using a single reviewer. Null
+            clears the reviewer.
+        tags (Union[Unset, list[str]]): Tag titles replacing all task tags. An empty array clears them. Unknown titles
+            create new tags; use / for nested tags.
         priority (Union[None, Priority, Unset]): The priority, which is a string that can be one of the specified
             options. This is used to sort tasks and determine which tasks should be done first.
         start_at (Union[None, Unset, str]): The start date, which is a date that the task should be started by in ISO
@@ -64,14 +63,15 @@ class ConciseTask:
         time_tracking (Union[Unset, str]): The time tracking, which is a string that indicates the amount of time spent
             on the task in hh:mm:ss format (or an empty string if no time has been tracked).
         custom_properties (Union['ConciseTaskCustomPropertiesType0', None, Unset]): Custom properties as a dict mapping
-            property NAME to value. Use exact property names from workspace config (e.g., {"customCheckboxProperty": true,
-            "customTextProperty": "Some text"}). Property names are case-sensitive. Example: {'customCheckboxProperty':
-            True, 'customDatesProperty': '2025-05-10', 'customDatesPropertyWithRange': ['2025-05-01', '2025-05-30'],
-            'customMultiselectProperty': ['frontend', 'bug'], 'customNumberPropertyWithIntegerFormat': 5,
-            'customNumberPropertyWithPercentageFormat': 75, 'customNumberPropertyWithDollarsFormat': 1500.5,
-            'customSelectProperty': 'In Progress', 'customStatusProperty': 'Blocked', 'customTextProperty': 'This task
-            requires additional review from the design team', 'customUserProperty': 'john.doe@example.com',
-            'customMultipleUserProperty': ['john.doe@example.com', 'Alice Smith']}.
+            the exact, case-sensitive name values from workspace config customProperties to values. These are generated
+            keys, not display titles or IDs (e.g., {"customCheckboxProperty": true, "customTextProperty": "Some text"}).
+            Example: {'customCheckboxProperty': True, 'customDatesProperty': '2025-05-10', 'customDatesPropertyWithRange':
+            ['2025-05-01', '2025-05-30'], 'customMultiselectProperty': ['frontend', 'bug'],
+            'customNumberPropertyWithIntegerFormat': 5, 'customNumberPropertyWithPercentageFormat': 75,
+            'customNumberPropertyWithDollarsFormat': 1500.5, 'customSelectProperty': 'In Progress', 'customStatusProperty':
+            'Blocked', 'customTextProperty': 'This task requires additional review from the design team',
+            'customUserProperty': 'john.doe@example.com', 'customMultipleUserProperty': ['john.doe@example.com', 'Alice
+            Smith']}.
         created_by (Union[None, Unset, str]): The name or email (moniker) of the user that created the task.
         updated_by (Union[None, Unset, str]): The name or email (moniker) of the user that last updated the task.
     """
