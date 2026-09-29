@@ -14,6 +14,7 @@ import tempfile
 import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
+from http.client import HTTPException
 from pathlib import Path
 from typing import Any, Literal, Mapping
 from urllib.parse import urljoin, urlsplit, urlunsplit
@@ -726,7 +727,7 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
     ),
     "cursor": _LocalAgent(
         display_name="Cursor CLI",
-        start_command=("agent", "--print", "--force", "--output-format", "stream-json"),
+        start_command=("cursor-agent", "--print", "--force", "--output-format", "stream-json"),
         install_command=_LocalAgentInstallCommand(
             ("sh", "-c", "curl https://cursor.com/install -fsS | bash"),
             "curl https://cursor.com/install -fsS | bash",
@@ -746,8 +747,7 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
         response_key="result",
         output_mode="jsonl",
         failure_response_keys=(),
-        resume_command=("agent", "--print", "--force", "--output-format", "stream-json", "--resume"),
-        attachment_prompt_style=None,
+        resume_command=("cursor-agent", "--print", "--force", "--output-format", "stream-json", "--resume"),
         stream_response_keys=False,
     ),
     "gemini": _LocalAgent(
@@ -1463,20 +1463,17 @@ def _materialize_attachments(
             continue
         fallback = f"attachment-{index}"
         attachment_type = _nested_string(attachment, _TYPE_KEY)
-        try:
-            if attachment_type == _TEXT_ATTACHMENT_TYPE:
-                materialized = _write_text_attachment(directory, attachment, fallback)
-            elif attachment_type == _FILE_ATTACHMENT_TYPE:
-                materialized = _write_file_attachment(
-                    directory,
-                    attachment,
-                    fallback,
-                    base_url=base_url,
-                    headers=headers,
-                )
-            else:
-                continue
-        except (OSError, ValueError, TimeoutError):
+        if attachment_type == _TEXT_ATTACHMENT_TYPE:
+            materialized = _write_text_attachment(directory, attachment, fallback)
+        elif attachment_type == _FILE_ATTACHMENT_TYPE:
+            materialized = _write_file_attachment(
+                directory,
+                attachment,
+                fallback,
+                base_url=base_url,
+                headers=headers,
+            )
+        else:
             continue
         if materialized is None:
             continue
@@ -1551,26 +1548,30 @@ async def _handle_work(
 
     local_agent = _get_local_agent(work[_LOCAL_AGENT_KEY])
     with tempfile.TemporaryDirectory(prefix="dart-agent-attachments-") as attachment_dir:
-        attachments = (
-            await asyncio.to_thread(
-                _materialize_attachments,
-                work.get(_ATTACHMENTS_KEY),
-                Path(attachment_dir),
-                base_url=base_url,
-                headers=headers,
+        try:
+            attachments = (
+                await asyncio.to_thread(
+                    _materialize_attachments,
+                    work.get(_ATTACHMENTS_KEY),
+                    Path(attachment_dir),
+                    base_url=base_url,
+                    headers=headers,
+                )
+                if local_agent.supports_attachments()
+                else ()
             )
-            if local_agent.supports_attachments()
-            else ()
-        )
-        success, message = await _run_local_agent(
-            work[_LOCAL_AGENT_KEY],
-            work[_PROMPT_KEY],
-            work[_MESSAGE_ID_KEY],
-            model,
-            thinking_level,
-            attachments,
-            emit_event,
-        )
+        except (HTTPException, OSError, ValueError, TimeoutError) as ex:
+            success, message = False, f"Failed to load attachments: {ex}."
+        else:
+            success, message = await _run_local_agent(
+                work[_LOCAL_AGENT_KEY],
+                work[_PROMPT_KEY],
+                work[_MESSAGE_ID_KEY],
+                model,
+                thinking_level,
+                attachments,
+                emit_event,
+            )
     terminal_printer.finish(message, success=success)
     await emit_event({_KIND_KEY: _DONE_EVENT_KIND, _SUCCESS_KEY: success, _MESSAGE_KEY: message})
 
