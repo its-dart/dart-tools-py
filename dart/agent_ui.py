@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -14,6 +15,8 @@ from rich.panel import Panel
 from rich.spinner import Spinner
 from rich.text import Text
 
+BACKGROUND_COMMAND = "/background"
+
 
 @dataclass
 class _TerminalTurn:
@@ -26,18 +29,12 @@ class _TerminalTurn:
 
 
 class _ChatTranscript:
-    def __init__(self, *, chat_key: str, title: str | None, console: Console) -> None:
+    def __init__(self, *, chat_key: str, title: str | None, is_task: bool, ui: AgentUI) -> None:
         self.chat_key = chat_key
         self.title = title
-        self.console = console
+        self.is_task = is_task
+        self.ui = ui
         self.items: list[_TerminalTurn | Text] = []
-        self.live: Live | None = Live(
-            self._render(),
-            console=self.console,
-            refresh_per_second=12,
-            vertical_overflow="visible",
-        )
-        self.live.start()
 
     def append(self, item: _TerminalTurn | Text) -> None:
         self.items.append(item)
@@ -49,14 +46,7 @@ class _ChatTranscript:
         return turn
 
     def update(self) -> None:
-        if self.live is not None:
-            self.live.update(self._render(), refresh=True)
-
-    def close(self) -> None:
-        if self.live is not None:
-            self.live.stop()
-            self.live = None
-            self.console.print()
+        self.ui.update()
 
     def _render(self) -> Panel:
         rendered_items: list[Any] = []
@@ -68,11 +58,12 @@ class _ChatTranscript:
             else:
                 rendered_items.extend(_render_turn(item))
 
+        label = "Task" if self.is_task else "Chat"
         return Panel(
             Group(*rendered_items),
-            title=self.title or "Chat",
+            title=Text(f"{label} · {self.title}" if self.title else label),
             title_align="left",
-            border_style="dim",
+            border_style="#4da56b" if self.is_task else "#615fff",
             padding=(0, 1),
         )
 
@@ -82,21 +73,69 @@ class AgentUI:
         self.console = Console()
         self.chat_titles_by_duid: dict[str, str] = {}
         self.active_chat_transcript: _ChatTranscript | None = None
+        self.current_chat_duid: str | None = None
+        self.prompt_text: str | None = None
+        self.is_working = False
+        self.live: Live | None = None
 
-    def activate_chat_transcript(self, chat_key: str, title: str | None) -> _ChatTranscript:
+    def activate_chat_transcript(self, chat_key: str, title: str | None, is_task: bool) -> _ChatTranscript:
         if self.active_chat_transcript is not None and self.active_chat_transcript.chat_key == chat_key:
             self.active_chat_transcript.title = title or self.active_chat_transcript.title
             return self.active_chat_transcript
 
         self.close_active_chat_transcript()
 
-        self.active_chat_transcript = _ChatTranscript(chat_key=chat_key, title=title, console=self.console)
+        self.active_chat_transcript = _ChatTranscript(chat_key=chat_key, title=title, is_task=is_task, ui=self)
         return self.active_chat_transcript
 
     def close_active_chat_transcript(self) -> None:
         if self.active_chat_transcript is not None:
-            self.active_chat_transcript.close()
+            self.console.print(self.active_chat_transcript._render())
+            self.console.print()
             self.active_chat_transcript = None
+            self.update()
+
+    def activate_prompt(self) -> None:
+        subprocess.run(("stty", "-icanon", "-echo"))
+        self.update_prompt("")
+
+    def update_prompt(self, text: str) -> None:
+        self.prompt_text = text
+        self.update()
+
+    def close_prompt(self) -> None:
+        if self.prompt_text is not None:
+            subprocess.run(("stty", "icanon", "echo"))
+            self.prompt_text = None
+            self.update()
+
+    def update(self) -> None:
+        if self.active_chat_transcript is None and self.prompt_text is None:
+            if self.live is not None:
+                self.live.stop()
+                self.live = None
+            return
+        if self.live is None:
+            self.live = Live(
+                console=self.console,
+                auto_refresh=False,
+                transient=True,
+                vertical_overflow="visible",
+            )
+            self.live.start()
+        self.live.update(self._render(), refresh=True)
+
+    def _render(self) -> Group:
+        rendered_items: list[Any] = []
+        if self.active_chat_transcript is not None:
+            rendered_items.append(self.active_chat_transcript._render())
+        if self.prompt_text is not None:
+            rendered_items.append(Text(f"$ {self.prompt_text}"))
+            if self.is_working and self.prompt_text:
+                rendered_items.append(Text("  Agent is working, press Enter to send when it finishes", style="dim"))
+            elif is_background_command(self.prompt_text):
+                rendered_items.append(Text(f"  {BACKGROUND_COMMAND}", style="dim"))
+        return Group(*rendered_items)
 
     def print_start_message(
         self,
@@ -161,14 +200,19 @@ class TerminalEventPrinter:
         self.transcript: _ChatTranscript | None = None
         self.turn: _TerminalTurn | None = None
 
-    def start_turn(self, *, chat_key: str, chat_title: str | None, display_prompt: str, user_name: str) -> None:
+    def start_turn(
+        self, *, chat_key: str, chat_title: str | None, is_task: bool, display_prompt: str, user_name: str
+    ) -> None:
         if self.quiet:
             return
-        self.transcript = self.ui.activate_chat_transcript(chat_key, chat_title)
+        self.transcript = self.ui.activate_chat_transcript(chat_key, chat_title, is_task)
+        if not is_task:
+            self.ui.current_chat_duid = chat_key
         self._append_chat_renamed_notice(chat_key, chat_title)
         self.turn = self.transcript.append_turn(display_prompt, user_name)
 
     def start_working(self, local_agent_name: str) -> None:
+        self.ui.is_working = True
         if self.quiet or self.turn is None or self.transcript is None:
             return
         self.turn.working_spinner = Spinner("dots", text=f" {local_agent_name} working", style="dim")
@@ -196,9 +240,11 @@ class TerminalEventPrinter:
         self._add_activity("!", "tool error", detail, "red")
 
     def finish(self, message: str, *, success: bool) -> None:
+        self.ui.is_working = False
         if self.quiet or self.turn is None or self.transcript is None:
             return
         self.turn.working_spinner = None
+        self._add_activity("·", "finished", "", "dim")
         if success and not self.has_streamed_text:
             self.turn.assistant_text = message
         if not success:
@@ -224,6 +270,10 @@ class TerminalEventPrinter:
             return
 
         self.transcript.append(Text(f"· chat renamed: {chat_title}", style="dim"))
+
+
+def is_background_command(text: str) -> bool:
+    return text.startswith("/") and BACKGROUND_COMMAND.startswith(text)
 
 
 def _render_turn(turn: _TerminalTurn) -> list[Any]:

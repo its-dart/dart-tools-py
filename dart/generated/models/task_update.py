@@ -36,17 +36,16 @@ class TaskUpdate:
         type_ (Union[Unset, str]): The title of the type of the task.
         status (Union[Unset, str]): The status from the list of available statuses.
         description (Union[Unset, str]): A longer description of the task, which can include markdown formatting.
-        assignees (Union[None, Unset, list[str]]): The names or emails of the users that the task is assigned to. Either
-            this or assignee must be included, depending on whether the workspaces allows multiple assignees or not.
-        assignee (Union[None, Unset, str]): The name or email of the user that the task is assigned to. Either this or
-            assignees must be included, depending on whether the workspaces allows multiple assignees or not.
-        reviewers (Union[None, Unset, list[str]]): The names or emails of the users that are reviewing the task. Either
-            this or reviewer must be included, depending on whether the workspace allows multiple reviewers or not.
-        reviewer (Union[None, Unset, str]): The name or email of the user that is reviewing the task. Either this or
-            reviewers must be included, depending on whether the workspace allows multiple reviewers or not.
-        tags (Union[Unset, list[str]]): Any tags that should be applied to the task, which can be used to filter and
-            search for tasks. Tags are also known as labels or components and are strings that can be anything, but should
-            be short and descriptive. This list can be empty.
+        assignees (Union[None, Unset, list[str]]): Names or emails replacing all assignees for a workspace allowing
+            multiple assignees. An empty array clears them.
+        assignee (Union[None, Unset, str]): The assignee's name or email for a workspace using a single assignee. Null
+            clears the assignee.
+        reviewers (Union[None, Unset, list[str]]): Names or emails replacing all reviewers for a workspace allowing
+            multiple reviewers. An empty array clears them.
+        reviewer (Union[None, Unset, str]): The reviewer's name or email for a workspace using a single reviewer. Null
+            clears the reviewer.
+        tags (Union[Unset, list[str]]): Tag titles replacing all task tags. An empty array clears them. Unknown titles
+            create new tags; use / for nested tags.
         priority (Union[None, Priority, Unset]): The priority, which is a string that can be one of the specified
             options. This is used to sort tasks and determine which tasks should be done first.
         start_at (Union[None, Unset, str]): The start date, which is a date that the task should be started by in ISO
@@ -56,14 +55,16 @@ class TaskUpdate:
         size (Union[None, Unset, int, str]): The size, which represents the amount of work that needs to be done. This
             is used to determine how long the task will take to complete.
         custom_properties (Union['TaskUpdateCustomPropertiesType0', None, Unset]): Custom properties as a dict mapping
-            property NAME to value. Use exact property names from workspace config (e.g., {"customCheckboxProperty": true,
-            "customTextProperty": "Some text"}). Property names are case-sensitive. Example: {'customCheckboxProperty':
-            True, 'customDatesProperty': '2025-05-10', 'customDatesPropertyWithRange': ['2025-05-01', '2025-05-30'],
-            'customMultiselectProperty': ['frontend', 'bug'], 'customNumberPropertyWithIntegerFormat': 5,
-            'customNumberPropertyWithPercentageFormat': 75, 'customNumberPropertyWithDollarsFormat': 1500.5,
-            'customSelectProperty': 'In Progress', 'customStatusProperty': 'Blocked', 'customTextProperty': 'This task
-            requires additional review from the design team', 'customUserProperty': 'john.doe@example.com',
-            'customMultipleUserProperty': ['john.doe@example.com', 'Alice Smith']}.
+            the exact, case-sensitive name values from workspace config customProperties to values. These are generated
+            keys, not display titles or IDs (e.g., {"customCheckboxProperty": true, "customTextProperty": "Some text"}).
+            Only supplied properties change. Null clears all custom properties; a null entry clears that property when its
+            type accepts null. Example: {'customCheckboxProperty': True, 'customDatesProperty': '2025-05-10',
+            'customDatesPropertyWithRange': ['2025-05-01', '2025-05-30'], 'customMultiselectProperty': ['frontend', 'bug'],
+            'customNumberPropertyWithIntegerFormat': 5, 'customNumberPropertyWithPercentageFormat': 75,
+            'customNumberPropertyWithDollarsFormat': 1500.5, 'customSelectProperty': 'In Progress', 'customStatusProperty':
+            'Blocked', 'customTextProperty': 'This task requires additional review from the design team',
+            'customUserProperty': 'john.doe@example.com', 'customMultipleUserProperty': ['john.doe@example.com', 'Alice
+            Smith']}.
         task_relationships (Union['TaskRelationshipsType0', None, Unset]): The relationships associated with the task.
     """
 

@@ -73,8 +73,8 @@ def sync_detailed(
 ) -> Response[Union[Any, WrappedAgent]]:
     """Update an agent
 
-     Update an agent's name and/or description. Only the fields provided will be changed. The agent is
-    identified by its ID in the URL.
+     Update an existing agent. The agent ID and fields to change. Use the same ID as the path id; omitted
+    top-level fields keep their current values.
 
     Args:
         id (str):
@@ -108,8 +108,8 @@ def sync(
 ) -> Optional[Union[Any, WrappedAgent]]:
     """Update an agent
 
-     Update an agent's name and/or description. Only the fields provided will be changed. The agent is
-    identified by its ID in the URL.
+     Update an existing agent. The agent ID and fields to change. Use the same ID as the path id; omitted
+    top-level fields keep their current values.
 
     Args:
         id (str):
@@ -138,8 +138,8 @@ async def asyncio_detailed(
 ) -> Response[Union[Any, WrappedAgent]]:
     """Update an agent
 
-     Update an agent's name and/or description. Only the fields provided will be changed. The agent is
-    identified by its ID in the URL.
+     Update an existing agent. The agent ID and fields to change. Use the same ID as the path id; omitted
+    top-level fields keep their current values.
 
     Args:
         id (str):
@@ -171,8 +171,8 @@ async def asyncio(
 ) -> Optional[Union[Any, WrappedAgent]]:
     """Update an agent
 
-     Update an agent's name and/or description. Only the fields provided will be changed. The agent is
-    identified by its ID in the URL.
+     Update an existing agent. The agent ID and fields to change. Use the same ID as the path id; omitted
+    top-level fields keep their current values.
 
     Args:
         id (str):

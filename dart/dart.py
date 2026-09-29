@@ -1047,6 +1047,8 @@ def connect_agent(
         _log("Done.")
         return
 
+    if not quiet and any(connection["agentId"] == id for connection in list_background_agent_connections()):
+        disconnect_agent(id)
     previous_sigint_handler = signal.getsignal(signal.SIGINT) if _is_cli else None
     if previous_sigint_handler is not None:
         signal.signal(signal.SIGINT, signal.default_int_handler)
