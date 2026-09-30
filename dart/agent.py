@@ -54,6 +54,8 @@ _CONTENT_KEY = "content"
 _DISPLAY_PROMPT_KEY = "displayPrompt"
 _EXIT_KEY = "exit"
 _KIND_KEY = "kind"
+_LOGGED_IN_KEY = "loggedIn"
+_LOGIN_COMMAND_KEY = "loginCommand"
 _MEDIA_TYPE_KEY = "mediaType"
 _MESSAGE_ID_KEY = "id"
 _MESSAGE_KEY = "message"
@@ -175,9 +177,17 @@ class _LocalAgent:
     response_key: str | tuple[str, ...]
     output_mode: _OutputMode
     failure_response_keys: tuple[str, ...]
+    login_command: tuple[str, ...]
     resume_command: tuple[str, ...] | None = None
     executable_candidates: tuple[str, ...] = ()
     auth_path: str = ""
+    api_key_envvar: str = ""
+    credentials_key: str = ""
+    credentials_path: str = ""
+    login_session_command: str = ""
+    login_status_command: tuple[str, ...] = ()
+    login_status_key: str = ""
+    login_status_confirms_logout: bool = False
     prompt_prefix: tuple[str, ...] = ()
     resume_suffix: tuple[str, ...] = ()
     model_arg: tuple[str, ...] = ("--model",)
@@ -193,6 +203,10 @@ class _LocalAgent:
     stream_response_keys: bool = True
     deduplicate_stream_events: bool = False
     reassemble_stream_events: bool = False
+
+    @property
+    def login_display(self) -> str:
+        return " ".join(self.login_command)
 
     @property
     def response_keys(self) -> tuple[str, ...]:
@@ -297,9 +311,57 @@ class _LocalAgent:
         except (OSError, json.JSONDecodeError):
             return []
 
+    def is_logged_in(self) -> bool | None:
+        if self.api_key_envvar and os.environ.get(self.api_key_envvar):
+            return True
+        if self.auth_path:
+            return bool(self.authenticated_providers())
+        if self.credentials_path:
+            return self._has_credentials()
+        if not self.login_status_command:
+            return None
+
+        try:
+            result = subprocess.run(self._resolved_command(self.login_status_command), capture_output=True, text=True)
+        except OSError:
+            return None
+        if result.returncode != 0:
+            return False if self.login_status_confirms_logout else None
+        if not self.login_status_key:
+            return True
+        return any(
+            _nested_value(value, self.login_status_key) is True for value in _load_json_values(result.stdout, "json")
+        )
+
+    def _has_credentials(self) -> bool:
+        try:
+            with open(Path(self.credentials_path).expanduser(), "r", encoding="UTF-8") as credentials_file:
+                credentials = json.load(credentials_file)
+        except (OSError, json.JSONDecodeError):
+            return False
+        if not self.credentials_key:
+            return bool(credentials)
+        return bool(_nested_value(credentials, self.credentials_key))
+
+    def log_in(self) -> bool:
+        command = self._resolved_command(self.login_command)
+        if sys.stdin.isatty():
+            subprocess.run(command)
+            return True
+        if os.name != "nt" and sys.stdout.isatty():
+            subprocess.run(command, stdin=sys.stdout)
+            return True
+
+        try:
+            with open("CONIN$" if os.name == "nt" else "/dev/tty", "r+b", buffering=0) as terminal:
+                subprocess.run(command, stdin=terminal)
+        except OSError:
+            return False
+        return True
+
     def _resolved_command(self, command: tuple[str, ...]) -> tuple[str, ...]:
         executable = self._resolved_executable()
-        if executable is None:
+        if executable is None or command[0] != self.start_command[0]:
             return command
         return (executable, *command[1:])
 
@@ -641,6 +703,8 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
         prompt_prefix=("-p",),
         resume_suffix=("-p",),
         deduplicate_stream_events=True,
+        login_command=("agy",),
+        login_status_command=("security", "find-generic-password", "-s", "gemini", "-a", "antigravity"),
     ),
     "claude": _LocalAgent(
         display_name="Claude Code",
@@ -672,6 +736,10 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
         stream_response_keys=False,
         deduplicate_stream_events=True,
         reassemble_stream_events=True,
+        login_command=("claude", "auth", "login"),
+        login_status_command=("claude", "auth", "status"),
+        login_status_key="loggedIn",
+        login_status_confirms_logout=True,
     ),
     "codex": _LocalAgent(
         display_name="Codex",
@@ -700,6 +768,9 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
         prompt_prefix=("--",),
         resume_suffix=("--",),
         resume_session_after_args=True,
+        login_command=("codex", "login"),
+        login_status_command=("codex", "login", "status"),
+        login_status_confirms_logout=True,
     ),
     "copilot": _LocalAgent(
         display_name="GitHub Copilot CLI",
@@ -724,6 +795,8 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
         resume_suffix=("-p",),
         response_types=("assistant.message",),
         response_phases=("final_answer",),
+        login_command=("copilot", "login"),
+        login_status_command=("security", "find-generic-password", "-s", "copilot-cli"),
     ),
     "cursor": _LocalAgent(
         display_name="Cursor CLI",
@@ -749,6 +822,23 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
         failure_response_keys=(),
         resume_command=("cursor-agent", "--print", "--force", "--output-format", "stream-json", "--resume"),
         stream_response_keys=False,
+        login_command=("cursor-agent", "login"),
+        login_status_command=("cursor-agent", "status", "--format", "json"),
+        login_status_key="isAuthenticated",
+        login_status_confirms_logout=True,
+    ),
+    "devin": _LocalAgent(
+        display_name="Devin CLI",
+        start_command=("devin", "--permission-mode", "dangerous", "--respect-workspace-trust", "false"),
+        install_command=_shell_install_command("curl -fsSL https://cli.devin.ai/install.sh | bash"),
+        session_id_key="",
+        response_key="",
+        output_mode="json",
+        failure_response_keys=(),
+        executable_candidates=("~/.local/bin/devin",),
+        prompt_prefix=("-p",),
+        login_command=("devin", "auth", "login"),
+        login_status_command=("devin", "setup"),
     ),
     "gemini": _LocalAgent(
         display_name="Gemini CLI",
@@ -760,6 +850,9 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
         failure_response_keys=("error.message",),
         prompt_prefix=("-p",),
         attachment_prompt_style="gemini_at",
+        api_key_envvar="GEMINI_API_KEY",
+        login_command=("gemini",),
+        login_status_command=("security", "find-generic-password", "-s", "gemini-cli-api-key"),
     ),
     "grok": _LocalAgent(
         display_name="Grok Build",
@@ -773,6 +866,9 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
         resume_command=("grok", "--output-format", "streaming-json", "--always-approve", "--no-alt-screen", "--resume"),
         prompt_prefix=("-p",),
         resume_suffix=("-p",),
+        api_key_envvar="XAI_API_KEY",
+        credentials_path="~/.grok/auth.json",
+        login_command=("grok", "login"),
     ),
     "muse": _LocalAgent(
         display_name="Muse Code",
@@ -785,6 +881,10 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
         output_mode="jsonl",
         failure_response_keys=("error.message",),
         resume_command=("muse", "exec", "--json", "--yolo", "--session-id"),
+        api_key_envvar="META_API_KEY",
+        credentials_key="providers",
+        credentials_path="~/.config/muse/auth.json",
+        login_command=("muse", "login"),
     ),
     "opencode": _LocalAgent(
         display_name="OpenCode",
@@ -798,6 +898,7 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
         attachment_arg=("--file",),
         qualify_model_provider=True,
         auth_path="opencode/auth.json",
+        login_command=("opencode", "auth", "login"),
     ),
     "prime-agent": _LocalAgent(
         display_name="Prime Agent",
@@ -809,6 +910,9 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
         failure_response_keys=("finalError", "errorMessage"),
         resume_command=("prime-agent", "--mode", "json", "--resume"),
         deduplicate_stream_events=True,
+        credentials_path="~/.prime/agent/auth.json",
+        login_command=("prime-agent",),
+        login_session_command="/login",
     ),
     "vibe": _LocalAgent(
         display_name="Mistral Vibe",
@@ -818,9 +922,13 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
         response_key="content.text",
         output_mode="jsonl",
         failure_response_keys=("error.message",),
+        executable_candidates=("~/.local/bin/vibe", "~/.local/share/uv/tools/mistral-vibe/bin/vibe"),
         resume_command=("vibe", "--output", "streaming", "--agent", "auto-approve", "--trust", "--resume"),
         prompt_prefix=("-p",),
         resume_suffix=("-p",),
+        api_key_envvar="MISTRAL_API_KEY",
+        login_command=("vibe", "--setup"),
+        login_status_command=("security", "find-generic-password", "-s", "ai.mistral.vibe", "-a", "MISTRAL_API_KEY"),
     ),
 }
 _LOCAL_AGENT_SESSION_IDS: dict[tuple[str, str], str] = {}
@@ -852,6 +960,16 @@ def ensure_local_agent_available(local_agent_name: str, install: AgentInstallPol
         _validate_local_agent_available(local_agent_name, install)
     except _LocalAgentSetupError as ex:
         raise SystemExit(str(ex)) from None
+
+
+def ensure_local_agent_logged_in(local_agent_name: str) -> None:
+    local_agent = _get_local_agent(local_agent_name)
+    if local_agent.is_logged_in() is not False:
+        return
+    detail = f"\n\n  run {local_agent.login_session_command} inside it" if local_agent.login_session_command else ""
+    print(f"Logging in to {local_agent.display_name}...{detail}", flush=True)
+    if not local_agent.log_in():
+        print(f"Could not open a terminal, log in with:\n\n  {local_agent.login_display}", flush=True)
 
 
 def _load_json_values(text: str, output_mode: _OutputMode) -> list[Any]:
@@ -1650,15 +1768,30 @@ def _print_update_message(message: dict[str, Any], ui: AgentUI) -> bool:
     return message.get(_EXIT_KEY) is True
 
 
-async def _stream_authenticated_providers(websocket: Any, local_agent: _LocalAgent) -> None:
-    previous: list[str] | None = None
+async def _stream_local_agent_state(websocket: Any, local_agent: _LocalAgent) -> None:
+    previous: dict[str, Any] | None = None
     while True:
-        providers = local_agent.authenticated_providers()
-        if providers != previous:
-            previous = providers
+        state: dict[str, Any] = {
+            _LOGGED_IN_KEY: await asyncio.to_thread(local_agent.is_logged_in),
+            _LOGIN_COMMAND_KEY: local_agent.login_display,
+        }
+        if local_agent.auth_path:
+            state[_PROVIDERS_KEY] = local_agent.authenticated_providers()
+        if state != previous:
+            previous = state
             with contextlib.suppress(ConnectionClosed):
-                await websocket.send(json.dumps({_TYPE_KEY: _STATE_TYPE, _STATE_KEY: {_PROVIDERS_KEY: providers}}))
+                await websocket.send(json.dumps({_TYPE_KEY: _STATE_TYPE, _STATE_KEY: state}))
+        if state[_LOGGED_IN_KEY] is not False and not local_agent.auth_path:
+            return
         await asyncio.sleep(_AUTH_POLL_INTERVAL_SECONDS)
+
+
+def _restart_local_agent_state_task(
+    websocket: Any, local_agent: _LocalAgent, state_task: asyncio.Task[None] | None
+) -> asyncio.Task[None]:
+    if state_task is not None:
+        state_task.cancel()
+    return asyncio.create_task(_stream_local_agent_state(websocket, local_agent))
 
 
 async def _handle_messages(
@@ -1670,7 +1803,7 @@ async def _handle_messages(
     ui: AgentUI,
     install: AgentInstallPolicy,
 ) -> bool:
-    providers_task: asyncio.Task[None] | None = None
+    state_task: asyncio.Task[None] | None = None
     try:
         async for raw_message in websocket:
             message = json.loads(raw_message)
@@ -1685,12 +1818,13 @@ async def _handle_messages(
                     log_path=os.environ.get(AGENT_CONNECTION_LOG_PATH_ENVVAR),
                 )
                 local_agent = _get_local_agent(message[_LOCAL_AGENT_KEY])
-                if local_agent.auth_path and providers_task is None:
-                    providers_task = asyncio.create_task(_stream_authenticated_providers(websocket, local_agent))
+                state_task = _restart_local_agent_state_task(websocket, local_agent, state_task)
                 continue
             if message_type == _UPDATE_TYPE:
                 if _LOCAL_AGENT_KEY in message:
                     _validate_local_agent_available(message[_LOCAL_AGENT_KEY], install)
+                    local_agent = _get_local_agent(message[_LOCAL_AGENT_KEY])
+                    state_task = _restart_local_agent_state_task(websocket, local_agent, state_task)
                 if _print_update_message(message, ui):
                     await websocket.close()
                     return False
@@ -1699,9 +1833,9 @@ async def _handle_messages(
                 continue
             await _handle_work(websocket, message, quiet, base_url=base_url, headers=headers, ui=ui)
     finally:
-        if providers_task is not None:
-            providers_task.cancel()
-            await asyncio.gather(providers_task, return_exceptions=True)
+        if state_task is not None:
+            state_task.cancel()
+            await asyncio.gather(state_task, return_exceptions=True)
     return True
 
 
