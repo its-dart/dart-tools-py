@@ -24,9 +24,9 @@ class AgentInstructions:
             * `gpt-6-astra` - GPT_6_ASTRA
             * `gpt-6-sol` - GPT_6_SOL
             * `gpt-6-luna` - GPT_6_LUNA
-            * `claude-haiku-4-5` - CLAUDE_HAIKU_4_5
             * `claude-fable-5-1` - CLAUDE_FABLE_5_1
             * `claude-opus-5-5` - CLAUDE_OPUS_5_5
+            * `claude-sonnet-5-5` - CLAUDE_SONNET_5_5
             * `gemini-3.1-flash-lite` - GEMINI_3_1_FLASH_LITE
             * `gemini-3.1-pro-preview` - GEMINI_3_1_PRO_PREVIEW
             * `gemini-3.8-flash` - GEMINI_3_8_FLASH
