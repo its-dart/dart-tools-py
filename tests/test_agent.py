@@ -1013,15 +1013,23 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
         with patch("dart.agent.subprocess.run", side_effect=FileNotFoundError):
             self.assertIsNone(agent._LOCAL_AGENTS["copilot"].is_logged_in())
 
-    async def test_stream_local_agent_state_reports_the_login_state(self) -> None:
+    async def test_stream_local_agent_state_reports_the_login_state_and_folder(self) -> None:
         websocket = Mock()
         websocket.send = AsyncMock()
 
-        with patch.object(agent._LocalAgent, "_has_credentials", return_value=True):
+        with (
+            patch.object(agent._LocalAgent, "_has_credentials", return_value=True),
+            patch("dart.agent.Path.cwd", return_value=agent.Path.home() / "projects" / "dart"),
+        ):
             await agent._stream_local_agent_state(websocket, agent._LOCAL_AGENTS["grok"])
 
         websocket.send.assert_awaited_once_with(
-            agent.json.dumps({"type": "state", "state": {"loggedIn": True, "loginCommand": "grok login"}})
+            agent.json.dumps(
+                {
+                    "type": "state",
+                    "state": {"loggedIn": True, "loginCommand": "grok login", "folder": "~/projects/dart"},
+                }
+            )
         )
 
     def test_ensure_local_agent_logged_in_opens_login_unless_already_logged_in(self) -> None:
