@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union, cast
+from typing import Any, cast
+from urllib.parse import quote
 
 import httpx
 
@@ -20,7 +21,7 @@ def _get_kwargs(
     _kwargs: dict[str, Any] = {
         "method": "put",
         "url": "/skills/{id}".format(
-            id=id,
+            id=quote(str(id), safe=""),
         ),
     }
 
@@ -32,9 +33,7 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(
-    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Optional[Union[Any, WrappedSkill]]:
+def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Any | WrappedSkill | None:
     if response.status_code == 200:
         response_200 = WrappedSkill.from_dict(response.json())
 
@@ -54,9 +53,7 @@ def _parse_response(
         return None
 
 
-def _build_response(
-    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Response[Union[Any, WrappedSkill]]:
+def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[Any | WrappedSkill]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -70,7 +67,7 @@ def sync_detailed(
     *,
     client: AuthenticatedClient,
     body: WrappedSkillUpdate,
-) -> Response[Union[Any, WrappedSkill]]:
+) -> Response[Any | WrappedSkill]:
     """Update an existing skill
 
      Update an existing skill's title and/or instructions. Only the fields provided will be updated. The
@@ -85,7 +82,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, WrappedSkill]]
+        Response[Any | WrappedSkill]
     """
 
     kwargs = _get_kwargs(
@@ -105,7 +102,7 @@ def sync(
     *,
     client: AuthenticatedClient,
     body: WrappedSkillUpdate,
-) -> Optional[Union[Any, WrappedSkill]]:
+) -> Any | WrappedSkill | None:
     """Update an existing skill
 
      Update an existing skill's title and/or instructions. Only the fields provided will be updated. The
@@ -120,7 +117,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, WrappedSkill]
+        Any | WrappedSkill
     """
 
     return sync_detailed(
@@ -135,7 +132,7 @@ async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
     body: WrappedSkillUpdate,
-) -> Response[Union[Any, WrappedSkill]]:
+) -> Response[Any | WrappedSkill]:
     """Update an existing skill
 
      Update an existing skill's title and/or instructions. Only the fields provided will be updated. The
@@ -150,7 +147,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, WrappedSkill]]
+        Response[Any | WrappedSkill]
     """
 
     kwargs = _get_kwargs(
@@ -168,7 +165,7 @@ async def asyncio(
     *,
     client: AuthenticatedClient,
     body: WrappedSkillUpdate,
-) -> Optional[Union[Any, WrappedSkill]]:
+) -> Any | WrappedSkill | None:
     """Update an existing skill
 
      Update an existing skill's title and/or instructions. Only the fields provided will be updated. The
@@ -183,7 +180,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, WrappedSkill]
+        Any | WrappedSkill
     """
 
     return (

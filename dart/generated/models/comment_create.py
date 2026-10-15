@@ -1,9 +1,7 @@
+from __future__ import annotations
+
 from collections.abc import Mapping
-from typing import (
-    Any,
-    TypeVar,
-    Union,
-)
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -19,12 +17,12 @@ class CommentCreate:
     Attributes:
         task_id (str): The universal, unique ID of the task that the comment is associated with.
         text (str): The full content of the comment, which can include markdown formatting.
-        parent_id (Union[Unset, str]): The universal, unique ID of the parent comment, if any.
+        parent_id (str | Unset): The universal, unique ID of the parent comment, if any.
     """
 
     task_id: str
     text: str
-    parent_id: Union[Unset, str] = UNSET
+    parent_id: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:

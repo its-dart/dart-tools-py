@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class LocalAgent(str, Enum):
+class LocalAgent(StrEnum):
     AGY = "agy"
     CLAUDE = "claude"
     CODEX = "codex"

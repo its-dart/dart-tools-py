@@ -1,9 +1,7 @@
+from __future__ import annotations
+
 from collections.abc import Mapping
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    TypeVar,
-)
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -22,10 +20,11 @@ class WrappedAgentCreate:
         item (AgentCreate):
     """
 
-    item: "AgentCreate"
+    item: AgentCreate
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+
         item = self.item.to_dict()
 
         field_dict: dict[str, Any] = {}
@@ -40,7 +39,7 @@ class WrappedAgentCreate:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.agent_create import AgentCreate
+        from ..models.agent_create import AgentCreate  # noqa: PLC0415
 
         d = dict(src_dict)
         item = AgentCreate.from_dict(d.pop("item"))

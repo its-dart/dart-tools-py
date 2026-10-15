@@ -1,9 +1,7 @@
+from __future__ import annotations
+
 from collections.abc import Mapping
-from typing import (
-    Any,
-    TypeVar,
-    Union,
-)
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -19,17 +17,17 @@ class WebhookUpdate:
     """
     Attributes:
         id (str): The universal, unique ID of the webhook.
-        enabled (Union[Unset, bool]):
-        title (Union[Unset, str]): The webhook title.
-        url (Union[Unset, str]): The URL that webhook events will be sent to.
-        event_kinds (Union[Unset, list[EventKindsEnum]]): The event kinds that will trigger the webhook.
+        enabled (bool | Unset):
+        title (str | Unset): The webhook title.
+        url (str | Unset): The URL that webhook events will be sent to.
+        event_kinds (list[EventKindsEnum] | Unset): The event kinds that will trigger the webhook.
     """
 
     id: str
-    enabled: Union[Unset, bool] = UNSET
-    title: Union[Unset, str] = UNSET
-    url: Union[Unset, str] = UNSET
-    event_kinds: Union[Unset, list[EventKindsEnum]] = UNSET
+    enabled: bool | Unset = UNSET
+    title: str | Unset = UNSET
+    url: str | Unset = UNSET
+    event_kinds: list[EventKindsEnum] | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -41,7 +39,7 @@ class WebhookUpdate:
 
         url = self.url
 
-        event_kinds: Union[Unset, list[str]] = UNSET
+        event_kinds: list[str] | Unset = UNSET
         if not isinstance(self.event_kinds, Unset):
             event_kinds = []
             for event_kinds_item_data in self.event_kinds:
@@ -77,12 +75,14 @@ class WebhookUpdate:
 
         url = d.pop("url", UNSET)
 
-        event_kinds = []
         _event_kinds = d.pop("eventKinds", UNSET)
-        for event_kinds_item_data in _event_kinds or []:
-            event_kinds_item = EventKindsEnum(event_kinds_item_data)
+        event_kinds: list[EventKindsEnum] | Unset = UNSET
+        if _event_kinds is not UNSET:
+            event_kinds = []
+            for event_kinds_item_data in _event_kinds:
+                event_kinds_item = EventKindsEnum(event_kinds_item_data)
 
-            event_kinds.append(event_kinds_item)
+                event_kinds.append(event_kinds_item)
 
         webhook_update = cls(
             id=id,

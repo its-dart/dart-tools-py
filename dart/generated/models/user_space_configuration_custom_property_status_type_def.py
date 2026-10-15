@@ -1,9 +1,10 @@
+from __future__ import annotations
+
 from collections.abc import Mapping
 from typing import (
     Any,
     Literal,
     TypeVar,
-    Union,
     cast,
 )
 
@@ -21,12 +22,12 @@ class UserSpaceConfigurationCustomPropertyStatusTypeDef:
     Attributes:
         name (str):
         type_ (Literal['Status']):
-        statuses (Union[Unset, list[str]]):
+        statuses (list[str] | Unset):
     """
 
     name: str
     type_: Literal["Status"]
-    statuses: Union[Unset, list[str]] = UNSET
+    statuses: list[str] | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -34,7 +35,7 @@ class UserSpaceConfigurationCustomPropertyStatusTypeDef:
 
         type_ = self.type_
 
-        statuses: Union[Unset, list[str]] = UNSET
+        statuses: list[str] | Unset = UNSET
         if not isinstance(self.statuses, Unset):
             statuses = self.statuses
 

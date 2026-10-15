@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union, cast
+from typing import Any, cast
 
 import httpx
 
@@ -29,9 +29,7 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(
-    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Optional[Union[Any, WrappedComment]]:
+def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Any | WrappedComment | None:
     if response.status_code == 200:
         response_200 = WrappedComment.from_dict(response.json())
 
@@ -48,8 +46,8 @@ def _parse_response(
 
 
 def _build_response(
-    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Response[Union[Any, WrappedComment]]:
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> Response[Any | WrappedComment]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -62,7 +60,7 @@ def sync_detailed(
     *,
     client: AuthenticatedClient,
     body: WrappedCommentCreate,
-) -> Response[Union[Any, WrappedComment]]:
+) -> Response[Any | WrappedComment]:
     """Create a new comment
 
      Record a new comment that the user intends to add to a given task. This will save the comment in
@@ -76,7 +74,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, WrappedComment]]
+        Response[Any | WrappedComment]
     """
 
     kwargs = _get_kwargs(
@@ -94,7 +92,7 @@ def sync(
     *,
     client: AuthenticatedClient,
     body: WrappedCommentCreate,
-) -> Optional[Union[Any, WrappedComment]]:
+) -> Any | WrappedComment | None:
     """Create a new comment
 
      Record a new comment that the user intends to add to a given task. This will save the comment in
@@ -108,7 +106,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, WrappedComment]
+        Any | WrappedComment
     """
 
     return sync_detailed(
@@ -121,7 +119,7 @@ async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
     body: WrappedCommentCreate,
-) -> Response[Union[Any, WrappedComment]]:
+) -> Response[Any | WrappedComment]:
     """Create a new comment
 
      Record a new comment that the user intends to add to a given task. This will save the comment in
@@ -135,7 +133,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, WrappedComment]]
+        Response[Any | WrappedComment]
     """
 
     kwargs = _get_kwargs(
@@ -151,7 +149,7 @@ async def asyncio(
     *,
     client: AuthenticatedClient,
     body: WrappedCommentCreate,
-) -> Optional[Union[Any, WrappedComment]]:
+) -> Any | WrappedComment | None:
     """Create a new comment
 
      Record a new comment that the user intends to add to a given task. This will save the comment in
@@ -165,7 +163,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, WrappedComment]
+        Any | WrappedComment
     """
 
     return (

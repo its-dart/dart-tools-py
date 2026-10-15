@@ -1,9 +1,7 @@
+from __future__ import annotations
+
 from collections.abc import Mapping
-from typing import (
-    Any,
-    TypeVar,
-    Union,
-)
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -22,19 +20,19 @@ class TextUpdate:
             * `insert_before` - INSERT_BEFORE
             * `insert_after` - INSERT_AFTER
             * `delete` - DELETE
-        old_text (Union[Unset, str]): The exact text to find. Required for "replace" and "delete".
-        anchor_text (Union[Unset, str]): The exact text to find as an insertion anchor. Required for "insert_before" and
+        old_text (str | Unset): The exact text to find. Required for "replace" and "delete".
+        anchor_text (str | Unset): The exact text to find as an insertion anchor. Required for "insert_before" and
             "insert_after".
-        new_text (Union[Unset, str]): The text to insert. Required for "replace", "insert_before", and "insert_after".
-        occurrence (Union[Unset, int]): Which occurrence of oldText or anchorText to act on, 1-indexed. When omitted,
-            the search text must be unique in the current content.
+        new_text (str | Unset): The text to insert. Required for "replace", "insert_before", and "insert_after".
+        occurrence (int | Unset): Which occurrence of oldText or anchorText to act on, 1-indexed. When omitted, the
+            search text must be unique in the current content.
     """
 
     type_: TextUpdateKind
-    old_text: Union[Unset, str] = UNSET
-    anchor_text: Union[Unset, str] = UNSET
-    new_text: Union[Unset, str] = UNSET
-    occurrence: Union[Unset, int] = UNSET
+    old_text: str | Unset = UNSET
+    anchor_text: str | Unset = UNSET
+    new_text: str | Unset = UNSET
+    occurrence: int | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:

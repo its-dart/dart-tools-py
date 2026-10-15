@@ -1,9 +1,7 @@
+from __future__ import annotations
+
 from collections.abc import Mapping
-from typing import (
-    Any,
-    TypeVar,
-    Union,
-)
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -20,14 +18,14 @@ class WebhookCreate:
     Attributes:
         url (str): The URL that webhook events will be sent to.
         event_kinds (list[EventKindsEnum]): The event kinds that will trigger the webhook.
-        enabled (Union[Unset, bool]):
-        title (Union[Unset, str]): The webhook title.
+        enabled (bool | Unset):
+        title (str | Unset): The webhook title.
     """
 
     url: str
     event_kinds: list[EventKindsEnum]
-    enabled: Union[Unset, bool] = UNSET
-    title: Union[Unset, str] = UNSET
+    enabled: bool | Unset = UNSET
+    title: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:

@@ -1,9 +1,7 @@
+from __future__ import annotations
+
 from collections.abc import Mapping
-from typing import (
-    Any,
-    TypeVar,
-    Union,
-)
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -18,7 +16,7 @@ T = TypeVar("T", bound="AgentLocal")
 class AgentLocal:
     """
     Attributes:
-        agent (Union[Unset, LocalAgent]): * `agy` - AGY
+        agent (LocalAgent | Unset): * `agy` - AGY
             * `claude` - CLAUDE
             * `codex` - CODEX
             * `copilot` - COPILOT
@@ -32,11 +30,11 @@ class AgentLocal:
             * `vibe` - VIBE
     """
 
-    agent: Union[Unset, LocalAgent] = UNSET
+    agent: LocalAgent | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        agent: Union[Unset, str] = UNSET
+        agent: str | Unset = UNSET
         if not isinstance(self.agent, Unset):
             agent = self.agent.value
 
@@ -52,7 +50,7 @@ class AgentLocal:
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         d = dict(src_dict)
         _agent = d.pop("agent", UNSET)
-        agent: Union[Unset, LocalAgent]
+        agent: LocalAgent | Unset
         if isinstance(_agent, Unset):
             agent = UNSET
         else:

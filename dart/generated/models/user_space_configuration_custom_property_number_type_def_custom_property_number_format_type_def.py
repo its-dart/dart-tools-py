@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class UserSpaceConfigurationCustomPropertyNumberTypeDefCustomPropertyNumberFormatTypeDef(str, Enum):
+class UserSpaceConfigurationCustomPropertyNumberTypeDefCustomPropertyNumberFormatTypeDef(StrEnum):
     DOLLARS = "Dollars"
     INTEGER = "Integer"
     PERCENTAGE = "Percentage"

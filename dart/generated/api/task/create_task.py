@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union
+from typing import Any
 
 import httpx
 
@@ -29,7 +29,7 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Union[AuthenticatedClient, Client], response: httpx.Response) -> Optional[WrappedTask]:
+def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> WrappedTask | None:
     if response.status_code == 200:
         response_200 = WrappedTask.from_dict(response.json())
 
@@ -41,7 +41,7 @@ def _parse_response(*, client: Union[AuthenticatedClient, Client], response: htt
         return None
 
 
-def _build_response(*, client: Union[AuthenticatedClient, Client], response: httpx.Response) -> Response[WrappedTask]:
+def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[WrappedTask]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -87,7 +87,7 @@ def sync(
     *,
     client: AuthenticatedClient,
     body: WrappedTaskCreate,
-) -> Optional[WrappedTask]:
+) -> WrappedTask | None:
     """Create a new task
 
      Record a new task that the user intends to do. By default the task will be assigned to the current
@@ -146,7 +146,7 @@ async def asyncio(
     *,
     client: AuthenticatedClient,
     body: WrappedTaskCreate,
-) -> Optional[WrappedTask]:
+) -> WrappedTask | None:
     """Create a new task
 
      Record a new task that the user intends to do. By default the task will be assigned to the current

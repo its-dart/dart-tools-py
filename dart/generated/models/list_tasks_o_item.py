@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class ListTasksOItem(str, Enum):
+class ListTasksOItem(StrEnum):
     COMPLETED_AT = "completed_at"
     CREATED_AT = "created_at"
     DARTBOARD_ORDER = "dartboard__order"

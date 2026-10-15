@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union, cast
+from typing import Any, cast
+from urllib.parse import quote
 
 import httpx
 
@@ -20,7 +21,7 @@ def _get_kwargs(
     _kwargs: dict[str, Any] = {
         "method": "post",
         "url": "/tasks/{id}/attachments/from-url".format(
-            id=id,
+            id=quote(str(id), safe=""),
         ),
     }
 
@@ -32,9 +33,7 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(
-    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Optional[Union[Any, Attachment]]:
+def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Any | Attachment | None:
     if response.status_code == 200:
         response_200 = Attachment.from_dict(response.json())
 
@@ -50,9 +49,7 @@ def _parse_response(
         return None
 
 
-def _build_response(
-    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Response[Union[Any, Attachment]]:
+def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[Any | Attachment]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -66,7 +63,7 @@ def sync_detailed(
     *,
     client: AuthenticatedClient,
     body: AttachmentCreateFromUrl,
-) -> Response[Union[Any, Attachment]]:
+) -> Response[Any | Attachment]:
     """Attach a file from a provided URL to a task
 
      Attach a file from a provided URL to a task. The file will be downloaded and attached
@@ -81,7 +78,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, Attachment]]
+        Response[Any | Attachment]
     """
 
     kwargs = _get_kwargs(
@@ -101,7 +98,7 @@ def sync(
     *,
     client: AuthenticatedClient,
     body: AttachmentCreateFromUrl,
-) -> Optional[Union[Any, Attachment]]:
+) -> Any | Attachment | None:
     """Attach a file from a provided URL to a task
 
      Attach a file from a provided URL to a task. The file will be downloaded and attached
@@ -116,7 +113,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, Attachment]
+        Any | Attachment
     """
 
     return sync_detailed(
@@ -131,7 +128,7 @@ async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
     body: AttachmentCreateFromUrl,
-) -> Response[Union[Any, Attachment]]:
+) -> Response[Any | Attachment]:
     """Attach a file from a provided URL to a task
 
      Attach a file from a provided URL to a task. The file will be downloaded and attached
@@ -146,7 +143,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, Attachment]]
+        Response[Any | Attachment]
     """
 
     kwargs = _get_kwargs(
@@ -164,7 +161,7 @@ async def asyncio(
     *,
     client: AuthenticatedClient,
     body: AttachmentCreateFromUrl,
-) -> Optional[Union[Any, Attachment]]:
+) -> Any | Attachment | None:
     """Attach a file from a provided URL to a task
 
      Attach a file from a provided URL to a task. The file will be downloaded and attached
@@ -179,7 +176,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, Attachment]
+        Any | Attachment
     """
 
     return (

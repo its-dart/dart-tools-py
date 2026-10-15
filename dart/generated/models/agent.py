@@ -1,9 +1,7 @@
+from __future__ import annotations
+
 from collections.abc import Mapping
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    TypeVar,
-)
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -39,12 +37,13 @@ class Agent:
     name: str
     enabled: bool
     execution_mode: AgentExecutionMode
-    instructions: "AgentInstructions"
-    forwarding: "AgentForwarding"
-    local: "AgentLocal"
+    instructions: AgentInstructions
+    forwarding: AgentForwarding
+    local: AgentLocal
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+
         id = self.id
 
         name = self.name
@@ -77,9 +76,9 @@ class Agent:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.agent_forwarding import AgentForwarding
-        from ..models.agent_instructions import AgentInstructions
-        from ..models.agent_local import AgentLocal
+        from ..models.agent_forwarding import AgentForwarding  # noqa: PLC0415
+        from ..models.agent_instructions import AgentInstructions  # noqa: PLC0415
+        from ..models.agent_local import AgentLocal  # noqa: PLC0415
 
         d = dict(src_dict)
         id = d.pop("id")

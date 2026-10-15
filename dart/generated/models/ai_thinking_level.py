@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class AiThinkingLevel(str, Enum):
+class AiThinkingLevel(StrEnum):
     HIGH = "high"
     LOW = "low"
     MEDIUM = "medium"

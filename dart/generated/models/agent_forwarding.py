@@ -1,11 +1,7 @@
+from __future__ import annotations
+
 from collections.abc import Mapping
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    TypeVar,
-    Union,
-    cast,
-)
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -23,26 +19,27 @@ T = TypeVar("T", bound="AgentForwarding")
 class AgentForwarding:
     """
     Attributes:
-        url (Union[Unset, str]): The URL to call when the agent is triggered.
-        headers (Union[Unset, AgentForwardingHeaders]): Headers to include with the forwarding request.
-        body (Union[Unset, str]): The JSON body template for the forwarding request.
-        response_key (Union[Unset, str]): The JSON response key to use as the agent's comment.
+        url (str | Unset): The URL to call when the agent is triggered.
+        headers (AgentForwardingHeaders | Unset): Headers to include with the forwarding request.
+        body (str | Unset): The JSON body template for the forwarding request.
+        response_key (str | Unset): The JSON response key to use as the agent's comment.
     """
 
-    url: Union[Unset, str] = UNSET
-    headers: Union[Unset, "AgentForwardingHeaders"] = UNSET
-    body: Union[Unset, str] = UNSET
-    response_key: Union[Unset, str] = UNSET
+    url: str | Unset = UNSET
+    headers: AgentForwardingHeaders | Unset = UNSET
+    body: str | Unset = UNSET
+    response_key: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        url: Union[Unset, str]
+
+        url: str | Unset
         if isinstance(self.url, Unset):
             url = UNSET
         else:
             url = self.url
 
-        headers: Union[Unset, dict[str, Any]] = UNSET
+        headers: dict[str, Any] | Unset = UNSET
         if not isinstance(self.headers, Unset):
             headers = self.headers.to_dict()
 
@@ -66,19 +63,19 @@ class AgentForwarding:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.agent_forwarding_headers import AgentForwardingHeaders
+        from ..models.agent_forwarding_headers import AgentForwardingHeaders  # noqa: PLC0415
 
         d = dict(src_dict)
 
-        def _parse_url(data: object) -> Union[Unset, str]:
+        def _parse_url(data: object) -> str | Unset:
             if isinstance(data, Unset):
                 return data
-            return cast(Union[Unset, str], data)
+            return cast(str | Unset, data)
 
         url = _parse_url(d.pop("url", UNSET))
 
         _headers = d.pop("headers", UNSET)
-        headers: Union[Unset, AgentForwardingHeaders]
+        headers: AgentForwardingHeaders | Unset
         if isinstance(_headers, Unset):
             headers = UNSET
         else:

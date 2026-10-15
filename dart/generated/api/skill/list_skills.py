@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union
+from typing import Any
 
 import httpx
 
@@ -11,9 +11,10 @@ from ...types import UNSET, Response, Unset
 
 def _get_kwargs(
     *,
-    limit: Union[Unset, int] = UNSET,
-    offset: Union[Unset, int] = UNSET,
+    limit: int | Unset = UNSET,
+    offset: int | Unset = UNSET,
 ) -> dict[str, Any]:
+
     params: dict[str, Any] = {}
 
     params["limit"] = limit
@@ -31,9 +32,7 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(
-    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Optional[PaginatedSkillList]:
+def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> PaginatedSkillList | None:
     if response.status_code == 200:
         response_200 = PaginatedSkillList.from_dict(response.json())
 
@@ -45,9 +44,7 @@ def _parse_response(
         return None
 
 
-def _build_response(
-    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Response[PaginatedSkillList]:
+def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[PaginatedSkillList]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -59,8 +56,8 @@ def _build_response(
 def sync_detailed(
     *,
     client: AuthenticatedClient,
-    limit: Union[Unset, int] = UNSET,
-    offset: Union[Unset, int] = UNSET,
+    limit: int | Unset = UNSET,
+    offset: int | Unset = UNSET,
 ) -> Response[PaginatedSkillList]:
     """List all skills
 
@@ -68,8 +65,8 @@ def sync_detailed(
     specific task types.
 
     Args:
-        limit (Union[Unset, int]):
-        offset (Union[Unset, int]):
+        limit (int | Unset):
+        offset (int | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -94,17 +91,17 @@ def sync_detailed(
 def sync(
     *,
     client: AuthenticatedClient,
-    limit: Union[Unset, int] = UNSET,
-    offset: Union[Unset, int] = UNSET,
-) -> Optional[PaginatedSkillList]:
+    limit: int | Unset = UNSET,
+    offset: int | Unset = UNSET,
+) -> PaginatedSkillList | None:
     """List all skills
 
      List all skills in the workspace. Skills are user-defined instructions or templates for performing
     specific task types.
 
     Args:
-        limit (Union[Unset, int]):
-        offset (Union[Unset, int]):
+        limit (int | Unset):
+        offset (int | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -124,8 +121,8 @@ def sync(
 async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
-    limit: Union[Unset, int] = UNSET,
-    offset: Union[Unset, int] = UNSET,
+    limit: int | Unset = UNSET,
+    offset: int | Unset = UNSET,
 ) -> Response[PaginatedSkillList]:
     """List all skills
 
@@ -133,8 +130,8 @@ async def asyncio_detailed(
     specific task types.
 
     Args:
-        limit (Union[Unset, int]):
-        offset (Union[Unset, int]):
+        limit (int | Unset):
+        offset (int | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -157,17 +154,17 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: AuthenticatedClient,
-    limit: Union[Unset, int] = UNSET,
-    offset: Union[Unset, int] = UNSET,
-) -> Optional[PaginatedSkillList]:
+    limit: int | Unset = UNSET,
+    offset: int | Unset = UNSET,
+) -> PaginatedSkillList | None:
     """List all skills
 
      List all skills in the workspace. Skills are user-defined instructions or templates for performing
     specific task types.
 
     Args:
-        limit (Union[Unset, int]):
-        offset (Union[Unset, int]):
+        limit (int | Unset):
+        offset (int | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

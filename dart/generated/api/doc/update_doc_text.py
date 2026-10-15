@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union, cast
+from typing import Any, cast
+from urllib.parse import quote
 
 import httpx
 
@@ -20,7 +21,7 @@ def _get_kwargs(
     _kwargs: dict[str, Any] = {
         "method": "post",
         "url": "/docs/{id}/update-text".format(
-            id=id,
+            id=quote(str(id), safe=""),
         ),
     }
 
@@ -32,9 +33,7 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(
-    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Optional[Union[Any, WrappedDoc]]:
+def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Any | WrappedDoc | None:
     if response.status_code == 200:
         response_200 = WrappedDoc.from_dict(response.json())
 
@@ -54,9 +53,7 @@ def _parse_response(
         return None
 
 
-def _build_response(
-    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Response[Union[Any, WrappedDoc]]:
+def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[Any | WrappedDoc]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -70,12 +67,12 @@ def sync_detailed(
     *,
     client: AuthenticatedClient,
     body: DocTextUpdate,
-) -> Response[Union[Any, WrappedDoc]]:
-    r"""Update a doc's text content with text updates
+) -> Response[Any | WrappedDoc]:
+    """Update a doc's text content with text updates
 
      Apply targeted text updates to a doc's content; use instead of updateDoc when only the text body
-    changes. Each update is one of: \"replace\" (swap oldText for newText), \"insert_before\" /
-    \"insert_after\" (insert newText relative to anchorText), or \"delete\" (remove oldText), applied in
+    changes. Each update is one of: "replace" (swap oldText for newText), "insert_before" /
+    "insert_after" (insert newText relative to anchorText), or "delete" (remove oldText), applied in
     order and atomically. When occurrence is omitted, the target text must be unique; otherwise specify
     occurrence (1-indexed). Preferred over a full update for long content: fewer tokens, and no risk of
     rewriting unrelated text.
@@ -90,7 +87,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, WrappedDoc]]
+        Response[Any | WrappedDoc]
     """
 
     kwargs = _get_kwargs(
@@ -110,12 +107,12 @@ def sync(
     *,
     client: AuthenticatedClient,
     body: DocTextUpdate,
-) -> Optional[Union[Any, WrappedDoc]]:
-    r"""Update a doc's text content with text updates
+) -> Any | WrappedDoc | None:
+    """Update a doc's text content with text updates
 
      Apply targeted text updates to a doc's content; use instead of updateDoc when only the text body
-    changes. Each update is one of: \"replace\" (swap oldText for newText), \"insert_before\" /
-    \"insert_after\" (insert newText relative to anchorText), or \"delete\" (remove oldText), applied in
+    changes. Each update is one of: "replace" (swap oldText for newText), "insert_before" /
+    "insert_after" (insert newText relative to anchorText), or "delete" (remove oldText), applied in
     order and atomically. When occurrence is omitted, the target text must be unique; otherwise specify
     occurrence (1-indexed). Preferred over a full update for long content: fewer tokens, and no risk of
     rewriting unrelated text.
@@ -130,7 +127,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, WrappedDoc]
+        Any | WrappedDoc
     """
 
     return sync_detailed(
@@ -145,12 +142,12 @@ async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
     body: DocTextUpdate,
-) -> Response[Union[Any, WrappedDoc]]:
-    r"""Update a doc's text content with text updates
+) -> Response[Any | WrappedDoc]:
+    """Update a doc's text content with text updates
 
      Apply targeted text updates to a doc's content; use instead of updateDoc when only the text body
-    changes. Each update is one of: \"replace\" (swap oldText for newText), \"insert_before\" /
-    \"insert_after\" (insert newText relative to anchorText), or \"delete\" (remove oldText), applied in
+    changes. Each update is one of: "replace" (swap oldText for newText), "insert_before" /
+    "insert_after" (insert newText relative to anchorText), or "delete" (remove oldText), applied in
     order and atomically. When occurrence is omitted, the target text must be unique; otherwise specify
     occurrence (1-indexed). Preferred over a full update for long content: fewer tokens, and no risk of
     rewriting unrelated text.
@@ -165,7 +162,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, WrappedDoc]]
+        Response[Any | WrappedDoc]
     """
 
     kwargs = _get_kwargs(
@@ -183,12 +180,12 @@ async def asyncio(
     *,
     client: AuthenticatedClient,
     body: DocTextUpdate,
-) -> Optional[Union[Any, WrappedDoc]]:
-    r"""Update a doc's text content with text updates
+) -> Any | WrappedDoc | None:
+    """Update a doc's text content with text updates
 
      Apply targeted text updates to a doc's content; use instead of updateDoc when only the text body
-    changes. Each update is one of: \"replace\" (swap oldText for newText), \"insert_before\" /
-    \"insert_after\" (insert newText relative to anchorText), or \"delete\" (remove oldText), applied in
+    changes. Each update is one of: "replace" (swap oldText for newText), "insert_before" /
+    "insert_after" (insert newText relative to anchorText), or "delete" (remove oldText), applied in
     order and atomically. When occurrence is omitted, the target text must be unique; otherwise specify
     occurrence (1-indexed). Preferred over a full update for long content: fewer tokens, and no risk of
     rewriting unrelated text.
@@ -203,7 +200,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, WrappedDoc]
+        Any | WrappedDoc
     """
 
     return (

@@ -1,9 +1,7 @@
+from __future__ import annotations
+
 from collections.abc import Mapping
-from typing import (
-    Any,
-    TypeVar,
-    Union,
-)
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -18,13 +16,13 @@ class SkillUpdate:
     """
     Attributes:
         id (str): The universal, unique ID of the skill.
-        title (Union[Unset, str]): The title of the skill, describing the task type.
-        prompt_markdown (Union[Unset, str]): User-defined instructions for performing this skill in markdown format.
+        title (str | Unset): The title of the skill, describing the task type.
+        prompt_markdown (str | Unset): User-defined instructions for performing this skill in markdown format.
     """
 
     id: str
-    title: Union[Unset, str] = UNSET
-    prompt_markdown: Union[Unset, str] = UNSET
+    title: str | Unset = UNSET
+    prompt_markdown: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:

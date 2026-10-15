@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class ListDocsOItem(str, Enum):
+class ListDocsOItem(StrEnum):
     CREATED_AT = "created_at"
     FOLDER_ORDER = "folder__order"
     ORDER = "order"

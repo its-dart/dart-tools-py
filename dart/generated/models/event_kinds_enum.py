@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class EventKindsEnum(str, Enum):
+class EventKindsEnum(StrEnum):
     COMMENT_CREATED = "comment.created"
     DOC_CREATED = "doc.created"
     DOC_DELETED = "doc.deleted"

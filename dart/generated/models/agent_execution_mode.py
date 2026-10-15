@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class AgentExecutionMode(str, Enum):
+class AgentExecutionMode(StrEnum):
     FORWARDING = "Forwarding"
     INSTRUCTIONS = "Instructions"
     LOCAL = "Local"

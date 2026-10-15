@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union, cast
+from typing import Any, cast
+from urllib.parse import quote
 
 import httpx
 
@@ -12,19 +13,18 @@ from ...types import Response
 def _get_kwargs(
     id: str,
 ) -> dict[str, Any]:
+
     _kwargs: dict[str, Any] = {
         "method": "get",
         "url": "/agents/{id}".format(
-            id=id,
+            id=quote(str(id), safe=""),
         ),
     }
 
     return _kwargs
 
 
-def _parse_response(
-    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Optional[Union[Any, WrappedAgent]]:
+def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Any | WrappedAgent | None:
     if response.status_code == 200:
         response_200 = WrappedAgent.from_dict(response.json())
 
@@ -40,9 +40,7 @@ def _parse_response(
         return None
 
 
-def _build_response(
-    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Response[Union[Any, WrappedAgent]]:
+def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[Any | WrappedAgent]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -55,7 +53,7 @@ def sync_detailed(
     id: str,
     *,
     client: AuthenticatedClient,
-) -> Response[Union[Any, WrappedAgent]]:
+) -> Response[Any | WrappedAgent]:
     """Retrieve an existing agent
 
      Retrieve an existing agent by its ID, including its name and current description or instructions.
@@ -68,7 +66,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, WrappedAgent]]
+        Response[Any | WrappedAgent]
     """
 
     kwargs = _get_kwargs(
@@ -86,7 +84,7 @@ def sync(
     id: str,
     *,
     client: AuthenticatedClient,
-) -> Optional[Union[Any, WrappedAgent]]:
+) -> Any | WrappedAgent | None:
     """Retrieve an existing agent
 
      Retrieve an existing agent by its ID, including its name and current description or instructions.
@@ -99,7 +97,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, WrappedAgent]
+        Any | WrappedAgent
     """
 
     return sync_detailed(
@@ -112,7 +110,7 @@ async def asyncio_detailed(
     id: str,
     *,
     client: AuthenticatedClient,
-) -> Response[Union[Any, WrappedAgent]]:
+) -> Response[Any | WrappedAgent]:
     """Retrieve an existing agent
 
      Retrieve an existing agent by its ID, including its name and current description or instructions.
@@ -125,7 +123,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, WrappedAgent]]
+        Response[Any | WrappedAgent]
     """
 
     kwargs = _get_kwargs(
@@ -141,7 +139,7 @@ async def asyncio(
     id: str,
     *,
     client: AuthenticatedClient,
-) -> Optional[Union[Any, WrappedAgent]]:
+) -> Any | WrappedAgent | None:
     """Retrieve an existing agent
 
      Retrieve an existing agent by its ID, including its name and current description or instructions.
@@ -154,7 +152,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, WrappedAgent]
+        Any | WrappedAgent
     """
 
     return (

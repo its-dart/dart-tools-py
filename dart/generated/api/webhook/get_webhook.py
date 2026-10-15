@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union, cast
+from typing import Any, cast
+from urllib.parse import quote
 
 import httpx
 
@@ -12,19 +13,18 @@ from ...types import Response
 def _get_kwargs(
     id: str,
 ) -> dict[str, Any]:
+
     _kwargs: dict[str, Any] = {
         "method": "get",
         "url": "/webhooks/{id}".format(
-            id=id,
+            id=quote(str(id), safe=""),
         ),
     }
 
     return _kwargs
 
 
-def _parse_response(
-    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Optional[Union[Any, WrappedWebhook]]:
+def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Any | WrappedWebhook | None:
     if response.status_code == 200:
         response_200 = WrappedWebhook.from_dict(response.json())
 
@@ -41,8 +41,8 @@ def _parse_response(
 
 
 def _build_response(
-    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Response[Union[Any, WrappedWebhook]]:
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> Response[Any | WrappedWebhook]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -55,7 +55,7 @@ def sync_detailed(
     id: str,
     *,
     client: AuthenticatedClient,
-) -> Response[Union[Any, WrappedWebhook]]:
+) -> Response[Any | WrappedWebhook]:
     """Retrieve an existing webhook
 
      Retrieve an existing webhook by its ID.
@@ -68,7 +68,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, WrappedWebhook]]
+        Response[Any | WrappedWebhook]
     """
 
     kwargs = _get_kwargs(
@@ -86,7 +86,7 @@ def sync(
     id: str,
     *,
     client: AuthenticatedClient,
-) -> Optional[Union[Any, WrappedWebhook]]:
+) -> Any | WrappedWebhook | None:
     """Retrieve an existing webhook
 
      Retrieve an existing webhook by its ID.
@@ -99,7 +99,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, WrappedWebhook]
+        Any | WrappedWebhook
     """
 
     return sync_detailed(
@@ -112,7 +112,7 @@ async def asyncio_detailed(
     id: str,
     *,
     client: AuthenticatedClient,
-) -> Response[Union[Any, WrappedWebhook]]:
+) -> Response[Any | WrappedWebhook]:
     """Retrieve an existing webhook
 
      Retrieve an existing webhook by its ID.
@@ -125,7 +125,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, WrappedWebhook]]
+        Response[Any | WrappedWebhook]
     """
 
     kwargs = _get_kwargs(
@@ -141,7 +141,7 @@ async def asyncio(
     id: str,
     *,
     client: AuthenticatedClient,
-) -> Optional[Union[Any, WrappedWebhook]]:
+) -> Any | WrappedWebhook | None:
     """Retrieve an existing webhook
 
      Retrieve an existing webhook by its ID.
@@ -154,7 +154,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, WrappedWebhook]
+        Any | WrappedWebhook
     """
 
     return (
