@@ -1,9 +1,7 @@
+from __future__ import annotations
+
 from collections.abc import Mapping
-from typing import (
-    Any,
-    TypeVar,
-    Union,
-)
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -18,13 +16,13 @@ class DocCreate:
     """
     Attributes:
         title (str): The title, which is a short description of the doc.
-        folder (Union[Unset, str]): The full title of the folder, which is a project or list of docs.
-        text (Union[Unset, str]): The full content of the doc, which can include markdown formatting.
+        folder (str | Unset): The full title of the folder, which is a project or list of docs.
+        text (str | Unset): The full content of the doc, which can include markdown formatting.
     """
 
     title: str
-    folder: Union[Unset, str] = UNSET
-    text: Union[Unset, str] = UNSET
+    folder: str | Unset = UNSET
+    text: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:

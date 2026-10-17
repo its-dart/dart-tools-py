@@ -1,0 +1,2 @@
+post_hooks:
+  - "ruff check --isolated --select F,I --fix-only ."

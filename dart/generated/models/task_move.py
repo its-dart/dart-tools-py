@@ -1,10 +1,7 @@
+from __future__ import annotations
+
 from collections.abc import Mapping
-from typing import (
-    Any,
-    TypeVar,
-    Union,
-    cast,
-)
+from typing import Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -18,25 +15,24 @@ T = TypeVar("T", bound="TaskMove")
 class TaskMove:
     """
     Attributes:
-        before_task_id (Union[None, Unset, str]): Move the task immediately before this task. For example: if tasks are
-            [A, B, C], then beforeTaskId=B produces [A, moved_task, B, C]. Use null to move to the beginning (first
-            position).
-        after_task_id (Union[None, Unset, str]): Move the task immediately after this task. For example: if tasks are
-            [A, B, C], then afterTaskId=B produces [A, B, moved_task, C]. Use null to move to the end (last position).
+        before_task_id (None | str | Unset): Move the task immediately before this task. For example: if tasks are [A,
+            B, C], then beforeTaskId=B produces [A, moved_task, B, C]. Use null to move to the beginning (first position).
+        after_task_id (None | str | Unset): Move the task immediately after this task. For example: if tasks are [A, B,
+            C], then afterTaskId=B produces [A, B, moved_task, C]. Use null to move to the end (last position).
     """
 
-    before_task_id: Union[None, Unset, str] = UNSET
-    after_task_id: Union[None, Unset, str] = UNSET
+    before_task_id: None | str | Unset = UNSET
+    after_task_id: None | str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        before_task_id: Union[None, Unset, str]
+        before_task_id: None | str | Unset
         if isinstance(self.before_task_id, Unset):
             before_task_id = UNSET
         else:
             before_task_id = self.before_task_id
 
-        after_task_id: Union[None, Unset, str]
+        after_task_id: None | str | Unset
         if isinstance(self.after_task_id, Unset):
             after_task_id = UNSET
         else:
@@ -56,21 +52,21 @@ class TaskMove:
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         d = dict(src_dict)
 
-        def _parse_before_task_id(data: object) -> Union[None, Unset, str]:
+        def _parse_before_task_id(data: object) -> None | str | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):
                 return data
-            return cast(Union[None, Unset, str], data)
+            return cast(None | str | Unset, data)
 
         before_task_id = _parse_before_task_id(d.pop("beforeTaskId", UNSET))
 
-        def _parse_after_task_id(data: object) -> Union[None, Unset, str]:
+        def _parse_after_task_id(data: object) -> None | str | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):
                 return data
-            return cast(Union[None, Unset, str], data)
+            return cast(None | str | Unset, data)
 
         after_task_id = _parse_after_task_id(d.pop("afterTaskId", UNSET))
 

@@ -1,10 +1,7 @@
+from __future__ import annotations
+
 from collections.abc import Mapping
-from typing import (
-    Any,
-    TypeVar,
-    Union,
-    cast,
-)
+from typing import Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 
@@ -17,19 +14,19 @@ class TimeTrackingEntry:
     Attributes:
         user_id (str):
         started_at (str):
-        finished_at (Union[None, str]):
+        finished_at (None | str):
     """
 
     user_id: str
     started_at: str
-    finished_at: Union[None, str]
+    finished_at: None | str
 
     def to_dict(self) -> dict[str, Any]:
         user_id = self.user_id
 
         started_at = self.started_at
 
-        finished_at: Union[None, str]
+        finished_at: None | str
         finished_at = self.finished_at
 
         field_dict: dict[str, Any] = {}
@@ -51,10 +48,10 @@ class TimeTrackingEntry:
 
         started_at = d.pop("startedAt")
 
-        def _parse_finished_at(data: object) -> Union[None, str]:
+        def _parse_finished_at(data: object) -> None | str:
             if data is None:
                 return data
-            return cast(Union[None, str], data)
+            return cast(None | str, data)
 
         finished_at = _parse_finished_at(d.pop("finishedAt"))
 

@@ -1,6 +1,6 @@
 import datetime
 from http import HTTPStatus
-from typing import Any, Optional, Union
+from typing import Any
 
 import httpx
 
@@ -13,84 +13,85 @@ from ...types import UNSET, Response, Unset
 
 def _get_kwargs(
     *,
-    assignee: Union[Unset, str] = UNSET,
-    assignee_id: Union[Unset, str] = UNSET,
-    completed_at: Union[Unset, datetime.datetime] = UNSET,
-    completed_at_after: Union[Unset, datetime.datetime] = UNSET,
-    completed_at_before: Union[Unset, datetime.datetime] = UNSET,
-    created_at: Union[Unset, datetime.datetime] = UNSET,
-    created_at_after: Union[Unset, datetime.datetime] = UNSET,
-    created_at_before: Union[Unset, datetime.datetime] = UNSET,
-    created_by: Union[Unset, str] = UNSET,
-    created_by_id: Union[Unset, str] = UNSET,
-    dartboard: Union[Unset, str] = UNSET,
-    dartboard_id: Union[Unset, str] = UNSET,
-    description: Union[Unset, str] = UNSET,
-    due_at: Union[Unset, str] = UNSET,
-    due_at_after: Union[Unset, str] = UNSET,
-    due_at_before: Union[Unset, str] = UNSET,
-    ids: Union[Unset, str] = UNSET,
-    in_trash: Union[Unset, bool] = UNSET,
-    is_completed: Union[Unset, bool] = UNSET,
-    limit: Union[Unset, int] = UNSET,
-    no_defaults: Union[Unset, bool] = True,
-    o: Union[Unset, list[ListTasksOItem]] = UNSET,
-    offset: Union[Unset, int] = UNSET,
-    parent_id: Union[Unset, str] = UNSET,
-    priority: Union[Unset, str] = UNSET,
-    reviewer: Union[Unset, str] = UNSET,
-    reviewer_id: Union[Unset, str] = UNSET,
-    size: Union[Unset, int] = UNSET,
-    start_at: Union[Unset, str] = UNSET,
-    start_at_after: Union[Unset, str] = UNSET,
-    start_at_before: Union[Unset, str] = UNSET,
-    status: Union[Unset, str] = UNSET,
-    status_id: Union[Unset, str] = UNSET,
-    tag: Union[Unset, str] = UNSET,
-    tag_id: Union[Unset, str] = UNSET,
-    title: Union[Unset, str] = UNSET,
-    type_: Union[Unset, str] = UNSET,
-    type_id: Union[Unset, str] = UNSET,
-    updated_at: Union[Unset, datetime.datetime] = UNSET,
-    updated_at_after: Union[Unset, datetime.datetime] = UNSET,
-    updated_at_before: Union[Unset, datetime.datetime] = UNSET,
-    updated_by: Union[Unset, str] = UNSET,
-    updated_by_id: Union[Unset, str] = UNSET,
-    view: Union[Unset, str] = UNSET,
-    view_id: Union[Unset, str] = UNSET,
+    assignee: str | Unset = UNSET,
+    assignee_id: str | Unset = UNSET,
+    completed_at: datetime.datetime | Unset = UNSET,
+    completed_at_after: datetime.datetime | Unset = UNSET,
+    completed_at_before: datetime.datetime | Unset = UNSET,
+    created_at: datetime.datetime | Unset = UNSET,
+    created_at_after: datetime.datetime | Unset = UNSET,
+    created_at_before: datetime.datetime | Unset = UNSET,
+    created_by: str | Unset = UNSET,
+    created_by_id: str | Unset = UNSET,
+    dartboard: str | Unset = UNSET,
+    dartboard_id: str | Unset = UNSET,
+    description: str | Unset = UNSET,
+    due_at: str | Unset = UNSET,
+    due_at_after: str | Unset = UNSET,
+    due_at_before: str | Unset = UNSET,
+    ids: str | Unset = UNSET,
+    in_trash: bool | Unset = UNSET,
+    is_completed: bool | Unset = UNSET,
+    limit: int | Unset = UNSET,
+    no_defaults: bool | Unset = True,
+    o: list[ListTasksOItem] | Unset = UNSET,
+    offset: int | Unset = UNSET,
+    parent_id: str | Unset = UNSET,
+    priority: str | Unset = UNSET,
+    reviewer: str | Unset = UNSET,
+    reviewer_id: str | Unset = UNSET,
+    size: int | Unset = UNSET,
+    start_at: str | Unset = UNSET,
+    start_at_after: str | Unset = UNSET,
+    start_at_before: str | Unset = UNSET,
+    status: str | Unset = UNSET,
+    status_id: str | Unset = UNSET,
+    tag: str | Unset = UNSET,
+    tag_id: str | Unset = UNSET,
+    title: str | Unset = UNSET,
+    type_: str | Unset = UNSET,
+    type_id: str | Unset = UNSET,
+    updated_at: datetime.datetime | Unset = UNSET,
+    updated_at_after: datetime.datetime | Unset = UNSET,
+    updated_at_before: datetime.datetime | Unset = UNSET,
+    updated_by: str | Unset = UNSET,
+    updated_by_id: str | Unset = UNSET,
+    view: str | Unset = UNSET,
+    view_id: str | Unset = UNSET,
 ) -> dict[str, Any]:
+
     params: dict[str, Any] = {}
 
     params["assignee"] = assignee
 
     params["assignee_id"] = assignee_id
 
-    json_completed_at: Union[Unset, str] = UNSET
+    json_completed_at: str | Unset = UNSET
     if not isinstance(completed_at, Unset):
         json_completed_at = completed_at.isoformat()
     params["completed_at"] = json_completed_at
 
-    json_completed_at_after: Union[Unset, str] = UNSET
+    json_completed_at_after: str | Unset = UNSET
     if not isinstance(completed_at_after, Unset):
         json_completed_at_after = completed_at_after.isoformat()
     params["completed_at_after"] = json_completed_at_after
 
-    json_completed_at_before: Union[Unset, str] = UNSET
+    json_completed_at_before: str | Unset = UNSET
     if not isinstance(completed_at_before, Unset):
         json_completed_at_before = completed_at_before.isoformat()
     params["completed_at_before"] = json_completed_at_before
 
-    json_created_at: Union[Unset, str] = UNSET
+    json_created_at: str | Unset = UNSET
     if not isinstance(created_at, Unset):
         json_created_at = created_at.isoformat()
     params["created_at"] = json_created_at
 
-    json_created_at_after: Union[Unset, str] = UNSET
+    json_created_at_after: str | Unset = UNSET
     if not isinstance(created_at_after, Unset):
         json_created_at_after = created_at_after.isoformat()
     params["created_at_after"] = json_created_at_after
 
-    json_created_at_before: Union[Unset, str] = UNSET
+    json_created_at_before: str | Unset = UNSET
     if not isinstance(created_at_before, Unset):
         json_created_at_before = created_at_before.isoformat()
     params["created_at_before"] = json_created_at_before
@@ -121,7 +122,7 @@ def _get_kwargs(
 
     params["no_defaults"] = no_defaults
 
-    json_o: Union[Unset, list[str]] = UNSET
+    json_o: list[str] | Unset = UNSET
     if not isinstance(o, Unset):
         json_o = []
         for o_item_data in o:
@@ -162,17 +163,17 @@ def _get_kwargs(
 
     params["type_id"] = type_id
 
-    json_updated_at: Union[Unset, str] = UNSET
+    json_updated_at: str | Unset = UNSET
     if not isinstance(updated_at, Unset):
         json_updated_at = updated_at.isoformat()
     params["updated_at"] = json_updated_at
 
-    json_updated_at_after: Union[Unset, str] = UNSET
+    json_updated_at_after: str | Unset = UNSET
     if not isinstance(updated_at_after, Unset):
         json_updated_at_after = updated_at_after.isoformat()
     params["updated_at_after"] = json_updated_at_after
 
-    json_updated_at_before: Union[Unset, str] = UNSET
+    json_updated_at_before: str | Unset = UNSET
     if not isinstance(updated_at_before, Unset):
         json_updated_at_before = updated_at_before.isoformat()
     params["updated_at_before"] = json_updated_at_before
@@ -197,8 +198,8 @@ def _get_kwargs(
 
 
 def _parse_response(
-    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Optional[PaginatedConciseTaskList]:
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> PaginatedConciseTaskList | None:
     if response.status_code == 200:
         response_200 = PaginatedConciseTaskList.from_dict(response.json())
 
@@ -211,7 +212,7 @@ def _parse_response(
 
 
 def _build_response(
-    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
+    *, client: AuthenticatedClient | Client, response: httpx.Response
 ) -> Response[PaginatedConciseTaskList]:
     return Response(
         status_code=HTTPStatus(response.status_code),
@@ -224,101 +225,101 @@ def _build_response(
 def sync_detailed(
     *,
     client: AuthenticatedClient,
-    assignee: Union[Unset, str] = UNSET,
-    assignee_id: Union[Unset, str] = UNSET,
-    completed_at: Union[Unset, datetime.datetime] = UNSET,
-    completed_at_after: Union[Unset, datetime.datetime] = UNSET,
-    completed_at_before: Union[Unset, datetime.datetime] = UNSET,
-    created_at: Union[Unset, datetime.datetime] = UNSET,
-    created_at_after: Union[Unset, datetime.datetime] = UNSET,
-    created_at_before: Union[Unset, datetime.datetime] = UNSET,
-    created_by: Union[Unset, str] = UNSET,
-    created_by_id: Union[Unset, str] = UNSET,
-    dartboard: Union[Unset, str] = UNSET,
-    dartboard_id: Union[Unset, str] = UNSET,
-    description: Union[Unset, str] = UNSET,
-    due_at: Union[Unset, str] = UNSET,
-    due_at_after: Union[Unset, str] = UNSET,
-    due_at_before: Union[Unset, str] = UNSET,
-    ids: Union[Unset, str] = UNSET,
-    in_trash: Union[Unset, bool] = UNSET,
-    is_completed: Union[Unset, bool] = UNSET,
-    limit: Union[Unset, int] = UNSET,
-    no_defaults: Union[Unset, bool] = True,
-    o: Union[Unset, list[ListTasksOItem]] = UNSET,
-    offset: Union[Unset, int] = UNSET,
-    parent_id: Union[Unset, str] = UNSET,
-    priority: Union[Unset, str] = UNSET,
-    reviewer: Union[Unset, str] = UNSET,
-    reviewer_id: Union[Unset, str] = UNSET,
-    size: Union[Unset, int] = UNSET,
-    start_at: Union[Unset, str] = UNSET,
-    start_at_after: Union[Unset, str] = UNSET,
-    start_at_before: Union[Unset, str] = UNSET,
-    status: Union[Unset, str] = UNSET,
-    status_id: Union[Unset, str] = UNSET,
-    tag: Union[Unset, str] = UNSET,
-    tag_id: Union[Unset, str] = UNSET,
-    title: Union[Unset, str] = UNSET,
-    type_: Union[Unset, str] = UNSET,
-    type_id: Union[Unset, str] = UNSET,
-    updated_at: Union[Unset, datetime.datetime] = UNSET,
-    updated_at_after: Union[Unset, datetime.datetime] = UNSET,
-    updated_at_before: Union[Unset, datetime.datetime] = UNSET,
-    updated_by: Union[Unset, str] = UNSET,
-    updated_by_id: Union[Unset, str] = UNSET,
-    view: Union[Unset, str] = UNSET,
-    view_id: Union[Unset, str] = UNSET,
+    assignee: str | Unset = UNSET,
+    assignee_id: str | Unset = UNSET,
+    completed_at: datetime.datetime | Unset = UNSET,
+    completed_at_after: datetime.datetime | Unset = UNSET,
+    completed_at_before: datetime.datetime | Unset = UNSET,
+    created_at: datetime.datetime | Unset = UNSET,
+    created_at_after: datetime.datetime | Unset = UNSET,
+    created_at_before: datetime.datetime | Unset = UNSET,
+    created_by: str | Unset = UNSET,
+    created_by_id: str | Unset = UNSET,
+    dartboard: str | Unset = UNSET,
+    dartboard_id: str | Unset = UNSET,
+    description: str | Unset = UNSET,
+    due_at: str | Unset = UNSET,
+    due_at_after: str | Unset = UNSET,
+    due_at_before: str | Unset = UNSET,
+    ids: str | Unset = UNSET,
+    in_trash: bool | Unset = UNSET,
+    is_completed: bool | Unset = UNSET,
+    limit: int | Unset = UNSET,
+    no_defaults: bool | Unset = True,
+    o: list[ListTasksOItem] | Unset = UNSET,
+    offset: int | Unset = UNSET,
+    parent_id: str | Unset = UNSET,
+    priority: str | Unset = UNSET,
+    reviewer: str | Unset = UNSET,
+    reviewer_id: str | Unset = UNSET,
+    size: int | Unset = UNSET,
+    start_at: str | Unset = UNSET,
+    start_at_after: str | Unset = UNSET,
+    start_at_before: str | Unset = UNSET,
+    status: str | Unset = UNSET,
+    status_id: str | Unset = UNSET,
+    tag: str | Unset = UNSET,
+    tag_id: str | Unset = UNSET,
+    title: str | Unset = UNSET,
+    type_: str | Unset = UNSET,
+    type_id: str | Unset = UNSET,
+    updated_at: datetime.datetime | Unset = UNSET,
+    updated_at_after: datetime.datetime | Unset = UNSET,
+    updated_at_before: datetime.datetime | Unset = UNSET,
+    updated_by: str | Unset = UNSET,
+    updated_by_id: str | Unset = UNSET,
+    view: str | Unset = UNSET,
+    view_id: str | Unset = UNSET,
 ) -> Response[PaginatedConciseTaskList]:
     """List tasks with powerful filtering options. Filter by dartboard, status, assignee, tags, priority,
     dates, completion state, view, and more. Supports pagination with limit/offset.
 
     Args:
-        assignee (Union[Unset, str]):
-        assignee_id (Union[Unset, str]):
-        completed_at (Union[Unset, datetime.datetime]):
-        completed_at_after (Union[Unset, datetime.datetime]):
-        completed_at_before (Union[Unset, datetime.datetime]):
-        created_at (Union[Unset, datetime.datetime]):
-        created_at_after (Union[Unset, datetime.datetime]):
-        created_at_before (Union[Unset, datetime.datetime]):
-        created_by (Union[Unset, str]):
-        created_by_id (Union[Unset, str]):
-        dartboard (Union[Unset, str]):
-        dartboard_id (Union[Unset, str]):
-        description (Union[Unset, str]):
-        due_at (Union[Unset, str]):
-        due_at_after (Union[Unset, str]):
-        due_at_before (Union[Unset, str]):
-        ids (Union[Unset, str]):
-        in_trash (Union[Unset, bool]):
-        is_completed (Union[Unset, bool]):
-        limit (Union[Unset, int]):
-        no_defaults (Union[Unset, bool]):  Default: True.
-        o (Union[Unset, list[ListTasksOItem]]):
-        offset (Union[Unset, int]):
-        parent_id (Union[Unset, str]):
-        priority (Union[Unset, str]):
-        reviewer (Union[Unset, str]):
-        reviewer_id (Union[Unset, str]):
-        size (Union[Unset, int]):
-        start_at (Union[Unset, str]):
-        start_at_after (Union[Unset, str]):
-        start_at_before (Union[Unset, str]):
-        status (Union[Unset, str]):
-        status_id (Union[Unset, str]):
-        tag (Union[Unset, str]):
-        tag_id (Union[Unset, str]):
-        title (Union[Unset, str]):
-        type_ (Union[Unset, str]):
-        type_id (Union[Unset, str]):
-        updated_at (Union[Unset, datetime.datetime]):
-        updated_at_after (Union[Unset, datetime.datetime]):
-        updated_at_before (Union[Unset, datetime.datetime]):
-        updated_by (Union[Unset, str]):
-        updated_by_id (Union[Unset, str]):
-        view (Union[Unset, str]):
-        view_id (Union[Unset, str]):
+        assignee (str | Unset):
+        assignee_id (str | Unset):
+        completed_at (datetime.datetime | Unset):
+        completed_at_after (datetime.datetime | Unset):
+        completed_at_before (datetime.datetime | Unset):
+        created_at (datetime.datetime | Unset):
+        created_at_after (datetime.datetime | Unset):
+        created_at_before (datetime.datetime | Unset):
+        created_by (str | Unset):
+        created_by_id (str | Unset):
+        dartboard (str | Unset):
+        dartboard_id (str | Unset):
+        description (str | Unset):
+        due_at (str | Unset):
+        due_at_after (str | Unset):
+        due_at_before (str | Unset):
+        ids (str | Unset):
+        in_trash (bool | Unset):
+        is_completed (bool | Unset):
+        limit (int | Unset):
+        no_defaults (bool | Unset):  Default: True.
+        o (list[ListTasksOItem] | Unset):
+        offset (int | Unset):
+        parent_id (str | Unset):
+        priority (str | Unset):
+        reviewer (str | Unset):
+        reviewer_id (str | Unset):
+        size (int | Unset):
+        start_at (str | Unset):
+        start_at_after (str | Unset):
+        start_at_before (str | Unset):
+        status (str | Unset):
+        status_id (str | Unset):
+        tag (str | Unset):
+        tag_id (str | Unset):
+        title (str | Unset):
+        type_ (str | Unset):
+        type_id (str | Unset):
+        updated_at (datetime.datetime | Unset):
+        updated_at_after (datetime.datetime | Unset):
+        updated_at_before (datetime.datetime | Unset):
+        updated_by (str | Unset):
+        updated_by_id (str | Unset):
+        view (str | Unset):
+        view_id (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -386,101 +387,101 @@ def sync_detailed(
 def sync(
     *,
     client: AuthenticatedClient,
-    assignee: Union[Unset, str] = UNSET,
-    assignee_id: Union[Unset, str] = UNSET,
-    completed_at: Union[Unset, datetime.datetime] = UNSET,
-    completed_at_after: Union[Unset, datetime.datetime] = UNSET,
-    completed_at_before: Union[Unset, datetime.datetime] = UNSET,
-    created_at: Union[Unset, datetime.datetime] = UNSET,
-    created_at_after: Union[Unset, datetime.datetime] = UNSET,
-    created_at_before: Union[Unset, datetime.datetime] = UNSET,
-    created_by: Union[Unset, str] = UNSET,
-    created_by_id: Union[Unset, str] = UNSET,
-    dartboard: Union[Unset, str] = UNSET,
-    dartboard_id: Union[Unset, str] = UNSET,
-    description: Union[Unset, str] = UNSET,
-    due_at: Union[Unset, str] = UNSET,
-    due_at_after: Union[Unset, str] = UNSET,
-    due_at_before: Union[Unset, str] = UNSET,
-    ids: Union[Unset, str] = UNSET,
-    in_trash: Union[Unset, bool] = UNSET,
-    is_completed: Union[Unset, bool] = UNSET,
-    limit: Union[Unset, int] = UNSET,
-    no_defaults: Union[Unset, bool] = True,
-    o: Union[Unset, list[ListTasksOItem]] = UNSET,
-    offset: Union[Unset, int] = UNSET,
-    parent_id: Union[Unset, str] = UNSET,
-    priority: Union[Unset, str] = UNSET,
-    reviewer: Union[Unset, str] = UNSET,
-    reviewer_id: Union[Unset, str] = UNSET,
-    size: Union[Unset, int] = UNSET,
-    start_at: Union[Unset, str] = UNSET,
-    start_at_after: Union[Unset, str] = UNSET,
-    start_at_before: Union[Unset, str] = UNSET,
-    status: Union[Unset, str] = UNSET,
-    status_id: Union[Unset, str] = UNSET,
-    tag: Union[Unset, str] = UNSET,
-    tag_id: Union[Unset, str] = UNSET,
-    title: Union[Unset, str] = UNSET,
-    type_: Union[Unset, str] = UNSET,
-    type_id: Union[Unset, str] = UNSET,
-    updated_at: Union[Unset, datetime.datetime] = UNSET,
-    updated_at_after: Union[Unset, datetime.datetime] = UNSET,
-    updated_at_before: Union[Unset, datetime.datetime] = UNSET,
-    updated_by: Union[Unset, str] = UNSET,
-    updated_by_id: Union[Unset, str] = UNSET,
-    view: Union[Unset, str] = UNSET,
-    view_id: Union[Unset, str] = UNSET,
-) -> Optional[PaginatedConciseTaskList]:
+    assignee: str | Unset = UNSET,
+    assignee_id: str | Unset = UNSET,
+    completed_at: datetime.datetime | Unset = UNSET,
+    completed_at_after: datetime.datetime | Unset = UNSET,
+    completed_at_before: datetime.datetime | Unset = UNSET,
+    created_at: datetime.datetime | Unset = UNSET,
+    created_at_after: datetime.datetime | Unset = UNSET,
+    created_at_before: datetime.datetime | Unset = UNSET,
+    created_by: str | Unset = UNSET,
+    created_by_id: str | Unset = UNSET,
+    dartboard: str | Unset = UNSET,
+    dartboard_id: str | Unset = UNSET,
+    description: str | Unset = UNSET,
+    due_at: str | Unset = UNSET,
+    due_at_after: str | Unset = UNSET,
+    due_at_before: str | Unset = UNSET,
+    ids: str | Unset = UNSET,
+    in_trash: bool | Unset = UNSET,
+    is_completed: bool | Unset = UNSET,
+    limit: int | Unset = UNSET,
+    no_defaults: bool | Unset = True,
+    o: list[ListTasksOItem] | Unset = UNSET,
+    offset: int | Unset = UNSET,
+    parent_id: str | Unset = UNSET,
+    priority: str | Unset = UNSET,
+    reviewer: str | Unset = UNSET,
+    reviewer_id: str | Unset = UNSET,
+    size: int | Unset = UNSET,
+    start_at: str | Unset = UNSET,
+    start_at_after: str | Unset = UNSET,
+    start_at_before: str | Unset = UNSET,
+    status: str | Unset = UNSET,
+    status_id: str | Unset = UNSET,
+    tag: str | Unset = UNSET,
+    tag_id: str | Unset = UNSET,
+    title: str | Unset = UNSET,
+    type_: str | Unset = UNSET,
+    type_id: str | Unset = UNSET,
+    updated_at: datetime.datetime | Unset = UNSET,
+    updated_at_after: datetime.datetime | Unset = UNSET,
+    updated_at_before: datetime.datetime | Unset = UNSET,
+    updated_by: str | Unset = UNSET,
+    updated_by_id: str | Unset = UNSET,
+    view: str | Unset = UNSET,
+    view_id: str | Unset = UNSET,
+) -> PaginatedConciseTaskList | None:
     """List tasks with powerful filtering options. Filter by dartboard, status, assignee, tags, priority,
     dates, completion state, view, and more. Supports pagination with limit/offset.
 
     Args:
-        assignee (Union[Unset, str]):
-        assignee_id (Union[Unset, str]):
-        completed_at (Union[Unset, datetime.datetime]):
-        completed_at_after (Union[Unset, datetime.datetime]):
-        completed_at_before (Union[Unset, datetime.datetime]):
-        created_at (Union[Unset, datetime.datetime]):
-        created_at_after (Union[Unset, datetime.datetime]):
-        created_at_before (Union[Unset, datetime.datetime]):
-        created_by (Union[Unset, str]):
-        created_by_id (Union[Unset, str]):
-        dartboard (Union[Unset, str]):
-        dartboard_id (Union[Unset, str]):
-        description (Union[Unset, str]):
-        due_at (Union[Unset, str]):
-        due_at_after (Union[Unset, str]):
-        due_at_before (Union[Unset, str]):
-        ids (Union[Unset, str]):
-        in_trash (Union[Unset, bool]):
-        is_completed (Union[Unset, bool]):
-        limit (Union[Unset, int]):
-        no_defaults (Union[Unset, bool]):  Default: True.
-        o (Union[Unset, list[ListTasksOItem]]):
-        offset (Union[Unset, int]):
-        parent_id (Union[Unset, str]):
-        priority (Union[Unset, str]):
-        reviewer (Union[Unset, str]):
-        reviewer_id (Union[Unset, str]):
-        size (Union[Unset, int]):
-        start_at (Union[Unset, str]):
-        start_at_after (Union[Unset, str]):
-        start_at_before (Union[Unset, str]):
-        status (Union[Unset, str]):
-        status_id (Union[Unset, str]):
-        tag (Union[Unset, str]):
-        tag_id (Union[Unset, str]):
-        title (Union[Unset, str]):
-        type_ (Union[Unset, str]):
-        type_id (Union[Unset, str]):
-        updated_at (Union[Unset, datetime.datetime]):
-        updated_at_after (Union[Unset, datetime.datetime]):
-        updated_at_before (Union[Unset, datetime.datetime]):
-        updated_by (Union[Unset, str]):
-        updated_by_id (Union[Unset, str]):
-        view (Union[Unset, str]):
-        view_id (Union[Unset, str]):
+        assignee (str | Unset):
+        assignee_id (str | Unset):
+        completed_at (datetime.datetime | Unset):
+        completed_at_after (datetime.datetime | Unset):
+        completed_at_before (datetime.datetime | Unset):
+        created_at (datetime.datetime | Unset):
+        created_at_after (datetime.datetime | Unset):
+        created_at_before (datetime.datetime | Unset):
+        created_by (str | Unset):
+        created_by_id (str | Unset):
+        dartboard (str | Unset):
+        dartboard_id (str | Unset):
+        description (str | Unset):
+        due_at (str | Unset):
+        due_at_after (str | Unset):
+        due_at_before (str | Unset):
+        ids (str | Unset):
+        in_trash (bool | Unset):
+        is_completed (bool | Unset):
+        limit (int | Unset):
+        no_defaults (bool | Unset):  Default: True.
+        o (list[ListTasksOItem] | Unset):
+        offset (int | Unset):
+        parent_id (str | Unset):
+        priority (str | Unset):
+        reviewer (str | Unset):
+        reviewer_id (str | Unset):
+        size (int | Unset):
+        start_at (str | Unset):
+        start_at_after (str | Unset):
+        start_at_before (str | Unset):
+        status (str | Unset):
+        status_id (str | Unset):
+        tag (str | Unset):
+        tag_id (str | Unset):
+        title (str | Unset):
+        type_ (str | Unset):
+        type_id (str | Unset):
+        updated_at (datetime.datetime | Unset):
+        updated_at_after (datetime.datetime | Unset):
+        updated_at_before (datetime.datetime | Unset):
+        updated_by (str | Unset):
+        updated_by_id (str | Unset):
+        view (str | Unset):
+        view_id (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -543,101 +544,101 @@ def sync(
 async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
-    assignee: Union[Unset, str] = UNSET,
-    assignee_id: Union[Unset, str] = UNSET,
-    completed_at: Union[Unset, datetime.datetime] = UNSET,
-    completed_at_after: Union[Unset, datetime.datetime] = UNSET,
-    completed_at_before: Union[Unset, datetime.datetime] = UNSET,
-    created_at: Union[Unset, datetime.datetime] = UNSET,
-    created_at_after: Union[Unset, datetime.datetime] = UNSET,
-    created_at_before: Union[Unset, datetime.datetime] = UNSET,
-    created_by: Union[Unset, str] = UNSET,
-    created_by_id: Union[Unset, str] = UNSET,
-    dartboard: Union[Unset, str] = UNSET,
-    dartboard_id: Union[Unset, str] = UNSET,
-    description: Union[Unset, str] = UNSET,
-    due_at: Union[Unset, str] = UNSET,
-    due_at_after: Union[Unset, str] = UNSET,
-    due_at_before: Union[Unset, str] = UNSET,
-    ids: Union[Unset, str] = UNSET,
-    in_trash: Union[Unset, bool] = UNSET,
-    is_completed: Union[Unset, bool] = UNSET,
-    limit: Union[Unset, int] = UNSET,
-    no_defaults: Union[Unset, bool] = True,
-    o: Union[Unset, list[ListTasksOItem]] = UNSET,
-    offset: Union[Unset, int] = UNSET,
-    parent_id: Union[Unset, str] = UNSET,
-    priority: Union[Unset, str] = UNSET,
-    reviewer: Union[Unset, str] = UNSET,
-    reviewer_id: Union[Unset, str] = UNSET,
-    size: Union[Unset, int] = UNSET,
-    start_at: Union[Unset, str] = UNSET,
-    start_at_after: Union[Unset, str] = UNSET,
-    start_at_before: Union[Unset, str] = UNSET,
-    status: Union[Unset, str] = UNSET,
-    status_id: Union[Unset, str] = UNSET,
-    tag: Union[Unset, str] = UNSET,
-    tag_id: Union[Unset, str] = UNSET,
-    title: Union[Unset, str] = UNSET,
-    type_: Union[Unset, str] = UNSET,
-    type_id: Union[Unset, str] = UNSET,
-    updated_at: Union[Unset, datetime.datetime] = UNSET,
-    updated_at_after: Union[Unset, datetime.datetime] = UNSET,
-    updated_at_before: Union[Unset, datetime.datetime] = UNSET,
-    updated_by: Union[Unset, str] = UNSET,
-    updated_by_id: Union[Unset, str] = UNSET,
-    view: Union[Unset, str] = UNSET,
-    view_id: Union[Unset, str] = UNSET,
+    assignee: str | Unset = UNSET,
+    assignee_id: str | Unset = UNSET,
+    completed_at: datetime.datetime | Unset = UNSET,
+    completed_at_after: datetime.datetime | Unset = UNSET,
+    completed_at_before: datetime.datetime | Unset = UNSET,
+    created_at: datetime.datetime | Unset = UNSET,
+    created_at_after: datetime.datetime | Unset = UNSET,
+    created_at_before: datetime.datetime | Unset = UNSET,
+    created_by: str | Unset = UNSET,
+    created_by_id: str | Unset = UNSET,
+    dartboard: str | Unset = UNSET,
+    dartboard_id: str | Unset = UNSET,
+    description: str | Unset = UNSET,
+    due_at: str | Unset = UNSET,
+    due_at_after: str | Unset = UNSET,
+    due_at_before: str | Unset = UNSET,
+    ids: str | Unset = UNSET,
+    in_trash: bool | Unset = UNSET,
+    is_completed: bool | Unset = UNSET,
+    limit: int | Unset = UNSET,
+    no_defaults: bool | Unset = True,
+    o: list[ListTasksOItem] | Unset = UNSET,
+    offset: int | Unset = UNSET,
+    parent_id: str | Unset = UNSET,
+    priority: str | Unset = UNSET,
+    reviewer: str | Unset = UNSET,
+    reviewer_id: str | Unset = UNSET,
+    size: int | Unset = UNSET,
+    start_at: str | Unset = UNSET,
+    start_at_after: str | Unset = UNSET,
+    start_at_before: str | Unset = UNSET,
+    status: str | Unset = UNSET,
+    status_id: str | Unset = UNSET,
+    tag: str | Unset = UNSET,
+    tag_id: str | Unset = UNSET,
+    title: str | Unset = UNSET,
+    type_: str | Unset = UNSET,
+    type_id: str | Unset = UNSET,
+    updated_at: datetime.datetime | Unset = UNSET,
+    updated_at_after: datetime.datetime | Unset = UNSET,
+    updated_at_before: datetime.datetime | Unset = UNSET,
+    updated_by: str | Unset = UNSET,
+    updated_by_id: str | Unset = UNSET,
+    view: str | Unset = UNSET,
+    view_id: str | Unset = UNSET,
 ) -> Response[PaginatedConciseTaskList]:
     """List tasks with powerful filtering options. Filter by dartboard, status, assignee, tags, priority,
     dates, completion state, view, and more. Supports pagination with limit/offset.
 
     Args:
-        assignee (Union[Unset, str]):
-        assignee_id (Union[Unset, str]):
-        completed_at (Union[Unset, datetime.datetime]):
-        completed_at_after (Union[Unset, datetime.datetime]):
-        completed_at_before (Union[Unset, datetime.datetime]):
-        created_at (Union[Unset, datetime.datetime]):
-        created_at_after (Union[Unset, datetime.datetime]):
-        created_at_before (Union[Unset, datetime.datetime]):
-        created_by (Union[Unset, str]):
-        created_by_id (Union[Unset, str]):
-        dartboard (Union[Unset, str]):
-        dartboard_id (Union[Unset, str]):
-        description (Union[Unset, str]):
-        due_at (Union[Unset, str]):
-        due_at_after (Union[Unset, str]):
-        due_at_before (Union[Unset, str]):
-        ids (Union[Unset, str]):
-        in_trash (Union[Unset, bool]):
-        is_completed (Union[Unset, bool]):
-        limit (Union[Unset, int]):
-        no_defaults (Union[Unset, bool]):  Default: True.
-        o (Union[Unset, list[ListTasksOItem]]):
-        offset (Union[Unset, int]):
-        parent_id (Union[Unset, str]):
-        priority (Union[Unset, str]):
-        reviewer (Union[Unset, str]):
-        reviewer_id (Union[Unset, str]):
-        size (Union[Unset, int]):
-        start_at (Union[Unset, str]):
-        start_at_after (Union[Unset, str]):
-        start_at_before (Union[Unset, str]):
-        status (Union[Unset, str]):
-        status_id (Union[Unset, str]):
-        tag (Union[Unset, str]):
-        tag_id (Union[Unset, str]):
-        title (Union[Unset, str]):
-        type_ (Union[Unset, str]):
-        type_id (Union[Unset, str]):
-        updated_at (Union[Unset, datetime.datetime]):
-        updated_at_after (Union[Unset, datetime.datetime]):
-        updated_at_before (Union[Unset, datetime.datetime]):
-        updated_by (Union[Unset, str]):
-        updated_by_id (Union[Unset, str]):
-        view (Union[Unset, str]):
-        view_id (Union[Unset, str]):
+        assignee (str | Unset):
+        assignee_id (str | Unset):
+        completed_at (datetime.datetime | Unset):
+        completed_at_after (datetime.datetime | Unset):
+        completed_at_before (datetime.datetime | Unset):
+        created_at (datetime.datetime | Unset):
+        created_at_after (datetime.datetime | Unset):
+        created_at_before (datetime.datetime | Unset):
+        created_by (str | Unset):
+        created_by_id (str | Unset):
+        dartboard (str | Unset):
+        dartboard_id (str | Unset):
+        description (str | Unset):
+        due_at (str | Unset):
+        due_at_after (str | Unset):
+        due_at_before (str | Unset):
+        ids (str | Unset):
+        in_trash (bool | Unset):
+        is_completed (bool | Unset):
+        limit (int | Unset):
+        no_defaults (bool | Unset):  Default: True.
+        o (list[ListTasksOItem] | Unset):
+        offset (int | Unset):
+        parent_id (str | Unset):
+        priority (str | Unset):
+        reviewer (str | Unset):
+        reviewer_id (str | Unset):
+        size (int | Unset):
+        start_at (str | Unset):
+        start_at_after (str | Unset):
+        start_at_before (str | Unset):
+        status (str | Unset):
+        status_id (str | Unset):
+        tag (str | Unset):
+        tag_id (str | Unset):
+        title (str | Unset):
+        type_ (str | Unset):
+        type_id (str | Unset):
+        updated_at (datetime.datetime | Unset):
+        updated_at_after (datetime.datetime | Unset):
+        updated_at_before (datetime.datetime | Unset):
+        updated_by (str | Unset):
+        updated_by_id (str | Unset):
+        view (str | Unset):
+        view_id (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -703,101 +704,101 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: AuthenticatedClient,
-    assignee: Union[Unset, str] = UNSET,
-    assignee_id: Union[Unset, str] = UNSET,
-    completed_at: Union[Unset, datetime.datetime] = UNSET,
-    completed_at_after: Union[Unset, datetime.datetime] = UNSET,
-    completed_at_before: Union[Unset, datetime.datetime] = UNSET,
-    created_at: Union[Unset, datetime.datetime] = UNSET,
-    created_at_after: Union[Unset, datetime.datetime] = UNSET,
-    created_at_before: Union[Unset, datetime.datetime] = UNSET,
-    created_by: Union[Unset, str] = UNSET,
-    created_by_id: Union[Unset, str] = UNSET,
-    dartboard: Union[Unset, str] = UNSET,
-    dartboard_id: Union[Unset, str] = UNSET,
-    description: Union[Unset, str] = UNSET,
-    due_at: Union[Unset, str] = UNSET,
-    due_at_after: Union[Unset, str] = UNSET,
-    due_at_before: Union[Unset, str] = UNSET,
-    ids: Union[Unset, str] = UNSET,
-    in_trash: Union[Unset, bool] = UNSET,
-    is_completed: Union[Unset, bool] = UNSET,
-    limit: Union[Unset, int] = UNSET,
-    no_defaults: Union[Unset, bool] = True,
-    o: Union[Unset, list[ListTasksOItem]] = UNSET,
-    offset: Union[Unset, int] = UNSET,
-    parent_id: Union[Unset, str] = UNSET,
-    priority: Union[Unset, str] = UNSET,
-    reviewer: Union[Unset, str] = UNSET,
-    reviewer_id: Union[Unset, str] = UNSET,
-    size: Union[Unset, int] = UNSET,
-    start_at: Union[Unset, str] = UNSET,
-    start_at_after: Union[Unset, str] = UNSET,
-    start_at_before: Union[Unset, str] = UNSET,
-    status: Union[Unset, str] = UNSET,
-    status_id: Union[Unset, str] = UNSET,
-    tag: Union[Unset, str] = UNSET,
-    tag_id: Union[Unset, str] = UNSET,
-    title: Union[Unset, str] = UNSET,
-    type_: Union[Unset, str] = UNSET,
-    type_id: Union[Unset, str] = UNSET,
-    updated_at: Union[Unset, datetime.datetime] = UNSET,
-    updated_at_after: Union[Unset, datetime.datetime] = UNSET,
-    updated_at_before: Union[Unset, datetime.datetime] = UNSET,
-    updated_by: Union[Unset, str] = UNSET,
-    updated_by_id: Union[Unset, str] = UNSET,
-    view: Union[Unset, str] = UNSET,
-    view_id: Union[Unset, str] = UNSET,
-) -> Optional[PaginatedConciseTaskList]:
+    assignee: str | Unset = UNSET,
+    assignee_id: str | Unset = UNSET,
+    completed_at: datetime.datetime | Unset = UNSET,
+    completed_at_after: datetime.datetime | Unset = UNSET,
+    completed_at_before: datetime.datetime | Unset = UNSET,
+    created_at: datetime.datetime | Unset = UNSET,
+    created_at_after: datetime.datetime | Unset = UNSET,
+    created_at_before: datetime.datetime | Unset = UNSET,
+    created_by: str | Unset = UNSET,
+    created_by_id: str | Unset = UNSET,
+    dartboard: str | Unset = UNSET,
+    dartboard_id: str | Unset = UNSET,
+    description: str | Unset = UNSET,
+    due_at: str | Unset = UNSET,
+    due_at_after: str | Unset = UNSET,
+    due_at_before: str | Unset = UNSET,
+    ids: str | Unset = UNSET,
+    in_trash: bool | Unset = UNSET,
+    is_completed: bool | Unset = UNSET,
+    limit: int | Unset = UNSET,
+    no_defaults: bool | Unset = True,
+    o: list[ListTasksOItem] | Unset = UNSET,
+    offset: int | Unset = UNSET,
+    parent_id: str | Unset = UNSET,
+    priority: str | Unset = UNSET,
+    reviewer: str | Unset = UNSET,
+    reviewer_id: str | Unset = UNSET,
+    size: int | Unset = UNSET,
+    start_at: str | Unset = UNSET,
+    start_at_after: str | Unset = UNSET,
+    start_at_before: str | Unset = UNSET,
+    status: str | Unset = UNSET,
+    status_id: str | Unset = UNSET,
+    tag: str | Unset = UNSET,
+    tag_id: str | Unset = UNSET,
+    title: str | Unset = UNSET,
+    type_: str | Unset = UNSET,
+    type_id: str | Unset = UNSET,
+    updated_at: datetime.datetime | Unset = UNSET,
+    updated_at_after: datetime.datetime | Unset = UNSET,
+    updated_at_before: datetime.datetime | Unset = UNSET,
+    updated_by: str | Unset = UNSET,
+    updated_by_id: str | Unset = UNSET,
+    view: str | Unset = UNSET,
+    view_id: str | Unset = UNSET,
+) -> PaginatedConciseTaskList | None:
     """List tasks with powerful filtering options. Filter by dartboard, status, assignee, tags, priority,
     dates, completion state, view, and more. Supports pagination with limit/offset.
 
     Args:
-        assignee (Union[Unset, str]):
-        assignee_id (Union[Unset, str]):
-        completed_at (Union[Unset, datetime.datetime]):
-        completed_at_after (Union[Unset, datetime.datetime]):
-        completed_at_before (Union[Unset, datetime.datetime]):
-        created_at (Union[Unset, datetime.datetime]):
-        created_at_after (Union[Unset, datetime.datetime]):
-        created_at_before (Union[Unset, datetime.datetime]):
-        created_by (Union[Unset, str]):
-        created_by_id (Union[Unset, str]):
-        dartboard (Union[Unset, str]):
-        dartboard_id (Union[Unset, str]):
-        description (Union[Unset, str]):
-        due_at (Union[Unset, str]):
-        due_at_after (Union[Unset, str]):
-        due_at_before (Union[Unset, str]):
-        ids (Union[Unset, str]):
-        in_trash (Union[Unset, bool]):
-        is_completed (Union[Unset, bool]):
-        limit (Union[Unset, int]):
-        no_defaults (Union[Unset, bool]):  Default: True.
-        o (Union[Unset, list[ListTasksOItem]]):
-        offset (Union[Unset, int]):
-        parent_id (Union[Unset, str]):
-        priority (Union[Unset, str]):
-        reviewer (Union[Unset, str]):
-        reviewer_id (Union[Unset, str]):
-        size (Union[Unset, int]):
-        start_at (Union[Unset, str]):
-        start_at_after (Union[Unset, str]):
-        start_at_before (Union[Unset, str]):
-        status (Union[Unset, str]):
-        status_id (Union[Unset, str]):
-        tag (Union[Unset, str]):
-        tag_id (Union[Unset, str]):
-        title (Union[Unset, str]):
-        type_ (Union[Unset, str]):
-        type_id (Union[Unset, str]):
-        updated_at (Union[Unset, datetime.datetime]):
-        updated_at_after (Union[Unset, datetime.datetime]):
-        updated_at_before (Union[Unset, datetime.datetime]):
-        updated_by (Union[Unset, str]):
-        updated_by_id (Union[Unset, str]):
-        view (Union[Unset, str]):
-        view_id (Union[Unset, str]):
+        assignee (str | Unset):
+        assignee_id (str | Unset):
+        completed_at (datetime.datetime | Unset):
+        completed_at_after (datetime.datetime | Unset):
+        completed_at_before (datetime.datetime | Unset):
+        created_at (datetime.datetime | Unset):
+        created_at_after (datetime.datetime | Unset):
+        created_at_before (datetime.datetime | Unset):
+        created_by (str | Unset):
+        created_by_id (str | Unset):
+        dartboard (str | Unset):
+        dartboard_id (str | Unset):
+        description (str | Unset):
+        due_at (str | Unset):
+        due_at_after (str | Unset):
+        due_at_before (str | Unset):
+        ids (str | Unset):
+        in_trash (bool | Unset):
+        is_completed (bool | Unset):
+        limit (int | Unset):
+        no_defaults (bool | Unset):  Default: True.
+        o (list[ListTasksOItem] | Unset):
+        offset (int | Unset):
+        parent_id (str | Unset):
+        priority (str | Unset):
+        reviewer (str | Unset):
+        reviewer_id (str | Unset):
+        size (int | Unset):
+        start_at (str | Unset):
+        start_at_after (str | Unset):
+        start_at_before (str | Unset):
+        status (str | Unset):
+        status_id (str | Unset):
+        tag (str | Unset):
+        tag_id (str | Unset):
+        title (str | Unset):
+        type_ (str | Unset):
+        type_id (str | Unset):
+        updated_at (datetime.datetime | Unset):
+        updated_at_after (datetime.datetime | Unset):
+        updated_at_before (datetime.datetime | Unset):
+        updated_by (str | Unset):
+        updated_by_id (str | Unset):
+        view (str | Unset):
+        view_id (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

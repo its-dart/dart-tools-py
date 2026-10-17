@@ -3,7 +3,7 @@ name = "dart-tools"
 version = "0.11.6"
 description = "The Dart CLI and Python Library"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 license = "MIT"
 license-files = ["LICENSE"]
 keywords = ["dart", "cli", "projectmanagement", "taskmanagement"]
@@ -19,11 +19,11 @@ classifiers=[
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
     "Topic :: Office/Business",
     "Topic :: Office/Business :: Groupware",
     "Topic :: Office/Business :: Scheduling",
@@ -32,21 +32,22 @@ classifiers=[
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
-  "attrs>=25.4",
-  "dateparser>=1.2",
+  "attrs>=26.1",
+  "dateparser>=1.4",
   "flask>=3.1",
   "httpx>=0.28",
-  "pick>=2.4",
-  "platformdirs>=4.4",
-  "rich>=14.3",
-  "websockets>=15.0",
+  "pick>=2.6",
+  "platformdirs>=4.12",
+  "rich>=15.0",
+  "typing-extensions>=4.16",
+  "websockets>=16.1",
 ]
 
 [dependency-groups]
 dev = [
-    "black==25.1.0",
-    "isort==6.1.0",
-    "openapi-python-client==0.26.2",
+    "black==26.10.1",
+    "isort==9.0.2",
+    "openapi-python-client==0.29.1",
 ]
 
 [project.urls]
@@ -60,7 +61,7 @@ dev = [
 dart = "dart:cli"
 
 [build-system]
-requires = ["setuptools>=77.0.0", "wheel"]
+requires = ["setuptools>=84.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.black]
@@ -73,3 +74,6 @@ line_length = 120
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["dart", "dart.generated*"]
+
+[tool.pylint.main]
+py-version = "3.11"

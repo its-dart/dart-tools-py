@@ -1,10 +1,7 @@
+from __future__ import annotations
+
 from collections.abc import Mapping
-from typing import (
-    Any,
-    TypeVar,
-    Union,
-    cast,
-)
+from typing import Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -30,24 +27,23 @@ class TaskUpdateCustomPropertiesType0:
 
     """
 
-    additional_properties: dict[str, Union[None, bool, float, int, list[Union[None, str]], list[str], str]] = (
-        _attrs_field(init=False, factory=dict)
+    additional_properties: dict[str, bool | float | int | list[None | str] | list[str] | None | str] = _attrs_field(
+        init=False, factory=dict
     )
 
     def to_dict(self) -> dict[str, Any]:
+
         field_dict: dict[str, Any] = {}
         for prop_name, prop in self.additional_properties.items():
+
             if isinstance(prop, list):
                 field_dict[prop_name] = []
                 for additional_property_custom_property_dates_range_type_0_item_data in prop:
-                    additional_property_custom_property_dates_range_type_0_item: Union[None, str]
+                    additional_property_custom_property_dates_range_type_0_item: None | str
                     additional_property_custom_property_dates_range_type_0_item = (
                         additional_property_custom_property_dates_range_type_0_item_data
                     )
                     field_dict[prop_name].append(additional_property_custom_property_dates_range_type_0_item)
-
-            elif isinstance(prop, list):
-                field_dict[prop_name] = prop
 
             elif isinstance(prop, list):
                 field_dict[prop_name] = prop
@@ -67,7 +63,7 @@ class TaskUpdateCustomPropertiesType0:
 
             def _parse_additional_property(
                 data: object,
-            ) -> Union[None, bool, float, int, list[Union[None, str]], list[str], str]:
+            ) -> bool | float | int | list[None | str] | list[str] | None | str:
                 if data is None:
                     return data
                 try:
@@ -81,10 +77,10 @@ class TaskUpdateCustomPropertiesType0:
 
                         def _parse_additional_property_custom_property_dates_range_type_0_item(
                             data: object,
-                        ) -> Union[None, str]:
+                        ) -> None | str:
                             if data is None:
                                 return data
-                            return cast(Union[None, str], data)
+                            return cast(None | str, data)
 
                         additional_property_custom_property_dates_range_type_0_item = (
                             _parse_additional_property_custom_property_dates_range_type_0_item(
@@ -97,7 +93,7 @@ class TaskUpdateCustomPropertiesType0:
                         )
 
                     return additional_property_custom_property_dates_range_type_0
-                except:  # noqa: E722
+                except (TypeError, ValueError, AttributeError, KeyError):
                     pass
                 try:
                     if not isinstance(data, list):
@@ -105,20 +101,9 @@ class TaskUpdateCustomPropertiesType0:
                     additional_property_custom_property_multiselect = cast(list[str], data)
 
                     return additional_property_custom_property_multiselect
-                except:  # noqa: E722
+                except (TypeError, ValueError, AttributeError, KeyError):
                     pass
-                try:
-                    if not isinstance(data, list):
-                        raise TypeError()
-                    additional_property_custom_property_user_multiple = cast(list[str], data)
-
-                    return additional_property_custom_property_user_multiple
-                except:  # noqa: E722
-                    pass
-                return cast(
-                    Union[None, bool, float, int, list[Union[None, str]], list[str], str],
-                    data,
-                )
+                return cast(bool | float | int | list[None | str] | list[str] | None | str, data)
 
             additional_property = _parse_additional_property(prop_dict)
 
@@ -131,14 +116,10 @@ class TaskUpdateCustomPropertiesType0:
     def additional_keys(self) -> list[str]:
         return list(self.additional_properties.keys())
 
-    def __getitem__(self, key: str) -> Union[None, bool, float, int, list[Union[None, str]], list[str], str]:
+    def __getitem__(self, key: str) -> bool | float | int | list[None | str] | list[str] | None | str:
         return self.additional_properties[key]
 
-    def __setitem__(
-        self,
-        key: str,
-        value: Union[None, bool, float, int, list[Union[None, str]], list[str], str],
-    ) -> None:
+    def __setitem__(self, key: str, value: bool | float | int | list[None | str] | list[str] | None | str) -> None:
         self.additional_properties[key] = value
 
     def __delitem__(self, key: str) -> None:

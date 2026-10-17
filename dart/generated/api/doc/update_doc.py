@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union, cast
+from typing import Any, cast
+from urllib.parse import quote
 
 import httpx
 
@@ -20,7 +21,7 @@ def _get_kwargs(
     _kwargs: dict[str, Any] = {
         "method": "put",
         "url": "/docs/{id}".format(
-            id=id,
+            id=quote(str(id), safe=""),
         ),
     }
 
@@ -32,9 +33,7 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(
-    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Optional[Union[Any, WrappedDoc]]:
+def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Any | WrappedDoc | None:
     if response.status_code == 200:
         response_200 = WrappedDoc.from_dict(response.json())
 
@@ -54,9 +53,7 @@ def _parse_response(
         return None
 
 
-def _build_response(
-    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Response[Union[Any, WrappedDoc]]:
+def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[Any | WrappedDoc]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -70,7 +67,7 @@ def sync_detailed(
     *,
     client: AuthenticatedClient,
     body: WrappedDocUpdate,
-) -> Response[Union[Any, WrappedDoc]]:
+) -> Response[Any | WrappedDoc]:
     """Update an existing doc
 
      Update certain properties of an existing doc. This will save the doc in Dart for later access,
@@ -85,7 +82,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, WrappedDoc]]
+        Response[Any | WrappedDoc]
     """
 
     kwargs = _get_kwargs(
@@ -105,7 +102,7 @@ def sync(
     *,
     client: AuthenticatedClient,
     body: WrappedDocUpdate,
-) -> Optional[Union[Any, WrappedDoc]]:
+) -> Any | WrappedDoc | None:
     """Update an existing doc
 
      Update certain properties of an existing doc. This will save the doc in Dart for later access,
@@ -120,7 +117,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, WrappedDoc]
+        Any | WrappedDoc
     """
 
     return sync_detailed(
@@ -135,7 +132,7 @@ async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
     body: WrappedDocUpdate,
-) -> Response[Union[Any, WrappedDoc]]:
+) -> Response[Any | WrappedDoc]:
     """Update an existing doc
 
      Update certain properties of an existing doc. This will save the doc in Dart for later access,
@@ -150,7 +147,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, WrappedDoc]]
+        Response[Any | WrappedDoc]
     """
 
     kwargs = _get_kwargs(
@@ -168,7 +165,7 @@ async def asyncio(
     *,
     client: AuthenticatedClient,
     body: WrappedDocUpdate,
-) -> Optional[Union[Any, WrappedDoc]]:
+) -> Any | WrappedDoc | None:
     """Update an existing doc
 
      Update certain properties of an existing doc. This will save the doc in Dart for later access,
@@ -183,7 +180,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, WrappedDoc]
+        Any | WrappedDoc
     """
 
     return (

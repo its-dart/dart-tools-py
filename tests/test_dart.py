@@ -232,7 +232,7 @@ class LoginTests(unittest.TestCase):
 
             self.assertIs(result, task)
             self.assertIn("new_token", config_path.read_text(encoding="UTF-8"))
-            open_new_tab_mock.assert_called_once_with("https://app.dartai.com/?settings=account")
+            open_new_tab_mock.assert_called_once_with(dart_cli._DEFAULT_HOST + "/?settings=account")
             input_mock.assert_called_once_with("Token: ")
             create_task_mock.assert_called_once()
 
@@ -432,7 +432,7 @@ class HostSetTests(unittest.TestCase):
                         str(ctx.exception),
                         f"Invalid host {host}. Valid hosts are {dart_cli._HOST_OPTIONS_TEXT}.",
                     )
-                    self.assertEqual(dart_cli._Config().host, dart_cli._PROD_HOST)
+                    self.assertEqual(dart_cli._Config().host, dart_cli._DEFAULT_HOST)
 
     def test_host_set_help_lists_supported_hosts(self) -> None:
         stdout = io.StringIO()

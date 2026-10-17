@@ -1,11 +1,7 @@
+from __future__ import annotations
+
 from collections.abc import Mapping
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    TypeVar,
-    Union,
-    cast,
-)
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -27,23 +23,21 @@ class PaginatedWebhookList:
     """
     Attributes:
         count (int):  Example: 123.
-        results (list['Webhook']):
-        next_ (Union[None, Unset, str]):  Example: http://api.example.org/accounts/?offset=400&limit=100.
-        previous (Union[None, Unset, str]):  Example: http://api.example.org/accounts/?offset=200&limit=100.
-        meta (Union['PaginatedWebhookListMetaType0', None, Unset]):
+        results (list[Webhook]):
+        next_ (None | str | Unset):  Example: http://api.example.org/accounts/?offset=400&limit=100.
+        previous (None | str | Unset):  Example: http://api.example.org/accounts/?offset=200&limit=100.
+        meta (None | PaginatedWebhookListMetaType0 | Unset):
     """
 
     count: int
-    results: list["Webhook"]
-    next_: Union[None, Unset, str] = UNSET
-    previous: Union[None, Unset, str] = UNSET
-    meta: Union["PaginatedWebhookListMetaType0", None, Unset] = UNSET
+    results: list[Webhook]
+    next_: None | str | Unset = UNSET
+    previous: None | str | Unset = UNSET
+    meta: None | PaginatedWebhookListMetaType0 | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.paginated_webhook_list_meta_type_0 import (
-            PaginatedWebhookListMetaType0,
-        )
+        from ..models.paginated_webhook_list_meta_type_0 import PaginatedWebhookListMetaType0  # noqa: PLC0415
 
         count = self.count
 
@@ -52,19 +46,19 @@ class PaginatedWebhookList:
             results_item = results_item_data.to_dict()
             results.append(results_item)
 
-        next_: Union[None, Unset, str]
+        next_: None | str | Unset
         if isinstance(self.next_, Unset):
             next_ = UNSET
         else:
             next_ = self.next_
 
-        previous: Union[None, Unset, str]
+        previous: None | str | Unset
         if isinstance(self.previous, Unset):
             previous = UNSET
         else:
             previous = self.previous
 
-        meta: Union[None, Unset, dict[str, Any]]
+        meta: dict[str, Any] | None | Unset
         if isinstance(self.meta, Unset):
             meta = UNSET
         elif isinstance(self.meta, PaginatedWebhookListMetaType0):
@@ -91,10 +85,8 @@ class PaginatedWebhookList:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.paginated_webhook_list_meta_type_0 import (
-            PaginatedWebhookListMetaType0,
-        )
-        from ..models.webhook import Webhook
+        from ..models.paginated_webhook_list_meta_type_0 import PaginatedWebhookListMetaType0  # noqa: PLC0415
+        from ..models.webhook import Webhook  # noqa: PLC0415
 
         d = dict(src_dict)
         count = d.pop("count")
@@ -106,27 +98,25 @@ class PaginatedWebhookList:
 
             results.append(results_item)
 
-        def _parse_next_(data: object) -> Union[None, Unset, str]:
+        def _parse_next_(data: object) -> None | str | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):
                 return data
-            return cast(Union[None, Unset, str], data)
+            return cast(None | str | Unset, data)
 
         next_ = _parse_next_(d.pop("next", UNSET))
 
-        def _parse_previous(data: object) -> Union[None, Unset, str]:
+        def _parse_previous(data: object) -> None | str | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):
                 return data
-            return cast(Union[None, Unset, str], data)
+            return cast(None | str | Unset, data)
 
         previous = _parse_previous(d.pop("previous", UNSET))
 
-        def _parse_meta(
-            data: object,
-        ) -> Union["PaginatedWebhookListMetaType0", None, Unset]:
+        def _parse_meta(data: object) -> None | PaginatedWebhookListMetaType0 | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):
@@ -137,9 +127,9 @@ class PaginatedWebhookList:
                 meta_type_0 = PaginatedWebhookListMetaType0.from_dict(data)
 
                 return meta_type_0
-            except:  # noqa: E722
+            except (TypeError, ValueError, AttributeError, KeyError):
                 pass
-            return cast(Union["PaginatedWebhookListMetaType0", None, Unset], data)
+            return cast(None | PaginatedWebhookListMetaType0 | Unset, data)
 
         meta = _parse_meta(d.pop("meta", UNSET))
 

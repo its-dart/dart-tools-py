@@ -1,5 +1,6 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union, cast
+from typing import Any, cast
+from urllib.parse import quote
 
 import httpx
 
@@ -20,7 +21,7 @@ def _get_kwargs(
     _kwargs: dict[str, Any] = {
         "method": "post",
         "url": "/tasks/{id}/update-description".format(
-            id=id,
+            id=quote(str(id), safe=""),
         ),
     }
 
@@ -32,9 +33,7 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(
-    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Optional[Union[Any, WrappedTask]]:
+def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Any | WrappedTask | None:
     if response.status_code == 200:
         response_200 = WrappedTask.from_dict(response.json())
 
@@ -54,9 +53,7 @@ def _parse_response(
         return None
 
 
-def _build_response(
-    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Response[Union[Any, WrappedTask]]:
+def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[Any | WrappedTask]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -70,15 +67,15 @@ def sync_detailed(
     *,
     client: AuthenticatedClient,
     body: TaskDescriptionUpdate,
-) -> Response[Union[Any, WrappedTask]]:
-    r"""Update a task's description with text updates
+) -> Response[Any | WrappedTask]:
+    """Update a task's description with text updates
 
      Apply targeted text updates to a task's description; use instead of updateTask when only the
-    description changes. Each update is one of: \"replace\" (swap oldText for newText),
-    \"insert_before\" / \"insert_after\" (insert newText relative to anchorText), or \"delete\" (remove
-    oldText), applied in order and atomically. When occurrence is omitted, the target text must be
-    unique; otherwise specify occurrence (1-indexed). Preferred over a full update for long content:
-    fewer tokens, and no risk of rewriting unrelated text.
+    description changes. Each update is one of: "replace" (swap oldText for newText), "insert_before" /
+    "insert_after" (insert newText relative to anchorText), or "delete" (remove oldText), applied in
+    order and atomically. When occurrence is omitted, the target text must be unique; otherwise specify
+    occurrence (1-indexed). Preferred over a full update for long content: fewer tokens, and no risk of
+    rewriting unrelated text.
 
     Args:
         id (str):
@@ -90,7 +87,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, WrappedTask]]
+        Response[Any | WrappedTask]
     """
 
     kwargs = _get_kwargs(
@@ -110,15 +107,15 @@ def sync(
     *,
     client: AuthenticatedClient,
     body: TaskDescriptionUpdate,
-) -> Optional[Union[Any, WrappedTask]]:
-    r"""Update a task's description with text updates
+) -> Any | WrappedTask | None:
+    """Update a task's description with text updates
 
      Apply targeted text updates to a task's description; use instead of updateTask when only the
-    description changes. Each update is one of: \"replace\" (swap oldText for newText),
-    \"insert_before\" / \"insert_after\" (insert newText relative to anchorText), or \"delete\" (remove
-    oldText), applied in order and atomically. When occurrence is omitted, the target text must be
-    unique; otherwise specify occurrence (1-indexed). Preferred over a full update for long content:
-    fewer tokens, and no risk of rewriting unrelated text.
+    description changes. Each update is one of: "replace" (swap oldText for newText), "insert_before" /
+    "insert_after" (insert newText relative to anchorText), or "delete" (remove oldText), applied in
+    order and atomically. When occurrence is omitted, the target text must be unique; otherwise specify
+    occurrence (1-indexed). Preferred over a full update for long content: fewer tokens, and no risk of
+    rewriting unrelated text.
 
     Args:
         id (str):
@@ -130,7 +127,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, WrappedTask]
+        Any | WrappedTask
     """
 
     return sync_detailed(
@@ -145,15 +142,15 @@ async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
     body: TaskDescriptionUpdate,
-) -> Response[Union[Any, WrappedTask]]:
-    r"""Update a task's description with text updates
+) -> Response[Any | WrappedTask]:
+    """Update a task's description with text updates
 
      Apply targeted text updates to a task's description; use instead of updateTask when only the
-    description changes. Each update is one of: \"replace\" (swap oldText for newText),
-    \"insert_before\" / \"insert_after\" (insert newText relative to anchorText), or \"delete\" (remove
-    oldText), applied in order and atomically. When occurrence is omitted, the target text must be
-    unique; otherwise specify occurrence (1-indexed). Preferred over a full update for long content:
-    fewer tokens, and no risk of rewriting unrelated text.
+    description changes. Each update is one of: "replace" (swap oldText for newText), "insert_before" /
+    "insert_after" (insert newText relative to anchorText), or "delete" (remove oldText), applied in
+    order and atomically. When occurrence is omitted, the target text must be unique; otherwise specify
+    occurrence (1-indexed). Preferred over a full update for long content: fewer tokens, and no risk of
+    rewriting unrelated text.
 
     Args:
         id (str):
@@ -165,7 +162,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, WrappedTask]]
+        Response[Any | WrappedTask]
     """
 
     kwargs = _get_kwargs(
@@ -183,15 +180,15 @@ async def asyncio(
     *,
     client: AuthenticatedClient,
     body: TaskDescriptionUpdate,
-) -> Optional[Union[Any, WrappedTask]]:
-    r"""Update a task's description with text updates
+) -> Any | WrappedTask | None:
+    """Update a task's description with text updates
 
      Apply targeted text updates to a task's description; use instead of updateTask when only the
-    description changes. Each update is one of: \"replace\" (swap oldText for newText),
-    \"insert_before\" / \"insert_after\" (insert newText relative to anchorText), or \"delete\" (remove
-    oldText), applied in order and atomically. When occurrence is omitted, the target text must be
-    unique; otherwise specify occurrence (1-indexed). Preferred over a full update for long content:
-    fewer tokens, and no risk of rewriting unrelated text.
+    description changes. Each update is one of: "replace" (swap oldText for newText), "insert_before" /
+    "insert_after" (insert newText relative to anchorText), or "delete" (remove oldText), applied in
+    order and atomically. When occurrence is omitted, the target text must be unique; otherwise specify
+    occurrence (1-indexed). Preferred over a full update for long content: fewer tokens, and no risk of
+    rewriting unrelated text.
 
     Args:
         id (str):
@@ -203,7 +200,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, WrappedTask]
+        Any | WrappedTask
     """
 
     return (

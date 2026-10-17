@@ -1,9 +1,7 @@
+from __future__ import annotations
+
 from collections.abc import Mapping
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    TypeVar,
-)
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -22,16 +20,17 @@ class Skill:
         id (str): The universal, unique ID of the skill.
         title (str): The title of the skill, describing the task type.
         prompt_markdown (str): User-defined instructions for performing this skill in markdown format.
-        attachments (list['Attachment']): Attachments linked to the skill, including their accessible URLs.
+        attachments (list[Attachment]): Attachments linked to the skill, including their accessible URLs.
     """
 
     id: str
     title: str
     prompt_markdown: str
-    attachments: list["Attachment"]
+    attachments: list[Attachment]
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+
         id = self.id
 
         title = self.title
@@ -58,7 +57,7 @@ class Skill:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.attachment import Attachment
+        from ..models.attachment import Attachment  # noqa: PLC0415
 
         d = dict(src_dict)
         id = d.pop("id")

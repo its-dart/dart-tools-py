@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union
+from typing import Any
 
 import httpx
 
@@ -10,6 +10,7 @@ from ...types import Response
 
 
 def _get_kwargs() -> dict[str, Any]:
+
     _kwargs: dict[str, Any] = {
         "method": "get",
         "url": "/me",
@@ -18,7 +19,7 @@ def _get_kwargs() -> dict[str, Any]:
     return _kwargs
 
 
-def _parse_response(*, client: Union[AuthenticatedClient, Client], response: httpx.Response) -> Optional[Me]:
+def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Me | None:
     if response.status_code == 200:
         response_200 = Me.from_dict(response.json())
 
@@ -30,7 +31,7 @@ def _parse_response(*, client: Union[AuthenticatedClient, Client], response: htt
         return None
 
 
-def _build_response(*, client: Union[AuthenticatedClient, Client], response: httpx.Response) -> Response[Me]:
+def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[Me]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -67,7 +68,7 @@ def sync_detailed(
 def sync(
     *,
     client: AuthenticatedClient,
-) -> Optional[Me]:
+) -> Me | None:
     """Check authentication
 
      Check the current public API authentication token and return the authenticated user.
@@ -111,7 +112,7 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: AuthenticatedClient,
-) -> Optional[Me]:
+) -> Me | None:
     """Check authentication
 
      Check the current public API authentication token and return the authenticated user.

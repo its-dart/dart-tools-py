@@ -1,9 +1,7 @@
+from __future__ import annotations
+
 from collections.abc import Mapping
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    TypeVar,
-)
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -20,14 +18,15 @@ class DocTextUpdate:
     """Payload for applying a list of targeted text updates to a doc's text content.
 
     Attributes:
-        updates (list['TextUpdate']): An ordered list of text updates to apply. Each one operates on the result of the
+        updates (list[TextUpdate]): An ordered list of text updates to apply. Each one operates on the result of the
             previous one. Applied atomically — if any update fails, none are persisted.
     """
 
-    updates: list["TextUpdate"]
+    updates: list[TextUpdate]
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+
         updates = []
         for updates_item_data in self.updates:
             updates_item = updates_item_data.to_dict()
@@ -45,7 +44,7 @@ class DocTextUpdate:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.text_update import TextUpdate
+        from ..models.text_update import TextUpdate  # noqa: PLC0415
 
         d = dict(src_dict)
         updates = []

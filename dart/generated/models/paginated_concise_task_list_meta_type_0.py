@@ -1,11 +1,7 @@
+from __future__ import annotations
+
 from collections.abc import Mapping
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    TypeVar,
-    Union,
-    cast,
-)
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -25,28 +21,28 @@ T = TypeVar("T", bound="PaginatedConciseTaskListMetaType0")
 class PaginatedConciseTaskListMetaType0:
     """
     Attributes:
-        defaults_applied (Union[Unset, bool]): Whether default filters or ordering were applied to the response.
-        applied_default_filters (Union[Unset, PaginatedConciseTaskListMetaType0AppliedDefaultFilters]): The default
-            filters that were applied automatically, if any.
-        applied_default_sorts (Union[Unset, list[str]]): The default ordering fields that were applied automatically, if
-            any.
-        instructions (Union[Unset, str]): Guidance on how to disable or override default filters and ordering.
+        defaults_applied (bool | Unset): Whether default filters or ordering were applied to the response.
+        applied_default_filters (PaginatedConciseTaskListMetaType0AppliedDefaultFilters | Unset): The default filters
+            that were applied automatically, if any.
+        applied_default_sorts (list[str] | Unset): The default ordering fields that were applied automatically, if any.
+        instructions (str | Unset): Guidance on how to disable or override default filters and ordering.
     """
 
-    defaults_applied: Union[Unset, bool] = UNSET
-    applied_default_filters: Union[Unset, "PaginatedConciseTaskListMetaType0AppliedDefaultFilters"] = UNSET
-    applied_default_sorts: Union[Unset, list[str]] = UNSET
-    instructions: Union[Unset, str] = UNSET
+    defaults_applied: bool | Unset = UNSET
+    applied_default_filters: PaginatedConciseTaskListMetaType0AppliedDefaultFilters | Unset = UNSET
+    applied_default_sorts: list[str] | Unset = UNSET
+    instructions: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+
         defaults_applied = self.defaults_applied
 
-        applied_default_filters: Union[Unset, dict[str, Any]] = UNSET
+        applied_default_filters: dict[str, Any] | Unset = UNSET
         if not isinstance(self.applied_default_filters, Unset):
             applied_default_filters = self.applied_default_filters.to_dict()
 
-        applied_default_sorts: Union[Unset, list[str]] = UNSET
+        applied_default_sorts: list[str] | Unset = UNSET
         if not isinstance(self.applied_default_sorts, Unset):
             applied_default_sorts = self.applied_default_sorts
 
@@ -68,7 +64,7 @@ class PaginatedConciseTaskListMetaType0:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.paginated_concise_task_list_meta_type_0_applied_default_filters import (
+        from ..models.paginated_concise_task_list_meta_type_0_applied_default_filters import (  # noqa: PLC0415
             PaginatedConciseTaskListMetaType0AppliedDefaultFilters,
         )
 
@@ -76,7 +72,7 @@ class PaginatedConciseTaskListMetaType0:
         defaults_applied = d.pop("defaultsApplied", UNSET)
 
         _applied_default_filters = d.pop("appliedDefaultFilters", UNSET)
-        applied_default_filters: Union[Unset, PaginatedConciseTaskListMetaType0AppliedDefaultFilters]
+        applied_default_filters: PaginatedConciseTaskListMetaType0AppliedDefaultFilters | Unset
         if isinstance(_applied_default_filters, Unset):
             applied_default_filters = UNSET
         else:

@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union, cast
+from typing import Any, cast
 
 import httpx
 
@@ -30,8 +30,8 @@ def _get_kwargs(
 
 
 def _parse_response(
-    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Optional[Union[Any, TokenLoginResponse]]:
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> Any | TokenLoginResponse | None:
     if response.status_code == 200:
         response_200 = TokenLoginResponse.from_dict(response.json())
 
@@ -52,8 +52,8 @@ def _parse_response(
 
 
 def _build_response(
-    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Response[Union[Any, TokenLoginResponse]]:
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> Response[Any | TokenLoginResponse]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -64,9 +64,9 @@ def _build_response(
 
 def sync_detailed(
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient | Client,
     body: TokenLoginRequest,
-) -> Response[Union[Any, TokenLoginResponse]]:
+) -> Response[Any | TokenLoginResponse]:
     """Exchange login token
 
      Exchange a standard Dart login token for the user's public API authentication token.
@@ -79,7 +79,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, TokenLoginResponse]]
+        Response[Any | TokenLoginResponse]
     """
 
     kwargs = _get_kwargs(
@@ -95,9 +95,9 @@ def sync_detailed(
 
 def sync(
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient | Client,
     body: TokenLoginRequest,
-) -> Optional[Union[Any, TokenLoginResponse]]:
+) -> Any | TokenLoginResponse | None:
     """Exchange login token
 
      Exchange a standard Dart login token for the user's public API authentication token.
@@ -110,7 +110,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, TokenLoginResponse]
+        Any | TokenLoginResponse
     """
 
     return sync_detailed(
@@ -121,9 +121,9 @@ def sync(
 
 async def asyncio_detailed(
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient | Client,
     body: TokenLoginRequest,
-) -> Response[Union[Any, TokenLoginResponse]]:
+) -> Response[Any | TokenLoginResponse]:
     """Exchange login token
 
      Exchange a standard Dart login token for the user's public API authentication token.
@@ -136,7 +136,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, TokenLoginResponse]]
+        Response[Any | TokenLoginResponse]
     """
 
     kwargs = _get_kwargs(
@@ -150,9 +150,9 @@ async def asyncio_detailed(
 
 async def asyncio(
     *,
-    client: Union[AuthenticatedClient, Client],
+    client: AuthenticatedClient | Client,
     body: TokenLoginRequest,
-) -> Optional[Union[Any, TokenLoginResponse]]:
+) -> Any | TokenLoginResponse | None:
     """Exchange login token
 
      Exchange a standard Dart login token for the user's public API authentication token.
@@ -165,7 +165,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, TokenLoginResponse]
+        Any | TokenLoginResponse
     """
 
     return (

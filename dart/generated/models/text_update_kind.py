@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class TextUpdateKind(str, Enum):
+class TextUpdateKind(StrEnum):
     DELETE = "delete"
     INSERT_AFTER = "insert_after"
     INSERT_BEFORE = "insert_before"

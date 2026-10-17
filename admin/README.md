@@ -42,3 +42,4 @@
    1. Bump the dependencies in `dependencies` to be `>=` the lowest functional minor version
    2. Bump the dependencies in `[dependency-groups]` to be `==` the latest patch version
 2. Run `make req-up-all`
+3. Update supported Python versions in package metadata and installer for new stable releases, and drop EOL versions as needed

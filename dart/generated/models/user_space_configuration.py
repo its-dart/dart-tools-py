@@ -1,16 +1,11 @@
+from __future__ import annotations
+
 import datetime
 from collections.abc import Mapping
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    TypeVar,
-    Union,
-    cast,
-)
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
-from dateutil.parser import isoparse
 
 if TYPE_CHECKING:
     from ..models.user import User
@@ -56,67 +51,65 @@ class UserSpaceConfiguration:
         folders (list[str]):
         types (list[str]):
         statuses (list[str]):
-        assignees (list['User']):
+        assignees (list[User]):
         tags (list[str]):
         priorities (list[str]):
-        sizes (Union[list[Union[int, str]], str]):
+        sizes (list[int | str] | str):
         skills (list[str]):
-        custom_properties (list[Union['UserSpaceConfigurationCustomPropertyCheckboxTypeDef',
-            'UserSpaceConfigurationCustomPropertyDatesTypeDef', 'UserSpaceConfigurationCustomPropertyMultiselectTypeDef',
-            'UserSpaceConfigurationCustomPropertyNumberTypeDef', 'UserSpaceConfigurationCustomPropertySelectTypeDef',
-            'UserSpaceConfigurationCustomPropertyStatusTypeDef', 'UserSpaceConfigurationCustomPropertyTextTypeDef',
-            'UserSpaceConfigurationCustomPropertyTimeTrackingTypeDef', 'UserSpaceConfigurationCustomPropertyUserTypeDef']]):
+        custom_properties (list[UserSpaceConfigurationCustomPropertyCheckboxTypeDef |
+            UserSpaceConfigurationCustomPropertyDatesTypeDef | UserSpaceConfigurationCustomPropertyMultiselectTypeDef |
+            UserSpaceConfigurationCustomPropertyNumberTypeDef | UserSpaceConfigurationCustomPropertySelectTypeDef |
+            UserSpaceConfigurationCustomPropertyStatusTypeDef | UserSpaceConfigurationCustomPropertyTextTypeDef |
+            UserSpaceConfigurationCustomPropertyTimeTrackingTypeDef | UserSpaceConfigurationCustomPropertyUserTypeDef]):
     """
 
     today: datetime.date
-    user: "User"
+    user: User
     dartboards: list[str]
     folders: list[str]
     types: list[str]
     statuses: list[str]
-    assignees: list["User"]
+    assignees: list[User]
     tags: list[str]
     priorities: list[str]
-    sizes: Union[list[Union[int, str]], str]
+    sizes: list[int | str] | str
     skills: list[str]
     custom_properties: list[
-        Union[
-            "UserSpaceConfigurationCustomPropertyCheckboxTypeDef",
-            "UserSpaceConfigurationCustomPropertyDatesTypeDef",
-            "UserSpaceConfigurationCustomPropertyMultiselectTypeDef",
-            "UserSpaceConfigurationCustomPropertyNumberTypeDef",
-            "UserSpaceConfigurationCustomPropertySelectTypeDef",
-            "UserSpaceConfigurationCustomPropertyStatusTypeDef",
-            "UserSpaceConfigurationCustomPropertyTextTypeDef",
-            "UserSpaceConfigurationCustomPropertyTimeTrackingTypeDef",
-            "UserSpaceConfigurationCustomPropertyUserTypeDef",
-        ]
+        UserSpaceConfigurationCustomPropertyCheckboxTypeDef
+        | UserSpaceConfigurationCustomPropertyDatesTypeDef
+        | UserSpaceConfigurationCustomPropertyMultiselectTypeDef
+        | UserSpaceConfigurationCustomPropertyNumberTypeDef
+        | UserSpaceConfigurationCustomPropertySelectTypeDef
+        | UserSpaceConfigurationCustomPropertyStatusTypeDef
+        | UserSpaceConfigurationCustomPropertyTextTypeDef
+        | UserSpaceConfigurationCustomPropertyTimeTrackingTypeDef
+        | UserSpaceConfigurationCustomPropertyUserTypeDef
     ]
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.user_space_configuration_custom_property_checkbox_type_def import (
+        from ..models.user_space_configuration_custom_property_checkbox_type_def import (  # noqa: PLC0415
             UserSpaceConfigurationCustomPropertyCheckboxTypeDef,
         )
-        from ..models.user_space_configuration_custom_property_dates_type_def import (
+        from ..models.user_space_configuration_custom_property_dates_type_def import (  # noqa: PLC0415
             UserSpaceConfigurationCustomPropertyDatesTypeDef,
         )
-        from ..models.user_space_configuration_custom_property_multiselect_type_def import (
+        from ..models.user_space_configuration_custom_property_multiselect_type_def import (  # noqa: PLC0415
             UserSpaceConfigurationCustomPropertyMultiselectTypeDef,
         )
-        from ..models.user_space_configuration_custom_property_number_type_def import (
+        from ..models.user_space_configuration_custom_property_number_type_def import (  # noqa: PLC0415
             UserSpaceConfigurationCustomPropertyNumberTypeDef,
         )
-        from ..models.user_space_configuration_custom_property_select_type_def import (
+        from ..models.user_space_configuration_custom_property_select_type_def import (  # noqa: PLC0415
             UserSpaceConfigurationCustomPropertySelectTypeDef,
         )
-        from ..models.user_space_configuration_custom_property_status_type_def import (
+        from ..models.user_space_configuration_custom_property_status_type_def import (  # noqa: PLC0415
             UserSpaceConfigurationCustomPropertyStatusTypeDef,
         )
-        from ..models.user_space_configuration_custom_property_text_type_def import (
+        from ..models.user_space_configuration_custom_property_text_type_def import (  # noqa: PLC0415
             UserSpaceConfigurationCustomPropertyTextTypeDef,
         )
-        from ..models.user_space_configuration_custom_property_time_tracking_type_def import (
+        from ..models.user_space_configuration_custom_property_time_tracking_type_def import (  # noqa: PLC0415
             UserSpaceConfigurationCustomPropertyTimeTrackingTypeDef,
         )
 
@@ -141,11 +134,11 @@ class UserSpaceConfiguration:
 
         priorities = self.priorities
 
-        sizes: Union[list[Union[int, str]], str]
+        sizes: list[int | str] | str
         if isinstance(self.sizes, list):
             sizes = []
             for sizes_type_1_item_data in self.sizes:
-                sizes_type_1_item: Union[int, str]
+                sizes_type_1_item: int | str
                 sizes_type_1_item = sizes_type_1_item_data
                 sizes.append(sizes_type_1_item)
 
@@ -157,45 +150,21 @@ class UserSpaceConfiguration:
         custom_properties = []
         for custom_properties_item_data in self.custom_properties:
             custom_properties_item: dict[str, Any]
-            if isinstance(
-                custom_properties_item_data,
-                UserSpaceConfigurationCustomPropertyCheckboxTypeDef,
-            ):
+            if isinstance(custom_properties_item_data, UserSpaceConfigurationCustomPropertyCheckboxTypeDef):
                 custom_properties_item = custom_properties_item_data.to_dict()
-            elif isinstance(
-                custom_properties_item_data,
-                UserSpaceConfigurationCustomPropertyDatesTypeDef,
-            ):
+            elif isinstance(custom_properties_item_data, UserSpaceConfigurationCustomPropertyDatesTypeDef):
                 custom_properties_item = custom_properties_item_data.to_dict()
-            elif isinstance(
-                custom_properties_item_data,
-                UserSpaceConfigurationCustomPropertyMultiselectTypeDef,
-            ):
+            elif isinstance(custom_properties_item_data, UserSpaceConfigurationCustomPropertyMultiselectTypeDef):
                 custom_properties_item = custom_properties_item_data.to_dict()
-            elif isinstance(
-                custom_properties_item_data,
-                UserSpaceConfigurationCustomPropertyNumberTypeDef,
-            ):
+            elif isinstance(custom_properties_item_data, UserSpaceConfigurationCustomPropertyNumberTypeDef):
                 custom_properties_item = custom_properties_item_data.to_dict()
-            elif isinstance(
-                custom_properties_item_data,
-                UserSpaceConfigurationCustomPropertySelectTypeDef,
-            ):
+            elif isinstance(custom_properties_item_data, UserSpaceConfigurationCustomPropertySelectTypeDef):
                 custom_properties_item = custom_properties_item_data.to_dict()
-            elif isinstance(
-                custom_properties_item_data,
-                UserSpaceConfigurationCustomPropertyStatusTypeDef,
-            ):
+            elif isinstance(custom_properties_item_data, UserSpaceConfigurationCustomPropertyStatusTypeDef):
                 custom_properties_item = custom_properties_item_data.to_dict()
-            elif isinstance(
-                custom_properties_item_data,
-                UserSpaceConfigurationCustomPropertyTextTypeDef,
-            ):
+            elif isinstance(custom_properties_item_data, UserSpaceConfigurationCustomPropertyTextTypeDef):
                 custom_properties_item = custom_properties_item_data.to_dict()
-            elif isinstance(
-                custom_properties_item_data,
-                UserSpaceConfigurationCustomPropertyTimeTrackingTypeDef,
-            ):
+            elif isinstance(custom_properties_item_data, UserSpaceConfigurationCustomPropertyTimeTrackingTypeDef):
                 custom_properties_item = custom_properties_item_data.to_dict()
             else:
                 custom_properties_item = custom_properties_item_data.to_dict()
@@ -225,37 +194,37 @@ class UserSpaceConfiguration:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.user import User
-        from ..models.user_space_configuration_custom_property_checkbox_type_def import (
+        from ..models.user import User  # noqa: PLC0415
+        from ..models.user_space_configuration_custom_property_checkbox_type_def import (  # noqa: PLC0415
             UserSpaceConfigurationCustomPropertyCheckboxTypeDef,
         )
-        from ..models.user_space_configuration_custom_property_dates_type_def import (
+        from ..models.user_space_configuration_custom_property_dates_type_def import (  # noqa: PLC0415
             UserSpaceConfigurationCustomPropertyDatesTypeDef,
         )
-        from ..models.user_space_configuration_custom_property_multiselect_type_def import (
+        from ..models.user_space_configuration_custom_property_multiselect_type_def import (  # noqa: PLC0415
             UserSpaceConfigurationCustomPropertyMultiselectTypeDef,
         )
-        from ..models.user_space_configuration_custom_property_number_type_def import (
+        from ..models.user_space_configuration_custom_property_number_type_def import (  # noqa: PLC0415
             UserSpaceConfigurationCustomPropertyNumberTypeDef,
         )
-        from ..models.user_space_configuration_custom_property_select_type_def import (
+        from ..models.user_space_configuration_custom_property_select_type_def import (  # noqa: PLC0415
             UserSpaceConfigurationCustomPropertySelectTypeDef,
         )
-        from ..models.user_space_configuration_custom_property_status_type_def import (
+        from ..models.user_space_configuration_custom_property_status_type_def import (  # noqa: PLC0415
             UserSpaceConfigurationCustomPropertyStatusTypeDef,
         )
-        from ..models.user_space_configuration_custom_property_text_type_def import (
+        from ..models.user_space_configuration_custom_property_text_type_def import (  # noqa: PLC0415
             UserSpaceConfigurationCustomPropertyTextTypeDef,
         )
-        from ..models.user_space_configuration_custom_property_time_tracking_type_def import (
+        from ..models.user_space_configuration_custom_property_time_tracking_type_def import (  # noqa: PLC0415
             UserSpaceConfigurationCustomPropertyTimeTrackingTypeDef,
         )
-        from ..models.user_space_configuration_custom_property_user_type_def import (
+        from ..models.user_space_configuration_custom_property_user_type_def import (  # noqa: PLC0415
             UserSpaceConfigurationCustomPropertyUserTypeDef,
         )
 
         d = dict(src_dict)
-        today = isoparse(d.pop("today")).date()
+        today = datetime.date.fromisoformat(d.pop("today"))
 
         user = User.from_dict(d.pop("user"))
 
@@ -278,7 +247,7 @@ class UserSpaceConfiguration:
 
         priorities = cast(list[str], d.pop("priorities"))
 
-        def _parse_sizes(data: object) -> Union[list[Union[int, str]], str]:
+        def _parse_sizes(data: object) -> list[int | str] | str:
             try:
                 if not isinstance(data, list):
                     raise TypeError()
@@ -286,17 +255,17 @@ class UserSpaceConfiguration:
                 _sizes_type_1 = data
                 for sizes_type_1_item_data in _sizes_type_1:
 
-                    def _parse_sizes_type_1_item(data: object) -> Union[int, str]:
-                        return cast(Union[int, str], data)
+                    def _parse_sizes_type_1_item(data: object) -> int | str:
+                        return cast(int | str, data)
 
                     sizes_type_1_item = _parse_sizes_type_1_item(sizes_type_1_item_data)
 
                     sizes_type_1.append(sizes_type_1_item)
 
                 return sizes_type_1
-            except:  # noqa: E722
+            except (TypeError, ValueError, AttributeError, KeyError):
                 pass
-            return cast(Union[list[Union[int, str]], str], data)
+            return cast(list[int | str] | str, data)
 
         sizes = _parse_sizes(d.pop("sizes"))
 
@@ -308,17 +277,17 @@ class UserSpaceConfiguration:
 
             def _parse_custom_properties_item(
                 data: object,
-            ) -> Union[
-                "UserSpaceConfigurationCustomPropertyCheckboxTypeDef",
-                "UserSpaceConfigurationCustomPropertyDatesTypeDef",
-                "UserSpaceConfigurationCustomPropertyMultiselectTypeDef",
-                "UserSpaceConfigurationCustomPropertyNumberTypeDef",
-                "UserSpaceConfigurationCustomPropertySelectTypeDef",
-                "UserSpaceConfigurationCustomPropertyStatusTypeDef",
-                "UserSpaceConfigurationCustomPropertyTextTypeDef",
-                "UserSpaceConfigurationCustomPropertyTimeTrackingTypeDef",
-                "UserSpaceConfigurationCustomPropertyUserTypeDef",
-            ]:
+            ) -> (
+                UserSpaceConfigurationCustomPropertyCheckboxTypeDef
+                | UserSpaceConfigurationCustomPropertyDatesTypeDef
+                | UserSpaceConfigurationCustomPropertyMultiselectTypeDef
+                | UserSpaceConfigurationCustomPropertyNumberTypeDef
+                | UserSpaceConfigurationCustomPropertySelectTypeDef
+                | UserSpaceConfigurationCustomPropertyStatusTypeDef
+                | UserSpaceConfigurationCustomPropertyTextTypeDef
+                | UserSpaceConfigurationCustomPropertyTimeTrackingTypeDef
+                | UserSpaceConfigurationCustomPropertyUserTypeDef
+            ):
                 try:
                     if not isinstance(data, dict):
                         raise TypeError()
@@ -327,7 +296,7 @@ class UserSpaceConfiguration:
                     )
 
                     return custom_properties_item_custom_property_checkbox_type_def
-                except:  # noqa: E722
+                except (TypeError, ValueError, AttributeError, KeyError):
                     pass
                 try:
                     if not isinstance(data, dict):
@@ -337,7 +306,7 @@ class UserSpaceConfiguration:
                     )
 
                     return custom_properties_item_custom_property_dates_type_def
-                except:  # noqa: E722
+                except (TypeError, ValueError, AttributeError, KeyError):
                     pass
                 try:
                     if not isinstance(data, dict):
@@ -347,7 +316,7 @@ class UserSpaceConfiguration:
                     )
 
                     return custom_properties_item_custom_property_multiselect_type_def
-                except:  # noqa: E722
+                except (TypeError, ValueError, AttributeError, KeyError):
                     pass
                 try:
                     if not isinstance(data, dict):
@@ -357,7 +326,7 @@ class UserSpaceConfiguration:
                     )
 
                     return custom_properties_item_custom_property_number_type_def
-                except:  # noqa: E722
+                except (TypeError, ValueError, AttributeError, KeyError):
                     pass
                 try:
                     if not isinstance(data, dict):
@@ -367,7 +336,7 @@ class UserSpaceConfiguration:
                     )
 
                     return custom_properties_item_custom_property_select_type_def
-                except:  # noqa: E722
+                except (TypeError, ValueError, AttributeError, KeyError):
                     pass
                 try:
                     if not isinstance(data, dict):
@@ -377,7 +346,7 @@ class UserSpaceConfiguration:
                     )
 
                     return custom_properties_item_custom_property_status_type_def
-                except:  # noqa: E722
+                except (TypeError, ValueError, AttributeError, KeyError):
                     pass
                 try:
                     if not isinstance(data, dict):
@@ -387,7 +356,7 @@ class UserSpaceConfiguration:
                     )
 
                     return custom_properties_item_custom_property_text_type_def
-                except:  # noqa: E722
+                except (TypeError, ValueError, AttributeError, KeyError):
                     pass
                 try:
                     if not isinstance(data, dict):
@@ -397,7 +366,7 @@ class UserSpaceConfiguration:
                     )
 
                     return custom_properties_item_custom_property_time_tracking_type_def
-                except:  # noqa: E722
+                except (TypeError, ValueError, AttributeError, KeyError):
                     pass
                 if not isinstance(data, dict):
                     raise TypeError()

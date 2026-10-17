@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union
+from typing import Any
 
 import httpx
 
@@ -12,19 +12,20 @@ from ...types import UNSET, Response, Unset
 
 def _get_kwargs(
     *,
-    editor: Union[Unset, str] = UNSET,
-    folder: Union[Unset, str] = UNSET,
-    folder_id: Union[Unset, str] = UNSET,
-    ids: Union[Unset, str] = UNSET,
-    in_trash: Union[Unset, bool] = UNSET,
-    limit: Union[Unset, int] = UNSET,
-    no_defaults: Union[Unset, bool] = True,
-    o: Union[Unset, list[ListDocsOItem]] = UNSET,
-    offset: Union[Unset, int] = UNSET,
-    s: Union[Unset, str] = UNSET,
-    text: Union[Unset, str] = UNSET,
-    title: Union[Unset, str] = UNSET,
+    editor: str | Unset = UNSET,
+    folder: str | Unset = UNSET,
+    folder_id: str | Unset = UNSET,
+    ids: str | Unset = UNSET,
+    in_trash: bool | Unset = UNSET,
+    limit: int | Unset = UNSET,
+    no_defaults: bool | Unset = True,
+    o: list[ListDocsOItem] | Unset = UNSET,
+    offset: int | Unset = UNSET,
+    s: str | Unset = UNSET,
+    text: str | Unset = UNSET,
+    title: str | Unset = UNSET,
 ) -> dict[str, Any]:
+
     params: dict[str, Any] = {}
 
     params["editor"] = editor
@@ -41,7 +42,7 @@ def _get_kwargs(
 
     params["no_defaults"] = no_defaults
 
-    json_o: Union[Unset, list[str]] = UNSET
+    json_o: list[str] | Unset = UNSET
     if not isinstance(o, Unset):
         json_o = []
         for o_item_data in o:
@@ -70,8 +71,8 @@ def _get_kwargs(
 
 
 def _parse_response(
-    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Optional[PaginatedConciseDocList]:
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> PaginatedConciseDocList | None:
     if response.status_code == 200:
         response_200 = PaginatedConciseDocList.from_dict(response.json())
 
@@ -84,7 +85,7 @@ def _parse_response(
 
 
 def _build_response(
-    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
+    *, client: AuthenticatedClient | Client, response: httpx.Response
 ) -> Response[PaginatedConciseDocList]:
     return Response(
         status_code=HTTPStatus(response.status_code),
@@ -97,35 +98,35 @@ def _build_response(
 def sync_detailed(
     *,
     client: AuthenticatedClient,
-    editor: Union[Unset, str] = UNSET,
-    folder: Union[Unset, str] = UNSET,
-    folder_id: Union[Unset, str] = UNSET,
-    ids: Union[Unset, str] = UNSET,
-    in_trash: Union[Unset, bool] = UNSET,
-    limit: Union[Unset, int] = UNSET,
-    no_defaults: Union[Unset, bool] = True,
-    o: Union[Unset, list[ListDocsOItem]] = UNSET,
-    offset: Union[Unset, int] = UNSET,
-    s: Union[Unset, str] = UNSET,
-    text: Union[Unset, str] = UNSET,
-    title: Union[Unset, str] = UNSET,
+    editor: str | Unset = UNSET,
+    folder: str | Unset = UNSET,
+    folder_id: str | Unset = UNSET,
+    ids: str | Unset = UNSET,
+    in_trash: bool | Unset = UNSET,
+    limit: int | Unset = UNSET,
+    no_defaults: bool | Unset = True,
+    o: list[ListDocsOItem] | Unset = UNSET,
+    offset: int | Unset = UNSET,
+    s: str | Unset = UNSET,
+    text: str | Unset = UNSET,
+    title: str | Unset = UNSET,
 ) -> Response[PaginatedConciseDocList]:
     """List docs with filtering and search capabilities. Filter by folder, title, text content, or use
     full-text search. Sort by creation/update date or title. Supports pagination.
 
     Args:
-        editor (Union[Unset, str]):
-        folder (Union[Unset, str]):
-        folder_id (Union[Unset, str]):
-        ids (Union[Unset, str]):
-        in_trash (Union[Unset, bool]):
-        limit (Union[Unset, int]):
-        no_defaults (Union[Unset, bool]):  Default: True.
-        o (Union[Unset, list[ListDocsOItem]]):
-        offset (Union[Unset, int]):
-        s (Union[Unset, str]):
-        text (Union[Unset, str]):
-        title (Union[Unset, str]):
+        editor (str | Unset):
+        folder (str | Unset):
+        folder_id (str | Unset):
+        ids (str | Unset):
+        in_trash (bool | Unset):
+        limit (int | Unset):
+        no_defaults (bool | Unset):  Default: True.
+        o (list[ListDocsOItem] | Unset):
+        offset (int | Unset):
+        s (str | Unset):
+        text (str | Unset):
+        title (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -160,35 +161,35 @@ def sync_detailed(
 def sync(
     *,
     client: AuthenticatedClient,
-    editor: Union[Unset, str] = UNSET,
-    folder: Union[Unset, str] = UNSET,
-    folder_id: Union[Unset, str] = UNSET,
-    ids: Union[Unset, str] = UNSET,
-    in_trash: Union[Unset, bool] = UNSET,
-    limit: Union[Unset, int] = UNSET,
-    no_defaults: Union[Unset, bool] = True,
-    o: Union[Unset, list[ListDocsOItem]] = UNSET,
-    offset: Union[Unset, int] = UNSET,
-    s: Union[Unset, str] = UNSET,
-    text: Union[Unset, str] = UNSET,
-    title: Union[Unset, str] = UNSET,
-) -> Optional[PaginatedConciseDocList]:
+    editor: str | Unset = UNSET,
+    folder: str | Unset = UNSET,
+    folder_id: str | Unset = UNSET,
+    ids: str | Unset = UNSET,
+    in_trash: bool | Unset = UNSET,
+    limit: int | Unset = UNSET,
+    no_defaults: bool | Unset = True,
+    o: list[ListDocsOItem] | Unset = UNSET,
+    offset: int | Unset = UNSET,
+    s: str | Unset = UNSET,
+    text: str | Unset = UNSET,
+    title: str | Unset = UNSET,
+) -> PaginatedConciseDocList | None:
     """List docs with filtering and search capabilities. Filter by folder, title, text content, or use
     full-text search. Sort by creation/update date or title. Supports pagination.
 
     Args:
-        editor (Union[Unset, str]):
-        folder (Union[Unset, str]):
-        folder_id (Union[Unset, str]):
-        ids (Union[Unset, str]):
-        in_trash (Union[Unset, bool]):
-        limit (Union[Unset, int]):
-        no_defaults (Union[Unset, bool]):  Default: True.
-        o (Union[Unset, list[ListDocsOItem]]):
-        offset (Union[Unset, int]):
-        s (Union[Unset, str]):
-        text (Union[Unset, str]):
-        title (Union[Unset, str]):
+        editor (str | Unset):
+        folder (str | Unset):
+        folder_id (str | Unset):
+        ids (str | Unset):
+        in_trash (bool | Unset):
+        limit (int | Unset):
+        no_defaults (bool | Unset):  Default: True.
+        o (list[ListDocsOItem] | Unset):
+        offset (int | Unset):
+        s (str | Unset):
+        text (str | Unset):
+        title (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -218,35 +219,35 @@ def sync(
 async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
-    editor: Union[Unset, str] = UNSET,
-    folder: Union[Unset, str] = UNSET,
-    folder_id: Union[Unset, str] = UNSET,
-    ids: Union[Unset, str] = UNSET,
-    in_trash: Union[Unset, bool] = UNSET,
-    limit: Union[Unset, int] = UNSET,
-    no_defaults: Union[Unset, bool] = True,
-    o: Union[Unset, list[ListDocsOItem]] = UNSET,
-    offset: Union[Unset, int] = UNSET,
-    s: Union[Unset, str] = UNSET,
-    text: Union[Unset, str] = UNSET,
-    title: Union[Unset, str] = UNSET,
+    editor: str | Unset = UNSET,
+    folder: str | Unset = UNSET,
+    folder_id: str | Unset = UNSET,
+    ids: str | Unset = UNSET,
+    in_trash: bool | Unset = UNSET,
+    limit: int | Unset = UNSET,
+    no_defaults: bool | Unset = True,
+    o: list[ListDocsOItem] | Unset = UNSET,
+    offset: int | Unset = UNSET,
+    s: str | Unset = UNSET,
+    text: str | Unset = UNSET,
+    title: str | Unset = UNSET,
 ) -> Response[PaginatedConciseDocList]:
     """List docs with filtering and search capabilities. Filter by folder, title, text content, or use
     full-text search. Sort by creation/update date or title. Supports pagination.
 
     Args:
-        editor (Union[Unset, str]):
-        folder (Union[Unset, str]):
-        folder_id (Union[Unset, str]):
-        ids (Union[Unset, str]):
-        in_trash (Union[Unset, bool]):
-        limit (Union[Unset, int]):
-        no_defaults (Union[Unset, bool]):  Default: True.
-        o (Union[Unset, list[ListDocsOItem]]):
-        offset (Union[Unset, int]):
-        s (Union[Unset, str]):
-        text (Union[Unset, str]):
-        title (Union[Unset, str]):
+        editor (str | Unset):
+        folder (str | Unset):
+        folder_id (str | Unset):
+        ids (str | Unset):
+        in_trash (bool | Unset):
+        limit (int | Unset):
+        no_defaults (bool | Unset):  Default: True.
+        o (list[ListDocsOItem] | Unset):
+        offset (int | Unset):
+        s (str | Unset):
+        text (str | Unset):
+        title (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -279,35 +280,35 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: AuthenticatedClient,
-    editor: Union[Unset, str] = UNSET,
-    folder: Union[Unset, str] = UNSET,
-    folder_id: Union[Unset, str] = UNSET,
-    ids: Union[Unset, str] = UNSET,
-    in_trash: Union[Unset, bool] = UNSET,
-    limit: Union[Unset, int] = UNSET,
-    no_defaults: Union[Unset, bool] = True,
-    o: Union[Unset, list[ListDocsOItem]] = UNSET,
-    offset: Union[Unset, int] = UNSET,
-    s: Union[Unset, str] = UNSET,
-    text: Union[Unset, str] = UNSET,
-    title: Union[Unset, str] = UNSET,
-) -> Optional[PaginatedConciseDocList]:
+    editor: str | Unset = UNSET,
+    folder: str | Unset = UNSET,
+    folder_id: str | Unset = UNSET,
+    ids: str | Unset = UNSET,
+    in_trash: bool | Unset = UNSET,
+    limit: int | Unset = UNSET,
+    no_defaults: bool | Unset = True,
+    o: list[ListDocsOItem] | Unset = UNSET,
+    offset: int | Unset = UNSET,
+    s: str | Unset = UNSET,
+    text: str | Unset = UNSET,
+    title: str | Unset = UNSET,
+) -> PaginatedConciseDocList | None:
     """List docs with filtering and search capabilities. Filter by folder, title, text content, or use
     full-text search. Sort by creation/update date or title. Supports pagination.
 
     Args:
-        editor (Union[Unset, str]):
-        folder (Union[Unset, str]):
-        folder_id (Union[Unset, str]):
-        ids (Union[Unset, str]):
-        in_trash (Union[Unset, bool]):
-        limit (Union[Unset, int]):
-        no_defaults (Union[Unset, bool]):  Default: True.
-        o (Union[Unset, list[ListDocsOItem]]):
-        offset (Union[Unset, int]):
-        s (Union[Unset, str]):
-        text (Union[Unset, str]):
-        title (Union[Unset, str]):
+        editor (str | Unset):
+        folder (str | Unset):
+        folder_id (str | Unset):
+        ids (str | Unset):
+        in_trash (bool | Unset):
+        limit (int | Unset):
+        no_defaults (bool | Unset):  Default: True.
+        o (list[ListDocsOItem] | Unset):
+        offset (int | Unset):
+        s (str | Unset):
+        text (str | Unset):
+        title (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

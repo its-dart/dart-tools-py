@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union, cast
+from typing import Any, cast
 
 import httpx
 
@@ -13,6 +13,7 @@ def _get_kwargs(
     *,
     title: str,
 ) -> dict[str, Any]:
+
     params: dict[str, Any] = {}
 
     params["title"] = title
@@ -28,9 +29,7 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(
-    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Optional[Union[Any, WrappedSkill]]:
+def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Any | WrappedSkill | None:
     if response.status_code == 200:
         response_200 = WrappedSkill.from_dict(response.json())
 
@@ -46,9 +45,7 @@ def _parse_response(
         return None
 
 
-def _build_response(
-    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Response[Union[Any, WrappedSkill]]:
+def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[Any | WrappedSkill]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -61,7 +58,7 @@ def sync_detailed(
     *,
     client: AuthenticatedClient,
     title: str,
-) -> Response[Union[Any, WrappedSkill]]:
+) -> Response[Any | WrappedSkill]:
     """Retrieve a skill by title
 
      Retrieve a skill by its title. Skills are user-defined instructions or templates for performing
@@ -75,7 +72,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, WrappedSkill]]
+        Response[Any | WrappedSkill]
     """
 
     kwargs = _get_kwargs(
@@ -93,7 +90,7 @@ def sync(
     *,
     client: AuthenticatedClient,
     title: str,
-) -> Optional[Union[Any, WrappedSkill]]:
+) -> Any | WrappedSkill | None:
     """Retrieve a skill by title
 
      Retrieve a skill by its title. Skills are user-defined instructions or templates for performing
@@ -107,7 +104,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, WrappedSkill]
+        Any | WrappedSkill
     """
 
     return sync_detailed(
@@ -120,7 +117,7 @@ async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
     title: str,
-) -> Response[Union[Any, WrappedSkill]]:
+) -> Response[Any | WrappedSkill]:
     """Retrieve a skill by title
 
      Retrieve a skill by its title. Skills are user-defined instructions or templates for performing
@@ -134,7 +131,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, WrappedSkill]]
+        Response[Any | WrappedSkill]
     """
 
     kwargs = _get_kwargs(
@@ -150,7 +147,7 @@ async def asyncio(
     *,
     client: AuthenticatedClient,
     title: str,
-) -> Optional[Union[Any, WrappedSkill]]:
+) -> Any | WrappedSkill | None:
     """Retrieve a skill by title
 
      Retrieve a skill by its title. Skills are user-defined instructions or templates for performing
@@ -164,7 +161,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, WrappedSkill]
+        Any | WrappedSkill
     """
 
     return (

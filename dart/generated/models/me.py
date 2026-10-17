@@ -1,9 +1,7 @@
+from __future__ import annotations
+
 from collections.abc import Mapping
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    TypeVar,
-)
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -24,10 +22,11 @@ class Me:
     """
 
     is_logged_in: bool
-    user: "AuthenticatedUser"
+    user: AuthenticatedUser
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+
         is_logged_in = self.is_logged_in
 
         user = self.user.to_dict()
@@ -45,7 +44,7 @@ class Me:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.authenticated_user import AuthenticatedUser
+        from ..models.authenticated_user import AuthenticatedUser  # noqa: PLC0415
 
         d = dict(src_dict)
         is_logged_in = d.pop("isLoggedIn")

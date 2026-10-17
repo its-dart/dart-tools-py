@@ -1,16 +1,11 @@
+from __future__ import annotations
+
 import datetime
 from collections.abc import Mapping
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    TypeVar,
-    Union,
-    cast,
-)
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
-from dateutil.parser import isoparse
 
 from ..models.priority import Priority
 from ..types import UNSET, Unset
@@ -32,7 +27,7 @@ class ConciseTask:
         id (str): The universal, unique ID of the task.
         html_url (str): The URL that can be used to open the task in the Dart web UI.
         title (str): The title, which is a short description of what needs to be done.
-        parent_id (Union[None, str]): The universal, unique ID of the parent task. This can be null. These tasks have a
+        parent_id (None | str): The universal, unique ID of the parent task. This can be null. These tasks have a
             parent-child relationship where the current task is the child and this task ID corresponds to the parent.
             Subtasks inherit context from their parent and are typically smaller units of work.
         dartboard (str): The full title of the dartboard, which is a project or list of tasks.
@@ -40,71 +35,69 @@ class ConciseTask:
         status (str): The status from the list of available statuses.
         created_at (datetime.datetime): The date and time when the task was created in ISO format.
         updated_at (datetime.datetime): The date and time when the task was last updated in ISO format.
-        completed_at (Union[None, datetime.datetime]): The date and time when the task was completed in ISO format. Null
-            if the task is not completed.
-        assignees (Union[None, Unset, list[str]]): Names or emails replacing all assignees for a workspace allowing
-            multiple assignees. An empty array clears them.
-        assignee (Union[None, Unset, str]): The assignee's name or email for a workspace using a single assignee. Null
-            clears the assignee.
-        reviewers (Union[None, Unset, list[str]]): Names or emails replacing all reviewers for a workspace allowing
-            multiple reviewers. An empty array clears them.
-        reviewer (Union[None, Unset, str]): The reviewer's name or email for a workspace using a single reviewer. Null
-            clears the reviewer.
-        tags (Union[Unset, list[str]]): Tag titles replacing all task tags. An empty array clears them. Unknown titles
-            create new tags; use / for nested tags.
-        priority (Union[None, Priority, Unset]): The priority, which is a string that can be one of the specified
-            options. This is used to sort tasks and determine which tasks should be done first.
-        start_at (Union[None, Unset, str]): The start date, which is a date that the task should be started by in ISO
-            format, like YYYY-MM-DD.
-        due_at (Union[None, Unset, str]): The due date, which is a date that the task should be completed by in ISO
-            format, like YYYY-MM-DD.
-        size (Union[None, Unset, int, str]): The size, which represents the amount of work that needs to be done. This
-            is used to determine how long the task will take to complete.
-        time_tracking (Union[Unset, str]): The time tracking, which is a string that indicates the amount of time spent
-            on the task in hh:mm:ss format (or an empty string if no time has been tracked).
-        custom_properties (Union['ConciseTaskCustomPropertiesType0', None, Unset]): Custom properties as a dict mapping
-            the exact, case-sensitive name values from workspace config customProperties to values. These are generated
-            keys, not display titles or IDs (e.g., {"customCheckboxProperty": true, "customTextProperty": "Some text"}).
-            Example: {'customCheckboxProperty': True, 'customDatesProperty': '2025-05-10', 'customDatesPropertyWithRange':
+        completed_at (datetime.datetime | None): The date and time when the task was completed in ISO format. Null if
+            the task is not completed.
+        assignees (list[str] | None | Unset): Names or emails replacing all assignees for a workspace allowing multiple
+            assignees. An empty array clears them.
+        assignee (None | str | Unset): The assignee's name or email for a workspace using a single assignee. Null clears
+            the assignee.
+        reviewers (list[str] | None | Unset): Names or emails replacing all reviewers for a workspace allowing multiple
+            reviewers. An empty array clears them.
+        reviewer (None | str | Unset): The reviewer's name or email for a workspace using a single reviewer. Null clears
+            the reviewer.
+        tags (list[str] | Unset): Tag titles replacing all task tags. An empty array clears them. Unknown titles create
+            new tags; use / for nested tags.
+        priority (None | Priority | Unset): The priority, which is a string that can be one of the specified options.
+            This is used to sort tasks and determine which tasks should be done first.
+        start_at (None | str | Unset): The start date, which is a date that the task should be started by in ISO format,
+            like YYYY-MM-DD.
+        due_at (None | str | Unset): The due date, which is a date that the task should be completed by in ISO format,
+            like YYYY-MM-DD.
+        size (int | None | str | Unset): The size, which represents the amount of work that needs to be done. This is
+            used to determine how long the task will take to complete.
+        time_tracking (str | Unset): The time tracking, which is a string that indicates the amount of time spent on the
+            task in hh:mm:ss format (or an empty string if no time has been tracked).
+        custom_properties (ConciseTaskCustomPropertiesType0 | None | Unset): Custom properties as a dict mapping the
+            exact, case-sensitive name values from workspace config customProperties to values. These are generated keys,
+            not display titles or IDs (e.g., {"customCheckboxProperty": true, "customTextProperty": "Some text"}). Example:
+            {'customCheckboxProperty': True, 'customDatesProperty': '2025-05-10', 'customDatesPropertyWithRange':
             ['2025-05-01', '2025-05-30'], 'customMultiselectProperty': ['frontend', 'bug'],
             'customNumberPropertyWithIntegerFormat': 5, 'customNumberPropertyWithPercentageFormat': 75,
             'customNumberPropertyWithDollarsFormat': 1500.5, 'customSelectProperty': 'In Progress', 'customStatusProperty':
             'Blocked', 'customTextProperty': 'This task requires additional review from the design team',
             'customUserProperty': 'john.doe@example.com', 'customMultipleUserProperty': ['john.doe@example.com', 'Alice
             Smith']}.
-        created_by (Union[None, Unset, str]): The name or email (moniker) of the user that created the task.
-        updated_by (Union[None, Unset, str]): The name or email (moniker) of the user that last updated the task.
+        created_by (None | str | Unset): The name or email (moniker) of the user that created the task.
+        updated_by (None | str | Unset): The name or email (moniker) of the user that last updated the task.
     """
 
     id: str
     html_url: str
     title: str
-    parent_id: Union[None, str]
+    parent_id: None | str
     dartboard: str
     type_: str
     status: str
     created_at: datetime.datetime
     updated_at: datetime.datetime
-    completed_at: Union[None, datetime.datetime]
-    assignees: Union[None, Unset, list[str]] = UNSET
-    assignee: Union[None, Unset, str] = UNSET
-    reviewers: Union[None, Unset, list[str]] = UNSET
-    reviewer: Union[None, Unset, str] = UNSET
-    tags: Union[Unset, list[str]] = UNSET
-    priority: Union[None, Priority, Unset] = UNSET
-    start_at: Union[None, Unset, str] = UNSET
-    due_at: Union[None, Unset, str] = UNSET
-    size: Union[None, Unset, int, str] = UNSET
-    time_tracking: Union[Unset, str] = UNSET
-    custom_properties: Union["ConciseTaskCustomPropertiesType0", None, Unset] = UNSET
-    created_by: Union[None, Unset, str] = UNSET
-    updated_by: Union[None, Unset, str] = UNSET
+    completed_at: datetime.datetime | None
+    assignees: list[str] | None | Unset = UNSET
+    assignee: None | str | Unset = UNSET
+    reviewers: list[str] | None | Unset = UNSET
+    reviewer: None | str | Unset = UNSET
+    tags: list[str] | Unset = UNSET
+    priority: None | Priority | Unset = UNSET
+    start_at: None | str | Unset = UNSET
+    due_at: None | str | Unset = UNSET
+    size: int | None | str | Unset = UNSET
+    time_tracking: str | Unset = UNSET
+    custom_properties: ConciseTaskCustomPropertiesType0 | None | Unset = UNSET
+    created_by: None | str | Unset = UNSET
+    updated_by: None | str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.concise_task_custom_properties_type_0 import (
-            ConciseTaskCustomPropertiesType0,
-        )
+        from ..models.concise_task_custom_properties_type_0 import ConciseTaskCustomPropertiesType0  # noqa: PLC0415
 
         id = self.id
 
@@ -112,7 +105,7 @@ class ConciseTask:
 
         title = self.title
 
-        parent_id: Union[None, str]
+        parent_id: None | str
         parent_id = self.parent_id
 
         dartboard = self.dartboard
@@ -125,13 +118,13 @@ class ConciseTask:
 
         updated_at = self.updated_at.isoformat()
 
-        completed_at: Union[None, str]
+        completed_at: None | str
         if isinstance(self.completed_at, datetime.datetime):
             completed_at = self.completed_at.isoformat()
         else:
             completed_at = self.completed_at
 
-        assignees: Union[None, Unset, list[str]]
+        assignees: list[str] | None | Unset
         if isinstance(self.assignees, Unset):
             assignees = UNSET
         elif isinstance(self.assignees, list):
@@ -140,13 +133,13 @@ class ConciseTask:
         else:
             assignees = self.assignees
 
-        assignee: Union[None, Unset, str]
+        assignee: None | str | Unset
         if isinstance(self.assignee, Unset):
             assignee = UNSET
         else:
             assignee = self.assignee
 
-        reviewers: Union[None, Unset, list[str]]
+        reviewers: list[str] | None | Unset
         if isinstance(self.reviewers, Unset):
             reviewers = UNSET
         elif isinstance(self.reviewers, list):
@@ -155,17 +148,17 @@ class ConciseTask:
         else:
             reviewers = self.reviewers
 
-        reviewer: Union[None, Unset, str]
+        reviewer: None | str | Unset
         if isinstance(self.reviewer, Unset):
             reviewer = UNSET
         else:
             reviewer = self.reviewer
 
-        tags: Union[Unset, list[str]] = UNSET
+        tags: list[str] | Unset = UNSET
         if not isinstance(self.tags, Unset):
             tags = self.tags
 
-        priority: Union[None, Unset, str]
+        priority: None | str | Unset
         if isinstance(self.priority, Unset):
             priority = UNSET
         elif isinstance(self.priority, Priority):
@@ -173,19 +166,19 @@ class ConciseTask:
         else:
             priority = self.priority
 
-        start_at: Union[None, Unset, str]
+        start_at: None | str | Unset
         if isinstance(self.start_at, Unset):
             start_at = UNSET
         else:
             start_at = self.start_at
 
-        due_at: Union[None, Unset, str]
+        due_at: None | str | Unset
         if isinstance(self.due_at, Unset):
             due_at = UNSET
         else:
             due_at = self.due_at
 
-        size: Union[None, Unset, int, str]
+        size: int | None | str | Unset
         if isinstance(self.size, Unset):
             size = UNSET
         else:
@@ -193,7 +186,7 @@ class ConciseTask:
 
         time_tracking = self.time_tracking
 
-        custom_properties: Union[None, Unset, dict[str, Any]]
+        custom_properties: dict[str, Any] | None | Unset
         if isinstance(self.custom_properties, Unset):
             custom_properties = UNSET
         elif isinstance(self.custom_properties, ConciseTaskCustomPropertiesType0):
@@ -201,13 +194,13 @@ class ConciseTask:
         else:
             custom_properties = self.custom_properties
 
-        created_by: Union[None, Unset, str]
+        created_by: None | str | Unset
         if isinstance(self.created_by, Unset):
             created_by = UNSET
         else:
             created_by = self.created_by
 
-        updated_by: Union[None, Unset, str]
+        updated_by: None | str | Unset
         if isinstance(self.updated_by, Unset):
             updated_by = UNSET
         else:
@@ -260,9 +253,7 @@ class ConciseTask:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.concise_task_custom_properties_type_0 import (
-            ConciseTaskCustomPropertiesType0,
-        )
+        from ..models.concise_task_custom_properties_type_0 import ConciseTaskCustomPropertiesType0  # noqa: PLC0415
 
         d = dict(src_dict)
         id = d.pop("id")
@@ -271,10 +262,10 @@ class ConciseTask:
 
         title = d.pop("title")
 
-        def _parse_parent_id(data: object) -> Union[None, str]:
+        def _parse_parent_id(data: object) -> None | str:
             if data is None:
                 return data
-            return cast(Union[None, str], data)
+            return cast(None | str, data)
 
         parent_id = _parse_parent_id(d.pop("parentId"))
 
@@ -284,26 +275,26 @@ class ConciseTask:
 
         status = d.pop("status")
 
-        created_at = isoparse(d.pop("createdAt"))
+        created_at = datetime.datetime.fromisoformat(d.pop("createdAt"))
 
-        updated_at = isoparse(d.pop("updatedAt"))
+        updated_at = datetime.datetime.fromisoformat(d.pop("updatedAt"))
 
-        def _parse_completed_at(data: object) -> Union[None, datetime.datetime]:
+        def _parse_completed_at(data: object) -> datetime.datetime | None:
             if data is None:
                 return data
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                completed_at_type_0 = isoparse(data)
+                completed_at_type_0 = datetime.datetime.fromisoformat(data)
 
                 return completed_at_type_0
-            except:  # noqa: E722
+            except (TypeError, ValueError, AttributeError, KeyError):
                 pass
-            return cast(Union[None, datetime.datetime], data)
+            return cast(datetime.datetime | None, data)
 
         completed_at = _parse_completed_at(d.pop("completedAt"))
 
-        def _parse_assignees(data: object) -> Union[None, Unset, list[str]]:
+        def _parse_assignees(data: object) -> list[str] | None | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):
@@ -314,22 +305,22 @@ class ConciseTask:
                 assignees_type_0 = cast(list[str], data)
 
                 return assignees_type_0
-            except:  # noqa: E722
+            except (TypeError, ValueError, AttributeError, KeyError):
                 pass
-            return cast(Union[None, Unset, list[str]], data)
+            return cast(list[str] | None | Unset, data)
 
         assignees = _parse_assignees(d.pop("assignees", UNSET))
 
-        def _parse_assignee(data: object) -> Union[None, Unset, str]:
+        def _parse_assignee(data: object) -> None | str | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):
                 return data
-            return cast(Union[None, Unset, str], data)
+            return cast(None | str | Unset, data)
 
         assignee = _parse_assignee(d.pop("assignee", UNSET))
 
-        def _parse_reviewers(data: object) -> Union[None, Unset, list[str]]:
+        def _parse_reviewers(data: object) -> list[str] | None | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):
@@ -340,24 +331,24 @@ class ConciseTask:
                 reviewers_type_0 = cast(list[str], data)
 
                 return reviewers_type_0
-            except:  # noqa: E722
+            except (TypeError, ValueError, AttributeError, KeyError):
                 pass
-            return cast(Union[None, Unset, list[str]], data)
+            return cast(list[str] | None | Unset, data)
 
         reviewers = _parse_reviewers(d.pop("reviewers", UNSET))
 
-        def _parse_reviewer(data: object) -> Union[None, Unset, str]:
+        def _parse_reviewer(data: object) -> None | str | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):
                 return data
-            return cast(Union[None, Unset, str], data)
+            return cast(None | str | Unset, data)
 
         reviewer = _parse_reviewer(d.pop("reviewer", UNSET))
 
         tags = cast(list[str], d.pop("tags", UNSET))
 
-        def _parse_priority(data: object) -> Union[None, Priority, Unset]:
+        def _parse_priority(data: object) -> None | Priority | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):
@@ -368,44 +359,42 @@ class ConciseTask:
                 priority_type_0 = Priority(data)
 
                 return priority_type_0
-            except:  # noqa: E722
+            except (TypeError, ValueError, AttributeError, KeyError):
                 pass
-            return cast(Union[None, Priority, Unset], data)
+            return cast(None | Priority | Unset, data)
 
         priority = _parse_priority(d.pop("priority", UNSET))
 
-        def _parse_start_at(data: object) -> Union[None, Unset, str]:
+        def _parse_start_at(data: object) -> None | str | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):
                 return data
-            return cast(Union[None, Unset, str], data)
+            return cast(None | str | Unset, data)
 
         start_at = _parse_start_at(d.pop("startAt", UNSET))
 
-        def _parse_due_at(data: object) -> Union[None, Unset, str]:
+        def _parse_due_at(data: object) -> None | str | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):
                 return data
-            return cast(Union[None, Unset, str], data)
+            return cast(None | str | Unset, data)
 
         due_at = _parse_due_at(d.pop("dueAt", UNSET))
 
-        def _parse_size(data: object) -> Union[None, Unset, int, str]:
+        def _parse_size(data: object) -> int | None | str | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):
                 return data
-            return cast(Union[None, Unset, int, str], data)
+            return cast(int | None | str | Unset, data)
 
         size = _parse_size(d.pop("size", UNSET))
 
         time_tracking = d.pop("timeTracking", UNSET)
 
-        def _parse_custom_properties(
-            data: object,
-        ) -> Union["ConciseTaskCustomPropertiesType0", None, Unset]:
+        def _parse_custom_properties(data: object) -> ConciseTaskCustomPropertiesType0 | None | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):
@@ -416,27 +405,27 @@ class ConciseTask:
                 custom_properties_type_0 = ConciseTaskCustomPropertiesType0.from_dict(data)
 
                 return custom_properties_type_0
-            except:  # noqa: E722
+            except (TypeError, ValueError, AttributeError, KeyError):
                 pass
-            return cast(Union["ConciseTaskCustomPropertiesType0", None, Unset], data)
+            return cast(ConciseTaskCustomPropertiesType0 | None | Unset, data)
 
         custom_properties = _parse_custom_properties(d.pop("customProperties", UNSET))
 
-        def _parse_created_by(data: object) -> Union[None, Unset, str]:
+        def _parse_created_by(data: object) -> None | str | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):
                 return data
-            return cast(Union[None, Unset, str], data)
+            return cast(None | str | Unset, data)
 
         created_by = _parse_created_by(d.pop("createdBy", UNSET))
 
-        def _parse_updated_by(data: object) -> Union[None, Unset, str]:
+        def _parse_updated_by(data: object) -> None | str | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):
                 return data
-            return cast(Union[None, Unset, str], data)
+            return cast(None | str | Unset, data)
 
         updated_by = _parse_updated_by(d.pop("updatedBy", UNSET))
 

@@ -1,10 +1,7 @@
+from __future__ import annotations
+
 from collections.abc import Mapping
-from typing import (
-    Any,
-    TypeVar,
-    Union,
-    cast,
-)
+from typing import Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -24,16 +21,16 @@ class TaskTimeTrackingCreate:
         finished_at (str): The end timestamp for the tracked time entry. Must be after the start time. Use an ISO 8601
             date and time with Z or a UTC offset, e.g. 2026-09-09T10:00:00Z or 2026-09-09T12:00:00+02:00. A date alone or a
             timestamp without a timezone is invalid.
-        user (Union[None, Unset, str]): The name or email of the user to attribute the tracked time to or null to use
-            the current user.
-        custom_property_name (Union[None, Unset, str]): The time tracking custom property name listed in config
+        user (None | str | Unset): The name or email of the user to attribute the tracked time to or null to use the
+            current user.
+        custom_property_name (None | str | Unset): The time tracking custom property name listed in config
             customProperties. Must be a time tracking type. If omitted, defaults to the main time tracking property.
     """
 
     started_at: str
     finished_at: str
-    user: Union[None, Unset, str] = UNSET
-    custom_property_name: Union[None, Unset, str] = UNSET
+    user: None | str | Unset = UNSET
+    custom_property_name: None | str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -41,13 +38,13 @@ class TaskTimeTrackingCreate:
 
         finished_at = self.finished_at
 
-        user: Union[None, Unset, str]
+        user: None | str | Unset
         if isinstance(self.user, Unset):
             user = UNSET
         else:
             user = self.user
 
-        custom_property_name: Union[None, Unset, str]
+        custom_property_name: None | str | Unset
         if isinstance(self.custom_property_name, Unset):
             custom_property_name = UNSET
         else:
@@ -75,21 +72,21 @@ class TaskTimeTrackingCreate:
 
         finished_at = d.pop("finishedAt")
 
-        def _parse_user(data: object) -> Union[None, Unset, str]:
+        def _parse_user(data: object) -> None | str | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):
                 return data
-            return cast(Union[None, Unset, str], data)
+            return cast(None | str | Unset, data)
 
         user = _parse_user(d.pop("user", UNSET))
 
-        def _parse_custom_property_name(data: object) -> Union[None, Unset, str]:
+        def _parse_custom_property_name(data: object) -> None | str | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):
                 return data
-            return cast(Union[None, Unset, str], data)
+            return cast(None | str | Unset, data)
 
         custom_property_name = _parse_custom_property_name(d.pop("customPropertyName", UNSET))
 

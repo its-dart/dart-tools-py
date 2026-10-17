@@ -170,7 +170,8 @@ _PRIORITY_MAP: dict[int, str] = {
     2: Priority.MEDIUM,
     3: Priority.LOW,
 }
-_SIZES = {1, 2, 3, 5, 8}
+
+_TSHIRT_SIZES = {"xs", "s", "m", "l", "xl", "extra small", "small", "medium", "large", "extra large"}
 
 _VERSION = version(_APP)
 _AUTH_TOKEN_ENVVAR = os.environ.get(_AUTH_TOKEN_ENVVAR_KEY)
@@ -264,6 +265,17 @@ def _nonnegative_float(value: str) -> float:
     if not math.isfinite(parsed) or parsed < 0:
         raise ArgumentTypeError("must be finite and greater than or equal to 0")
     return parsed
+
+
+def _parse_size(value: str) -> int | str:
+    try:
+        return int(value)
+    except ValueError:
+        if value.lower() not in _TSHIRT_SIZES:
+            raise ArgumentTypeError(
+                f"must be an integer or a T-shirt size: {', '.join(sorted(_TSHIRT_SIZES))}"
+            ) from None
+        return value
 
 
 def _exit_gracefully(_signal_received, _frame) -> None:
@@ -1093,7 +1105,7 @@ def create_task(
     assignee_emails: Union[list[str], Unset] = UNSET,
     tag_titles: Union[list[str], Unset] = UNSET,
     priority_int: Union[int, None, Unset] = UNSET,
-    size_int: Union[int, None, Unset] = UNSET,
+    size_int: Union[int, str, None, Unset] = UNSET,
     due_at_str: Union[str, None, Unset] = UNSET,
     should_begin: bool = False,
     begin_status_name: str = _DEFAULT_BEGIN_STATUS,
@@ -1130,7 +1142,7 @@ def update_task(
     assignee_emails: Union[list[str], Unset] = UNSET,
     tag_titles: Union[list[str], Unset] = UNSET,
     priority_int: Union[int, None, Unset] = UNSET,
-    size_int: Union[int, None, Unset] = UNSET,
+    size_int: Union[int, str, None, Unset] = UNSET,
     due_at_str: Union[str, None, Unset] = UNSET,
 ) -> Task:
     dart = _make_authenticated_dart()
@@ -1274,9 +1286,8 @@ def _add_standard_task_arguments(parser: ArgumentParser) -> None:
         "-i",
         "--size",
         dest="size_int",
-        type=int,
-        choices=_SIZES,
-        help="task size",
+        type=_parse_size,
+        help="task size (number or T-shirt label)",
         default=UNSET,
     )
     parser.add_argument(

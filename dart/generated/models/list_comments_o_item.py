@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class ListCommentsOItem(str, Enum):
+class ListCommentsOItem(StrEnum):
     HIERARCHICAL = "hierarchical"
     PUBLISHED_AT = "published_at"
     PUBLISHED_AT_DESC = "-published_at"

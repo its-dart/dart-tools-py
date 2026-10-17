@@ -1,6 +1,6 @@
 import datetime
 from http import HTTPStatus
-from typing import Any, Optional, Union
+from typing import Any
 
 import httpx
 
@@ -13,20 +13,21 @@ from ...types import UNSET, Response, Unset
 
 def _get_kwargs(
     *,
-    author: Union[Unset, str] = UNSET,
-    author_id: Union[Unset, str] = UNSET,
-    ids: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = UNSET,
-    o: Union[Unset, list[ListCommentsOItem]] = UNSET,
-    offset: Union[Unset, int] = UNSET,
-    parent_id: Union[Unset, str] = UNSET,
-    published_at: Union[Unset, datetime.datetime] = UNSET,
-    published_at_after: Union[Unset, datetime.datetime] = UNSET,
-    published_at_before: Union[Unset, datetime.datetime] = UNSET,
-    task: Union[Unset, str] = UNSET,
+    author: str | Unset = UNSET,
+    author_id: str | Unset = UNSET,
+    ids: str | Unset = UNSET,
+    limit: int | Unset = UNSET,
+    o: list[ListCommentsOItem] | Unset = UNSET,
+    offset: int | Unset = UNSET,
+    parent_id: str | Unset = UNSET,
+    published_at: datetime.datetime | Unset = UNSET,
+    published_at_after: datetime.datetime | Unset = UNSET,
+    published_at_before: datetime.datetime | Unset = UNSET,
+    task: str | Unset = UNSET,
     task_id: str,
-    text: Union[Unset, str] = UNSET,
+    text: str | Unset = UNSET,
 ) -> dict[str, Any]:
+
     params: dict[str, Any] = {}
 
     params["author"] = author
@@ -37,7 +38,7 @@ def _get_kwargs(
 
     params["limit"] = limit
 
-    json_o: Union[Unset, list[str]] = UNSET
+    json_o: list[str] | Unset = UNSET
     if not isinstance(o, Unset):
         json_o = []
         for o_item_data in o:
@@ -50,17 +51,17 @@ def _get_kwargs(
 
     params["parent_id"] = parent_id
 
-    json_published_at: Union[Unset, str] = UNSET
+    json_published_at: str | Unset = UNSET
     if not isinstance(published_at, Unset):
         json_published_at = published_at.isoformat()
     params["published_at"] = json_published_at
 
-    json_published_at_after: Union[Unset, str] = UNSET
+    json_published_at_after: str | Unset = UNSET
     if not isinstance(published_at_after, Unset):
         json_published_at_after = published_at_after.isoformat()
     params["published_at_after"] = json_published_at_after
 
-    json_published_at_before: Union[Unset, str] = UNSET
+    json_published_at_before: str | Unset = UNSET
     if not isinstance(published_at_before, Unset):
         json_published_at_before = published_at_before.isoformat()
     params["published_at_before"] = json_published_at_before
@@ -82,9 +83,7 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(
-    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Optional[PaginatedCommentList]:
+def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> PaginatedCommentList | None:
     if response.status_code == 200:
         response_200 = PaginatedCommentList.from_dict(response.json())
 
@@ -97,7 +96,7 @@ def _parse_response(
 
 
 def _build_response(
-    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
+    *, client: AuthenticatedClient | Client, response: httpx.Response
 ) -> Response[PaginatedCommentList]:
     return Response(
         status_code=HTTPStatus(response.status_code),
@@ -110,37 +109,37 @@ def _build_response(
 def sync_detailed(
     *,
     client: AuthenticatedClient,
-    author: Union[Unset, str] = UNSET,
-    author_id: Union[Unset, str] = UNSET,
-    ids: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = UNSET,
-    o: Union[Unset, list[ListCommentsOItem]] = UNSET,
-    offset: Union[Unset, int] = UNSET,
-    parent_id: Union[Unset, str] = UNSET,
-    published_at: Union[Unset, datetime.datetime] = UNSET,
-    published_at_after: Union[Unset, datetime.datetime] = UNSET,
-    published_at_before: Union[Unset, datetime.datetime] = UNSET,
-    task: Union[Unset, str] = UNSET,
+    author: str | Unset = UNSET,
+    author_id: str | Unset = UNSET,
+    ids: str | Unset = UNSET,
+    limit: int | Unset = UNSET,
+    o: list[ListCommentsOItem] | Unset = UNSET,
+    offset: int | Unset = UNSET,
+    parent_id: str | Unset = UNSET,
+    published_at: datetime.datetime | Unset = UNSET,
+    published_at_after: datetime.datetime | Unset = UNSET,
+    published_at_before: datetime.datetime | Unset = UNSET,
+    task: str | Unset = UNSET,
     task_id: str,
-    text: Union[Unset, str] = UNSET,
+    text: str | Unset = UNSET,
 ) -> Response[PaginatedCommentList]:
     """List comments for a task with filtering options. Filter by author, text content, or date range. Sort
     by date or hierarchical thread order. Task ID required. Supports pagination.
 
     Args:
-        author (Union[Unset, str]):
-        author_id (Union[Unset, str]):
-        ids (Union[Unset, str]):
-        limit (Union[Unset, int]):
-        o (Union[Unset, list[ListCommentsOItem]]):
-        offset (Union[Unset, int]):
-        parent_id (Union[Unset, str]):
-        published_at (Union[Unset, datetime.datetime]):
-        published_at_after (Union[Unset, datetime.datetime]):
-        published_at_before (Union[Unset, datetime.datetime]):
-        task (Union[Unset, str]):
+        author (str | Unset):
+        author_id (str | Unset):
+        ids (str | Unset):
+        limit (int | Unset):
+        o (list[ListCommentsOItem] | Unset):
+        offset (int | Unset):
+        parent_id (str | Unset):
+        published_at (datetime.datetime | Unset):
+        published_at_after (datetime.datetime | Unset):
+        published_at_before (datetime.datetime | Unset):
+        task (str | Unset):
         task_id (str):
-        text (Union[Unset, str]):
+        text (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -176,37 +175,37 @@ def sync_detailed(
 def sync(
     *,
     client: AuthenticatedClient,
-    author: Union[Unset, str] = UNSET,
-    author_id: Union[Unset, str] = UNSET,
-    ids: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = UNSET,
-    o: Union[Unset, list[ListCommentsOItem]] = UNSET,
-    offset: Union[Unset, int] = UNSET,
-    parent_id: Union[Unset, str] = UNSET,
-    published_at: Union[Unset, datetime.datetime] = UNSET,
-    published_at_after: Union[Unset, datetime.datetime] = UNSET,
-    published_at_before: Union[Unset, datetime.datetime] = UNSET,
-    task: Union[Unset, str] = UNSET,
+    author: str | Unset = UNSET,
+    author_id: str | Unset = UNSET,
+    ids: str | Unset = UNSET,
+    limit: int | Unset = UNSET,
+    o: list[ListCommentsOItem] | Unset = UNSET,
+    offset: int | Unset = UNSET,
+    parent_id: str | Unset = UNSET,
+    published_at: datetime.datetime | Unset = UNSET,
+    published_at_after: datetime.datetime | Unset = UNSET,
+    published_at_before: datetime.datetime | Unset = UNSET,
+    task: str | Unset = UNSET,
     task_id: str,
-    text: Union[Unset, str] = UNSET,
-) -> Optional[PaginatedCommentList]:
+    text: str | Unset = UNSET,
+) -> PaginatedCommentList | None:
     """List comments for a task with filtering options. Filter by author, text content, or date range. Sort
     by date or hierarchical thread order. Task ID required. Supports pagination.
 
     Args:
-        author (Union[Unset, str]):
-        author_id (Union[Unset, str]):
-        ids (Union[Unset, str]):
-        limit (Union[Unset, int]):
-        o (Union[Unset, list[ListCommentsOItem]]):
-        offset (Union[Unset, int]):
-        parent_id (Union[Unset, str]):
-        published_at (Union[Unset, datetime.datetime]):
-        published_at_after (Union[Unset, datetime.datetime]):
-        published_at_before (Union[Unset, datetime.datetime]):
-        task (Union[Unset, str]):
+        author (str | Unset):
+        author_id (str | Unset):
+        ids (str | Unset):
+        limit (int | Unset):
+        o (list[ListCommentsOItem] | Unset):
+        offset (int | Unset):
+        parent_id (str | Unset):
+        published_at (datetime.datetime | Unset):
+        published_at_after (datetime.datetime | Unset):
+        published_at_before (datetime.datetime | Unset):
+        task (str | Unset):
         task_id (str):
-        text (Union[Unset, str]):
+        text (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -237,37 +236,37 @@ def sync(
 async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
-    author: Union[Unset, str] = UNSET,
-    author_id: Union[Unset, str] = UNSET,
-    ids: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = UNSET,
-    o: Union[Unset, list[ListCommentsOItem]] = UNSET,
-    offset: Union[Unset, int] = UNSET,
-    parent_id: Union[Unset, str] = UNSET,
-    published_at: Union[Unset, datetime.datetime] = UNSET,
-    published_at_after: Union[Unset, datetime.datetime] = UNSET,
-    published_at_before: Union[Unset, datetime.datetime] = UNSET,
-    task: Union[Unset, str] = UNSET,
+    author: str | Unset = UNSET,
+    author_id: str | Unset = UNSET,
+    ids: str | Unset = UNSET,
+    limit: int | Unset = UNSET,
+    o: list[ListCommentsOItem] | Unset = UNSET,
+    offset: int | Unset = UNSET,
+    parent_id: str | Unset = UNSET,
+    published_at: datetime.datetime | Unset = UNSET,
+    published_at_after: datetime.datetime | Unset = UNSET,
+    published_at_before: datetime.datetime | Unset = UNSET,
+    task: str | Unset = UNSET,
     task_id: str,
-    text: Union[Unset, str] = UNSET,
+    text: str | Unset = UNSET,
 ) -> Response[PaginatedCommentList]:
     """List comments for a task with filtering options. Filter by author, text content, or date range. Sort
     by date or hierarchical thread order. Task ID required. Supports pagination.
 
     Args:
-        author (Union[Unset, str]):
-        author_id (Union[Unset, str]):
-        ids (Union[Unset, str]):
-        limit (Union[Unset, int]):
-        o (Union[Unset, list[ListCommentsOItem]]):
-        offset (Union[Unset, int]):
-        parent_id (Union[Unset, str]):
-        published_at (Union[Unset, datetime.datetime]):
-        published_at_after (Union[Unset, datetime.datetime]):
-        published_at_before (Union[Unset, datetime.datetime]):
-        task (Union[Unset, str]):
+        author (str | Unset):
+        author_id (str | Unset):
+        ids (str | Unset):
+        limit (int | Unset):
+        o (list[ListCommentsOItem] | Unset):
+        offset (int | Unset):
+        parent_id (str | Unset):
+        published_at (datetime.datetime | Unset):
+        published_at_after (datetime.datetime | Unset):
+        published_at_before (datetime.datetime | Unset):
+        task (str | Unset):
         task_id (str):
-        text (Union[Unset, str]):
+        text (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -301,37 +300,37 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: AuthenticatedClient,
-    author: Union[Unset, str] = UNSET,
-    author_id: Union[Unset, str] = UNSET,
-    ids: Union[Unset, str] = UNSET,
-    limit: Union[Unset, int] = UNSET,
-    o: Union[Unset, list[ListCommentsOItem]] = UNSET,
-    offset: Union[Unset, int] = UNSET,
-    parent_id: Union[Unset, str] = UNSET,
-    published_at: Union[Unset, datetime.datetime] = UNSET,
-    published_at_after: Union[Unset, datetime.datetime] = UNSET,
-    published_at_before: Union[Unset, datetime.datetime] = UNSET,
-    task: Union[Unset, str] = UNSET,
+    author: str | Unset = UNSET,
+    author_id: str | Unset = UNSET,
+    ids: str | Unset = UNSET,
+    limit: int | Unset = UNSET,
+    o: list[ListCommentsOItem] | Unset = UNSET,
+    offset: int | Unset = UNSET,
+    parent_id: str | Unset = UNSET,
+    published_at: datetime.datetime | Unset = UNSET,
+    published_at_after: datetime.datetime | Unset = UNSET,
+    published_at_before: datetime.datetime | Unset = UNSET,
+    task: str | Unset = UNSET,
     task_id: str,
-    text: Union[Unset, str] = UNSET,
-) -> Optional[PaginatedCommentList]:
+    text: str | Unset = UNSET,
+) -> PaginatedCommentList | None:
     """List comments for a task with filtering options. Filter by author, text content, or date range. Sort
     by date or hierarchical thread order. Task ID required. Supports pagination.
 
     Args:
-        author (Union[Unset, str]):
-        author_id (Union[Unset, str]):
-        ids (Union[Unset, str]):
-        limit (Union[Unset, int]):
-        o (Union[Unset, list[ListCommentsOItem]]):
-        offset (Union[Unset, int]):
-        parent_id (Union[Unset, str]):
-        published_at (Union[Unset, datetime.datetime]):
-        published_at_after (Union[Unset, datetime.datetime]):
-        published_at_before (Union[Unset, datetime.datetime]):
-        task (Union[Unset, str]):
+        author (str | Unset):
+        author_id (str | Unset):
+        ids (str | Unset):
+        limit (int | Unset):
+        o (list[ListCommentsOItem] | Unset):
+        offset (int | Unset):
+        parent_id (str | Unset):
+        published_at (datetime.datetime | Unset):
+        published_at_after (datetime.datetime | Unset):
+        published_at_before (datetime.datetime | Unset):
+        task (str | Unset):
         task_id (str):
-        text (Union[Unset, str]):
+        text (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
