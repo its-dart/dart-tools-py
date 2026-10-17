@@ -53,6 +53,7 @@ _CHAT_TITLE_KEY = "chatTitle"
 _CONTENT_KEY = "content"
 _DISPLAY_PROMPT_KEY = "displayPrompt"
 _EXIT_KEY = "exit"
+_FOLDER_KEY = "folder"
 _KIND_KEY = "kind"
 _LOGGED_IN_KEY = "loggedIn"
 _LOGIN_COMMAND_KEY = "loginCommand"
@@ -1768,12 +1769,19 @@ def _print_update_message(message: dict[str, Any], ui: AgentUI) -> bool:
     return message.get(_EXIT_KEY) is True
 
 
+def _get_folder() -> str:
+    cwd = Path.cwd()
+    home = Path.home()
+    return str(Path("~") / cwd.relative_to(home)) if cwd.is_relative_to(home) else str(cwd)
+
+
 async def _stream_local_agent_state(websocket: Any, local_agent: _LocalAgent) -> None:
     previous: dict[str, Any] | None = None
     while True:
         state: dict[str, Any] = {
             _LOGGED_IN_KEY: await asyncio.to_thread(local_agent.is_logged_in),
             _LOGIN_COMMAND_KEY: local_agent.login_display,
+            _FOLDER_KEY: _get_folder(),
         }
         if local_agent.auth_path:
             state[_PROVIDERS_KEY] = local_agent.authenticated_providers()
