@@ -302,7 +302,7 @@ T = TypeVar("T")
 def _exit_with_response_error(response: Response) -> NoReturn:
     try:
         response_content = json.loads(response.content)
-    except json.JSONDecodeError:
+    except (json.JSONDecodeError, UnicodeDecodeError):
         _unknown_failure_exit()
     if not isinstance(response_content, dict):
         _unknown_failure_exit()

@@ -219,6 +219,20 @@ class LoginTests(unittest.TestCase):
 
         self.assertEqual(str(ctx.exception), dart_cli.UNKNOWN_FAILURE_MESSAGE)
 
+    def test_exchange_login_token_falls_back_when_error_body_has_invalid_encoding(self) -> None:
+        dart = dart_cli.Dart()
+        public_api = Mock()
+        response = _response(HTTPStatus.BAD_GATEWAY, content=b"<html>R\xe9essayez</html>")
+
+        with (
+            patch.object(dart, "_make_public_api_client", return_value=public_api),
+            patch("dart.dart.api.token_login.sync_detailed", return_value=response),
+            self.assertRaises(dart_cli.DartException) as ctx,
+        ):
+            dart.exchange_login_token("login_token")
+
+        self.assertEqual(str(ctx.exception), dart_cli.UNKNOWN_FAILURE_MESSAGE)
+
     def test_token_login_persists_exchanged_auth_token(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             config_path = Path(tmp_dir) / "dart-tools" / "config.json"
