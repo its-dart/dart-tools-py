@@ -299,6 +299,24 @@ def _get_required_text(prompt: str) -> str:
 T = TypeVar("T")
 
 
+def _exit_with_response_error(response: Response) -> NoReturn:
+    try:
+        response_content = json.loads(response.content)
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        _unknown_failure_exit()
+    if not isinstance(response_content, dict):
+        _unknown_failure_exit()
+    detail = response_content.get("detail")
+    if detail:
+        _dart_exit(detail if isinstance(detail, str) else str(detail))
+    errors = response_content.get("errors")
+    if isinstance(errors, list):
+        messages = [error for error in errors if isinstance(error, str) and error]
+        if messages:
+            _dart_exit(" ".join(messages))
+    _unknown_failure_exit()
+
+
 def _get_response_parsed(
     response: Response[T],
     not_found_message="Not found.",
@@ -312,12 +330,7 @@ def _get_response_parsed(
         _auth_failure_exit()
     elif response.status_code == 404:
         _dart_exit(not_found_message)
-    try:
-        response_content = json.loads(response.content)
-        error_message = response_content.get("detail") or " ".join(response_content.get("errors", []))
-        _dart_exit(error_message)
-    except (json.JSONDecodeError, AttributeError):
-        _unknown_failure_exit()
+    _exit_with_response_error(response)
 
 
 def _handle_request_errors(fn: Callable) -> Callable:
@@ -471,9 +484,7 @@ class Dart:
             return response.parsed.auth_token
         if response.status_code in _AUTH_FAILURE_STATUS_CODES:
             _dart_exit("Invalid token.")
-        if response.status_code != 200:
-            _unknown_failure_exit()
-        _unknown_failure_exit()
+        _exit_with_response_error(response)
 
     def ensure_logged_in_for_cli(self) -> None:
         if not _is_cli or self.is_logged_in():
