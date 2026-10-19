@@ -41,15 +41,34 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
                     events.append(prepared_event)
         return events, stream_state
 
+    async def _run_jsonl_agent(self, name, values, *, returncode=0):
+        stdout = "\n".join(agent.json.dumps(value) for value in values).encode()
+        process = Mock(
+            stdout=Mock(read=AsyncMock(side_effect=[stdout, b""])),
+            stderr=Mock(read=AsyncMock(return_value=b"")),
+            wait=AsyncMock(return_value=returncode),
+            returncode=returncode,
+        )
+        emit_event = AsyncMock()
+        with patch("dart.agent.asyncio.create_subprocess_exec", new=AsyncMock(return_value=process)):
+            result = await agent._LOCAL_AGENTS[name].run("prompt", None, None, None, (), emit_event)
+        return result, [call.args[0] for call in emit_event.await_args_list]
+
     def test_configured_agents_extract_text_delta_from_response_keys(self) -> None:
         cases = {
-            "codex": ({"item": {"text": "codex text"}}, "codex text"),
+            "codex": (
+                {"type": "item.completed", "item": {"type": "agent_message", "text": "codex text"}},
+                "codex text",
+            ),
             "copilot": (
                 {"type": "assistant.message", "data": {"content": "copilot text", "phase": "final_answer"}},
                 "copilot text",
             ),
             "gemini": ({"response": "gemini text"}, "gemini text"),
-            "opencode": ({"part": {"text": "opencode text"}}, "opencode text"),
+            "opencode": (
+                {"type": "text", "part": {"type": "text", "text": "opencode text"}},
+                "opencode text",
+            ),
             "agy": ({"event": "step_update", "step_update": {"text_delta": "agy text"}}, "agy text"),
             "grok": ({"type": "text", "data": "grok text"}, "grok text"),
             "muse": ({"payload": {"kind": "run_output_delta", "text": "muse text"}}, "muse text"),
@@ -340,6 +359,321 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
             events,
             [{"kind": "thinking", "detail": "Think through the request.", "summary": "Plan"}],
         )
+
+    async def test_codex_keeps_reasoning_out_of_answer_text(self) -> None:
+        values = [
+            {"type": "thread.started", "thread_id": "thread-1"},
+            {"type": "item.completed", "item": {"id": "i1", "type": "reasoning", "text": "Check the tests."}},
+            {"type": "item.completed", "item": {"id": "i2", "type": "reasoning", "text": "Check the tests."}},
+            {"type": "item.completed", "item": {"id": "i3", "type": "agent_message", "text": "All tests pass."}},
+        ]
+
+        result, events = await self._run_jsonl_agent("codex", values)
+
+        self.assertEqual(result, (True, "All tests pass.", "thread-1"))
+        self.assertEqual(
+            events,
+            [
+                {"kind": "thinking", "detail": "Check the tests."},
+                {"kind": "thinking", "detail": "Check the tests."},
+                {"kind": "text_delta", "text": "All tests pass."},
+            ],
+        )
+
+    async def test_codex_still_accepts_legacy_message_events(self) -> None:
+        values = [
+            {"id": "submission-1", "msg": {"type": "agent_reasoning", "text": "Check the tests."}},
+            {"id": "submission-1", "msg": {"type": "agent_message", "message": "All tests pass."}},
+        ]
+
+        result, events = await self._run_jsonl_agent("codex", values)
+
+        self.assertEqual(result, (True, "All tests pass.", None))
+        self.assertEqual(
+            events,
+            [
+                {"kind": "thinking", "detail": "Check the tests."},
+                {"kind": "text_delta", "text": "All tests pass."},
+            ],
+        )
+
+    async def test_opencode_emits_completed_reasoning_separately_from_text(self) -> None:
+        local_agent = agent._LOCAL_AGENTS["opencode"]
+        for session_id in (None, "session-1"):
+            self.assertIn("--thinking", local_agent.make_command(session_id, "prompt"))
+        values = [
+            {
+                "type": "reasoning",
+                "sessionID": "session-1",
+                "part": {
+                    "id": part_id,
+                    "type": "reasoning",
+                    "text": "Check the tests.",
+                    "time": {"start": 1, "end": 2},
+                },
+            }
+            for part_id in ("p1", "p2")
+        ]
+        values.append({"type": "text", "part": {"id": "p3", "type": "text", "text": "All tests pass."}})
+
+        result, events = await self._run_jsonl_agent("opencode", values)
+
+        self.assertEqual(result, (True, "All tests pass.", "session-1"))
+        self.assertEqual(
+            events,
+            [
+                {"kind": "thinking", "detail": "Check the tests."},
+                {"kind": "thinking", "detail": "Check the tests."},
+                {"kind": "text_delta", "text": "All tests pass."},
+            ],
+        )
+
+    async def test_reasoning_only_jsonl_does_not_fall_back_to_raw_json_answer(self) -> None:
+        cases = {
+            "codex": {"type": "item.completed", "item": {"type": "reasoning", "text": "Check the tests."}},
+            "opencode": {"type": "reasoning", "part": {"type": "reasoning", "text": "Check the tests."}},
+            "grok": {"type": "thought", "data": "Check the tests."},
+            "cursor": {"type": "thinking", "subtype": "delta", "text": "Check the tests."},
+        }
+        for name, value in cases.items():
+            with self.subTest(name=name):
+                result, events = await self._run_jsonl_agent(name, [value])
+                self.assertEqual(result, (True, "Done.", None))
+                self.assertEqual(events, [{"kind": "thinking", "detail": "Check the tests."}])
+
+    def test_claude_preserves_identical_thoughts_with_distinct_envelope_ids(self) -> None:
+        values = [
+            {
+                "type": "stream_event",
+                "event": {
+                    "type": "content_block_delta",
+                    "index": 0,
+                    "delta": {"type": "thinking_delta", "thinking": "Check "},
+                },
+            }
+        ]
+        values.extend(
+            {
+                "type": "assistant",
+                "uuid": uuid,
+                "message": {"id": "msg-1", "content": [{"type": "thinking", "thinking": "Check the tests."}]},
+            }
+            for uuid in ("block-1", "block-1", "block-2")
+        )
+
+        events, _ = self._prepare_claude_stream_events(values)
+
+        self.assertEqual(
+            events,
+            [
+                {"kind": "thinking", "detail": "Check the tests."},
+                {"kind": "thinking", "detail": "Check the tests."},
+            ],
+        )
+
+    async def test_prime_uses_completed_thoughts_and_preserves_identical_blocks(self) -> None:
+        thought = {"type": "thinking", "thinking": "Check the tests."}
+        values = [
+            {
+                "type": event_type,
+                "message": {"role": "assistant", "timestamp": 1, "content": content},
+                "assistantMessageEvent": update,
+            }
+            for event_type, content, update in (
+                ("message_start", [], None),
+                (
+                    "message_update",
+                    [{"type": "thinking", "thinking": "Check "}],
+                    {
+                        "type": "thinking_delta",
+                        "contentIndex": 0,
+                        "delta": "Check ",
+                    },
+                ),
+                (
+                    "message_update",
+                    [thought],
+                    {
+                        "type": "thinking_end",
+                        "contentIndex": 0,
+                        "content": "Check the tests.",
+                    },
+                ),
+                (
+                    "message_update",
+                    [thought, thought],
+                    {
+                        "type": "thinking_end",
+                        "contentIndex": 1,
+                        "content": "Check the tests.",
+                    },
+                ),
+                (
+                    "message_update",
+                    [thought, thought, {"type": "text", "text": "Let me"}],
+                    {
+                        "type": "text_delta",
+                        "contentIndex": 2,
+                        "delta": "Let me",
+                    },
+                ),
+                (
+                    "message_update",
+                    [thought, thought, {"type": "text", "text": "Let me check."}],
+                    {
+                        "type": "text_delta",
+                        "contentIndex": 2,
+                        "delta": " check.",
+                    },
+                ),
+                ("message_end", [thought, thought, {"type": "text", "text": "Let me check."}], None),
+                ("turn_end", [thought, thought, {"type": "text", "text": "Let me check."}], None),
+                ("message_start", [], None),
+                (
+                    "message_update",
+                    [thought],
+                    {
+                        "type": "thinking_end",
+                        "contentIndex": 0,
+                        "content": "Check the tests.",
+                    },
+                ),
+                ("message_end", [thought], None),
+                ("turn_end", [thought], None),
+            )
+        ]
+
+        _, events = await self._run_jsonl_agent("prime-agent", values)
+
+        self.assertEqual(
+            events,
+            [
+                {"kind": "thinking", "detail": "Check the tests."},
+                {"kind": "thinking", "detail": "Check the tests."},
+                {"kind": "text_delta", "text": "Let me"},
+                {"kind": "text_delta", "text": " check."},
+                {"kind": "thinking", "detail": "Check the tests."},
+            ],
+        )
+
+    async def test_prime_flushes_thought_before_later_block_if_thinking_end_is_missing(self) -> None:
+        cases = [
+            ("text_delta", {"type": "text", "text": "Done."}, {"kind": "text_delta", "text": "Done."}),
+            (
+                "toolcall_end",
+                {"type": "toolCall", "id": "t1", "name": "Read", "arguments": {}},
+                {
+                    "kind": "tool_call",
+                    "toolCallId": "t1",
+                    "name": "Read",
+                    "args": {},
+                },
+            ),
+        ]
+        for update_type, block, expected_event in cases:
+            with self.subTest(update_type=update_type):
+                thought = {"type": "thinking", "thinking": "Check the tests."}
+                values = [
+                    {"type": "message_start", "message": {"role": "assistant", "content": []}},
+                    {
+                        "type": "message_update",
+                        "message": {"role": "assistant", "content": [thought]},
+                        "assistantMessageEvent": {
+                            "type": "thinking_delta",
+                            "contentIndex": 0,
+                            "delta": "Check the tests.",
+                        },
+                    },
+                    {
+                        "type": "message_update",
+                        "message": {"role": "assistant", "content": [thought, block]},
+                        "assistantMessageEvent": {"type": update_type, "contentIndex": 1},
+                    },
+                    {"type": "message_end", "message": {"role": "assistant", "content": [thought, block]}},
+                ]
+                if update_type == "toolcall_end":
+                    values.append({"type": "tool_execution_start", "toolCallId": "t1", "toolName": "Read", "args": {}})
+
+                _, events = await self._run_jsonl_agent("prime-agent", values)
+
+                self.assertEqual(events, [{"kind": "thinking", "detail": "Check the tests."}, expected_event])
+
+    async def test_prime_preserves_order_when_message_start_contains_final_snapshot(self) -> None:
+        message = {
+            "role": "assistant",
+            "content": [
+                {"type": "thinking", "thinking": "Check the tests."},
+                {"type": "text", "text": "Done."},
+            ],
+        }
+        values = [
+            {"type": event_type, "message": message} for event_type in ("message_start", "message_end", "turn_end")
+        ]
+
+        _, events = await self._run_jsonl_agent("prime-agent", values)
+
+        self.assertEqual(
+            events,
+            [
+                {"kind": "thinking", "detail": "Check the tests."},
+                {"kind": "text_delta", "text": "Done."},
+            ],
+        )
+
+    async def test_prime_keeps_partial_thought_from_aborted_message_end(self) -> None:
+        value = {
+            "type": "message_end",
+            "message": {
+                "role": "assistant",
+                "stopReason": "aborted",
+                "content": [{"type": "thinking", "thinking": "Check the"}],
+            },
+        }
+
+        _, events = await self._run_jsonl_agent("prime-agent", [value], returncode=1)
+
+        self.assertEqual(events, [{"kind": "thinking", "detail": "Check the"}])
+
+    async def test_grok_buffers_thought_chunks_until_output_or_response_boundary(self) -> None:
+        boundaries = [
+            {"type": "text", "data": "Checking."},
+            {"type": "usage", "messageId": "msg-1"},
+            {"type": "end", "sessionId": "session-1"},
+            {"type": "error", "message": "Interrupted."},
+            {"type": "tool_call", "toolCallId": "t1", "toolName": "read_file", "status": "in_progress"},
+            {"type": "tool_call_update", "toolCallId": "t1", "status": "completed", "rawOutput": "done"},
+        ]
+        for boundary in boundaries:
+            with self.subTest(boundary=boundary["type"]):
+                values = [
+                    {"type": "thought", "data": "Check"},
+                    {"type": "thought", "data": " "},
+                    {"type": "plan", "entries": []},
+                    {"type": "thought", "data": "the tests."},
+                    boundary,
+                    {"type": "thought", "data": ""},
+                    {"type": "thought", "data": "Check the tests."},
+                ]
+
+                _, events = await self._run_jsonl_agent("grok", values)
+
+                self.assertEqual(events[0], {"kind": "thinking", "detail": "Check the tests."})
+                self.assertEqual(events[-1], {"kind": "thinking", "detail": "Check the tests."})
+                self.assertEqual(sum(event["kind"] == "thinking" for event in events), 2)
+
+    async def test_grok_flushes_unfinished_thought_on_success_or_failure(self) -> None:
+        for returncode in (0, 1):
+            with self.subTest(returncode=returncode):
+                result, events = await self._run_jsonl_agent(
+                    "grok",
+                    [
+                        {"type": "thought", "data": "Still "},
+                        {"type": "thought", "data": "thinking."},
+                    ],
+                    returncode=returncode,
+                )
+                self.assertEqual(result[0], returncode == 0)
+                self.assertEqual(events, [{"kind": "thinking", "detail": "Still thinking."}])
 
     def test_events_from_value_extracts_claude_content_blocks(self) -> None:
         local_agent = agent._LOCAL_AGENTS["claude"]
@@ -693,6 +1027,97 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
                 }
             ],
         )
+
+    async def test_cursor_buffers_thinking_deltas_and_preserves_adjacent_thoughts(self) -> None:
+        emitted_events = []
+        chunks = iter(
+            (
+                [
+                    {"type": "thinking", "subtype": "delta", "text": "Think"},
+                    {"type": "thinking", "subtype": "delta", "text": " "},
+                    {"type": "thinking", "subtype": "delta", "text": "carefully."},
+                ],
+                [
+                    {"type": "thinking", "subtype": "completed"},
+                    {"type": "thinking", "subtype": "delta", "text": "Think carefully."},
+                    {"type": "thinking", "subtype": "completed"},
+                    {"type": "thinking", "subtype": "delta", "text": ""},
+                    {"type": "thinking", "subtype": "completed"},
+                    {
+                        "type": "tool_call",
+                        "subtype": "started",
+                        "call_id": "call-1",
+                        "name": "Read",
+                        "args": {"path": "README.md"},
+                    },
+                    {"type": "assistant", "message": {"content": [{"type": "text", "text": "Done."}]}},
+                    {"type": "result", "result": "Done.", "session_id": "session-1"},
+                ],
+            )
+        )
+
+        async def read_stdout(size):
+            values = next(chunks, None)
+            if values is None:
+                return b""
+            self.assertEqual(emitted_events, [])
+            return "".join(agent.json.dumps(value) + "\n" for value in values).encode()
+
+        process = Mock(
+            stdout=Mock(read=AsyncMock(side_effect=read_stdout)),
+            stderr=Mock(read=AsyncMock(return_value=b"")),
+            wait=AsyncMock(return_value=0),
+            returncode=0,
+        )
+
+        async def emit_event(event):
+            emitted_events.append(event)
+
+        with patch("dart.agent.asyncio.create_subprocess_exec", new=AsyncMock(return_value=process)):
+            result = await agent._LOCAL_AGENTS["cursor"].run("Think carefully", None, None, None, (), emit_event)
+
+        self.assertEqual(result, (True, "Done.", "session-1"))
+        self.assertEqual(
+            emitted_events,
+            [
+                {"kind": "thinking", "detail": "Think carefully."},
+                {"kind": "thinking", "detail": "Think carefully."},
+                {"kind": "tool_call", "toolCallId": "call-1", "name": "Read", "args": {"path": "README.md"}},
+                {"kind": "text_delta", "text": "Done."},
+            ],
+        )
+
+    async def test_cursor_flushes_unfinished_thinking_before_later_output_or_exit(self) -> None:
+        for returncode, stream_text in ((0, False), (1, False), (0, True)):
+            with self.subTest(returncode=returncode, stream_text=stream_text):
+                values = [
+                    {"type": "thinking", "subtype": "delta", "text": "Still "},
+                    {"type": "thinking", "subtype": "delta", "text": "thinking."},
+                ]
+                if stream_text:
+                    values.append({"type": "assistant", "message": {"content": [{"type": "text", "text": "Done."}]}})
+                if returncode == 0:
+                    values.append({"type": "result", "result": "Done.", "session_id": "session-1"})
+                stdout = "\n".join(agent.json.dumps(value) for value in values).encode()
+                process = Mock(
+                    stdout=Mock(read=AsyncMock(side_effect=[stdout, b""])),
+                    stderr=Mock(read=AsyncMock(side_effect=[b"Process failed.", b""])),
+                    wait=AsyncMock(return_value=returncode),
+                    returncode=returncode,
+                )
+                emit_event = AsyncMock()
+
+                with patch("dart.agent.asyncio.create_subprocess_exec", new=AsyncMock(return_value=process)):
+                    success, _, _ = await agent._LOCAL_AGENTS["cursor"].run(
+                        "Think carefully", None, None, None, (), emit_event
+                    )
+
+                self.assertEqual(success, returncode == 0)
+                events = [call.args[0] for call in emit_event.await_args_list]
+                expected_events = [{"kind": "thinking", "detail": "Still thinking."}]
+                if returncode == 0:
+                    expected_events.append({"kind": "text_delta", "text": "Done."})
+                self.assertEqual(events, expected_events)
 
     def test_cursor_user_text_content_is_not_streamed_as_assistant_text(self) -> None:
         local_agent = agent._LOCAL_AGENTS["cursor"]
@@ -1089,7 +1514,7 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
                 self.killed = False
                 self.wait_future = asyncio.get_running_loop().create_future()
 
-                self.stdout.feed_data(b'{"item":{"text":"hello"}}\n')
+                self.stdout.feed_data(b'{"type":"item.completed","item":{"type":"agent_message","text":"hello"}}\n')
                 self.stderr.feed_eof()
 
             async def wait(self) -> int:

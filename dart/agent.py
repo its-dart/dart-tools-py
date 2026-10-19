@@ -105,6 +105,7 @@ _CLAUDE_CONTENT_BLOCK_PATHS = (
     "content",
     "content_block",
     "delta",
+    "part",
 )
 _MODEL_PROVIDERS = {"claude": "anthropic", "gemini": "google", "gpt": "openai"}
 _TOOL_NAME_ALIASES = {
@@ -199,11 +200,13 @@ class _LocalAgent:
     attachment_prompt_style: Literal["path", "gemini_at"] | None = "path"
     resume_session_after_args: bool = False
     response_types: tuple[str, ...] | None = None
-    type_key: str = _TYPE_KEY
+    type_key: str | tuple[str, ...] = _TYPE_KEY
     response_phases: tuple[str, ...] | None = None
     stream_response_keys: bool = True
     deduplicate_stream_events: bool = False
     reassemble_stream_events: bool = False
+    buffer_thinking_deltas: bool = False
+    filter_thinking_snapshots: bool = False
 
     @property
     def login_display(self) -> str:
@@ -369,9 +372,11 @@ class _LocalAgent:
     def parse_output(self, stdout: str, stderr: str) -> tuple[str, str | None]:
         response_parts_by_key = {response_key: [] for response_key in self.response_keys}
         session_id: str | None = None
+        has_json_output = False
         for value in _load_json_values(stdout, self.output_mode):
             if not isinstance(value, dict):
                 continue
+            has_json_output = True
             session_id = session_id or _nested_string(value, self.session_id_key)
             if not self._should_use_response_value(value):
                 continue
@@ -387,6 +392,8 @@ class _LocalAgent:
         )
         if response:
             return response, session_id
+        if self.output_mode == "jsonl" and has_json_output:
+            return "", session_id
         return "\n\n".join(part for part in (stdout.strip(), stderr.strip()) if part), session_id
 
     def parse_failure_output(self, stdout: str, stderr: str) -> str:
@@ -427,6 +434,10 @@ class _LocalAgent:
     def _events_from_value(
         self, value: dict[str, Any], stream_assembler: "_StreamEventAssembler | None" = None
     ) -> list[dict[str, Any]]:
+        if self.filter_thinking_snapshots:
+            value = _completed_thinking_snapshot(value)
+            if value is None:
+                return []
         if stream_assembler is not None and _nested_string(value, _TYPE_KEY) == _STREAM_EVENT_TYPE:
             return stream_assembler.events_from_stream_event(value)
 
@@ -592,7 +603,8 @@ class _LocalAgent:
 
     def _should_use_response_value(self, value: dict[str, Any]) -> bool:
         if self.response_types is not None:
-            value_type = _nested_string(value, self.type_key)
+            type_keys = (self.type_key,) if isinstance(self.type_key, str) else self.type_key
+            value_type = _first_string_from_paths(value, type_keys)
             if value_type not in self.response_types:
                 return False
         if self.response_phases is not None:
@@ -624,8 +636,17 @@ class _LocalAgent:
         assert process.stdout is not None
         assert process.stderr is not None
         next_session_id = session_id
-        stream_state = _StreamEventState(deduplicate_cumulative_events=self.deduplicate_stream_events)
+        stream_state = _StreamEventState(
+            deduplicate_cumulative_events=self.deduplicate_stream_events,
+            deduplicate_thinking_by_source=self.filter_thinking_snapshots,
+        )
         stream_assembler = _StreamEventAssembler() if self.reassemble_stream_events else None
+        thinking_parts: list[str] = []
+
+        async def flush_thinking() -> None:
+            if thinking_parts:
+                await emit_event({_KIND_KEY: _THINKING_EVENT_KIND, "detail": "".join(thinking_parts)})
+                thinking_parts.clear()
 
         async def handle_stdout_line(line: str) -> None:
             nonlocal next_session_id
@@ -635,9 +656,29 @@ class _LocalAgent:
                 if not isinstance(value, dict):
                     continue
                 next_session_id = next_session_id or _nested_string(value, self.session_id_key)
+                if self.filter_thinking_snapshots and value.get(_TYPE_KEY) == _MESSAGE_START_EVENT_TYPE:
+                    stream_state.seen_thinking_events.clear()
+                if self.buffer_thinking_deltas:
+                    value_type = _nested_string(value, _TYPE_KEY)
+                    if value_type == "thought":
+                        if text := _nested_string(value, "data"):
+                            thinking_parts.append(text)
+                        continue
+                    if value_type == _THINKING_EVENT_KIND:
+                        if value.get("subtype") == "delta":
+                            if text := _nested_string(value, _TEXT_KEY):
+                                thinking_parts.append(text)
+                            continue
+                        if value.get("subtype") == "completed":
+                            await flush_thinking()
+                            continue
+                    # Grok has no thought-completed event; use response and activity boundaries.
+                    if value_type in {"text", "tool_call", "tool_call_update", "usage", "end", "error"}:
+                        await flush_thinking()
                 for event in self._events_from_value(value, stream_assembler):
                     prepared_event = stream_state.prepare(event)
                     if prepared_event is not None:
+                        await flush_thinking()
                         await emit_event(prepared_event)
 
         stdout_task = asyncio.create_task(_read_stream(process.stdout, handle_stdout_line))
@@ -667,6 +708,7 @@ class _LocalAgent:
 
         stdout = stdout_task.result().strip()
         stderr = stderr_task.result().strip()
+        await flush_thinking()
 
         if timed_out:
             message = f"{command[0]} did not finish within {_RUN_TIMEOUT_SECONDS} seconds."
@@ -754,6 +796,8 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
         install_command=_npm_install_command("@openai/codex"),
         session_id_key="thread_id",
         response_key=("item.text", "msg.message"),
+        response_types=("agent_message",),
+        type_key=("item.type", "msg.type"),
         output_mode="jsonl",
         failure_response_keys=("error.message",),
         resume_command=(
@@ -823,6 +867,7 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
         failure_response_keys=(),
         resume_command=("cursor-agent", "--print", "--force", "--output-format", "stream-json", "--resume"),
         stream_response_keys=False,
+        buffer_thinking_deltas=True,
         login_command=("cursor-agent", "login"),
         login_status_command=("cursor-agent", "status", "--format", "json"),
         login_status_key="isAuthenticated",
@@ -862,6 +907,7 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
         session_id_key="sessionId",
         response_key="data",
         response_types=("text",),
+        buffer_thinking_deltas=True,
         output_mode="jsonl",
         failure_response_keys=("message",),
         resume_command=("grok", "--output-format", "streaming-json", "--always-approve", "--no-alt-screen", "--resume"),
@@ -889,13 +935,22 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
     ),
     "opencode": _LocalAgent(
         display_name="OpenCode",
-        start_command=("opencode", "run", "--format", "json", "--dangerously-skip-permissions"),
+        start_command=("opencode", "run", "--format", "json", "--thinking", "--dangerously-skip-permissions"),
         install_command=_npm_install_command("opencode-ai"),
         session_id_key="sessionID",
         response_key="part.text",
+        response_types=("text",),
         output_mode="jsonl",
         failure_response_keys=("error.data.message",),
-        resume_command=("opencode", "run", "--format", "json", "--dangerously-skip-permissions", "--session"),
+        resume_command=(
+            "opencode",
+            "run",
+            "--format",
+            "json",
+            "--thinking",
+            "--dangerously-skip-permissions",
+            "--session",
+        ),
         attachment_arg=("--file",),
         qualify_model_provider=True,
         auth_path="opencode/auth.json",
@@ -911,6 +966,7 @@ _LOCAL_AGENTS: dict[str, _LocalAgent] = {
         failure_response_keys=("finalError", "errorMessage"),
         resume_command=("prime-agent", "--mode", "json", "--resume"),
         deduplicate_stream_events=True,
+        filter_thinking_snapshots=True,
         credentials_path="~/.prime/agent/auth.json",
         login_command=("prime-agent",),
         login_session_command="/login",
@@ -1097,6 +1153,27 @@ def _normalized_tool_name(tool_name: str) -> str:
     return _TOOL_NAME_ALIASES.get(tool_name, tool_name)
 
 
+def _completed_thinking_snapshot(value: dict[str, Any]) -> dict[str, Any] | None:
+    """Keep completed Prime thinking blocks in order, preserving their indices for deduplication."""
+    value_type = _nested_string(value, _TYPE_KEY)
+    if value_type in {_MESSAGE_START_EVENT_TYPE, "turn_end"}:
+        return None
+    if value_type != "message_update":
+        return value
+
+    content = _nested_value(value, "message.content")
+    index = _nested_value(value, "assistantMessageEvent.contentIndex")
+    if not isinstance(content, list) or not isinstance(index, int) or isinstance(index, bool):
+        return None
+    thinking_ended = _nested_string(value, "assistantMessageEvent.type") == "thinking_end"
+    completed_index = index if thinking_ended else index - 1
+    content = list(content)
+    for block_index, block in enumerate(content):
+        if block_index > completed_index and isinstance(block, dict) and _content_block_type(block) == "thinking":
+            content[block_index] = {}
+    return {**value, "message": {**value["message"], "content": content}}
+
+
 def _events_from_content_blocks(value: dict[str, Any], *, fallback_message_id: str = "") -> list[dict[str, Any]]:
     events = []
     for source, block in _content_blocks_from_value(value, fallback_message_id=fallback_message_id):
@@ -1128,7 +1205,7 @@ def _content_blocks_from_value(
 ) -> list[tuple[str, dict[str, Any]]]:
     blocks: list[tuple[str, dict[str, Any]]] = []
     message_id = (
-        _first_string_from_paths(value, ("message.id", "item.message.id", "data.message.id", "id"))
+        _first_string_from_paths(value, ("uuid", "message.id", "item.message.id", "data.message.id", "id"))
         or fallback_message_id
     )
     if _is_content_block(value):
@@ -1416,8 +1493,11 @@ class _StreamEventAssembler:
 
 
 class _StreamEventState:
-    def __init__(self, *, deduplicate_cumulative_events: bool = False) -> None:
+    def __init__(
+        self, *, deduplicate_cumulative_events: bool = False, deduplicate_thinking_by_source: bool = False
+    ) -> None:
         self.deduplicate_cumulative_events = deduplicate_cumulative_events
+        self.deduplicate_thinking_by_source = deduplicate_thinking_by_source
         self.has_streamed_text = False
         self.text_by_source: dict[str, str] = {}
         self.seen_tool_event_keys: set[tuple[str, str]] = set()
@@ -1472,7 +1552,7 @@ class _StreamEventState:
             return None
         if not self.deduplicate_cumulative_events:
             return _strip_internal_event_keys(event)
-        key = (source if isinstance(source, str) else "", detail)
+        key = (source if isinstance(source, str) else "", "" if self.deduplicate_thinking_by_source else detail)
         if key in self.seen_thinking_events:
             return None
         self.seen_thinking_events.add(key)
