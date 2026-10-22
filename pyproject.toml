@@ -64,6 +64,9 @@ dart = "dart:cli"
 requires = ["setuptools>=84.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
+[tool.uv]
+required-version = "==0.13.5"
+
 [tool.black]
 line-length = 120
 
