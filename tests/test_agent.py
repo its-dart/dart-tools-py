@@ -1416,13 +1416,13 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
 
     def test_validate_local_agent_available_auto_installs_and_rechecks_path(self) -> None:
         with (
-            patch("dart.agent.shutil.which", side_effect=[None, "/usr/local/bin/codex"]),
+            patch("dart.agent.shutil.which", side_effect=[None, "/usr/local/bin/npm", "/usr/local/bin/codex"]),
             patch("dart.agent.subprocess.run") as run_mock,
             patch("builtins.print"),
         ):
             agent._validate_local_agent_available("codex", "auto")
 
-        run_mock.assert_called_once_with(("npm", "install", "-g", "@openai/codex"), check=True)
+        run_mock.assert_called_once_with(("/usr/local/bin/npm", "install", "-g", "@openai/codex"), check=True)
 
     def test_is_logged_in_uses_status_command_then_credentials_path(self) -> None:
         with patch("dart.agent.subprocess.run", return_value=Mock(returncode=0, stdout='{"loggedIn": false}')):

@@ -108,6 +108,7 @@ _CLAUDE_CONTENT_BLOCK_PATHS = (
     "part",
 )
 _MODEL_PROVIDERS = {"claude": "anthropic", "gemini": "google", "gpt": "openai"}
+_NPM_SHIM_TARGET_RE = re.compile(r'(?:"%_prog%"\s+(.*?)\s*)?"%dp0%\\([^"]+)"\s+%\*')
 _TOOL_NAME_ALIASES = {
     "createPlanToolCall": "Plan",
     "deleteToolCall": "Delete",
@@ -303,8 +304,8 @@ class _LocalAgent:
         for executable in (self.start_command[0], *self.executable_candidates):
             path = Path(executable).expanduser()
             expanded = str(path)
-            if shutil.which(expanded) is not None or path.is_file():
-                return expanded
+            if (resolved := shutil.which(expanded)) is not None or path.is_file():
+                return resolved or expanded
         return None
 
     def authenticated_providers(self) -> list[str]:
@@ -367,7 +368,7 @@ class _LocalAgent:
         executable = self._resolved_executable()
         if executable is None or command[0] != self.start_command[0]:
             return command
-        return (executable, *command[1:])
+        return (*_npm_shim_command(executable), *command[1:])
 
     def parse_output(self, stdout: str, stderr: str) -> tuple[str, str | None]:
         response_parts_by_key = {response_key: [] for response_key in self.response_keys}
@@ -722,6 +723,21 @@ class _LocalAgent:
         if message and not stream_state.has_streamed_text:
             await emit_event({_KIND_KEY: _TEXT_DELTA_EVENT_KIND, "text": message})
         return True, message or "Done.", next_session_id
+
+
+def _npm_shim_command(executable: str) -> tuple[str, ...]:
+    path = Path(executable)
+    if path.suffix.lower() != ".cmd":
+        return (executable,)
+    with open(path, "r", encoding="UTF-8") as shim_file:
+        match = _NPM_SHIM_TARGET_RE.search(shim_file.read())
+    if not match:
+        return (executable,)
+    target = str(path.parent / match.group(2))
+    if match.group(1) is None:
+        return (target,)
+    node = path.parent / "node.exe"
+    return (str(node) if node.is_file() else "node", *match.group(1).split(), target)
 
 
 def _npm_install_command(package: str) -> _LocalAgentInstallCommand:
@@ -1393,8 +1409,9 @@ def _install_local_agent(local_agent: _LocalAgent, install: AgentInstallPolicy) 
         raise _LocalAgentSetupError(f"{local_agent.display_name} was not installed.")
 
     print(f"Installing {local_agent.display_name}...", flush=True)
+    executable = shutil.which(install_command.command[0]) or install_command.command[0]
     try:
-        subprocess.run(install_command.command, check=True)
+        subprocess.run((executable, *install_command.command[1:]), check=True)
     except FileNotFoundError:
         raise _LocalAgentSetupError(
             f"Could not install {local_agent.display_name}: {install_command.command[0]} was not found."
