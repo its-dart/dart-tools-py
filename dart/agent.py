@@ -40,6 +40,7 @@ AGENT_INSTALL_POLICIES: tuple[AgentInstallPolicy, ...] = ("prompt", "auto", "nev
 _WEBSOCKET_PATH = "/ws/v0/local-agent"
 _AUTH_FAILURE_STATUS_CODES = (401, 403)
 _RUN_TIMEOUT_SECONDS = 1800
+_THINKING_DELTA_INTERVAL_SECONDS = 0.25
 _FAILURE_OUTPUT_MAX_LENGTH = 300
 _STREAM_READ_CHUNK_SIZE_BYTES = 65536
 _MAX_RECONNECT_DELAY_SECONDS = 15
@@ -82,6 +83,7 @@ _START_TYPE = "start"
 _STATE_TYPE = "state"
 _TEXT_DELTA_EVENT_KIND = "text_delta"
 _THINKING_EVENT_KIND = "thinking"
+_THINKING_DELTA_EVENT_KIND = "thinking_delta"
 _TOOL_CALL_EVENT_KIND = "tool_call"
 _TOOL_ERROR_EVENT_KIND = "tool_error"
 _TOOL_RESULT_EVENT_KIND = "tool_result"
@@ -643,8 +645,23 @@ class _LocalAgent:
         )
         stream_assembler = _StreamEventAssembler() if self.reassemble_stream_events else None
         thinking_parts: list[str] = []
+        thinking_delta_parts: list[str] = []
+        thinking_delta_sent_at = 0.0
+
+        async def flush_thinking_delta() -> None:
+            nonlocal thinking_delta_sent_at
+            if thinking_delta_parts:
+                await emit_event({_KIND_KEY: _THINKING_DELTA_EVENT_KIND, "text": "".join(thinking_delta_parts)})
+                thinking_delta_parts.clear()
+                thinking_delta_sent_at = time.monotonic()
+
+        async def append_thinking_delta(text: str) -> None:
+            thinking_delta_parts.append(text)
+            if time.monotonic() - thinking_delta_sent_at >= _THINKING_DELTA_INTERVAL_SECONDS:
+                await flush_thinking_delta()
 
         async def flush_thinking() -> None:
+            await flush_thinking_delta()
             if thinking_parts:
                 await emit_event({_KIND_KEY: _THINKING_EVENT_KIND, "detail": "".join(thinking_parts)})
                 thinking_parts.clear()
@@ -664,11 +681,13 @@ class _LocalAgent:
                     if value_type == "thought":
                         if text := _nested_string(value, "data"):
                             thinking_parts.append(text)
+                            await append_thinking_delta(text)
                         continue
                     if value_type == _THINKING_EVENT_KIND:
                         if value.get("subtype") == "delta":
                             if text := _nested_string(value, _TEXT_KEY):
                                 thinking_parts.append(text)
+                                await append_thinking_delta(text)
                             continue
                         if value.get("subtype") == "completed":
                             await flush_thinking()
@@ -681,6 +700,8 @@ class _LocalAgent:
                     if prepared_event is not None:
                         await flush_thinking()
                         await emit_event(prepared_event)
+                if text := _thinking_delta_from_value(value):
+                    await append_thinking_delta(text)
 
         stdout_task = asyncio.create_task(_read_stream(process.stdout, handle_stdout_line))
         stderr_task = asyncio.create_task(_read_stream(process.stderr))
@@ -1188,6 +1209,14 @@ def _completed_thinking_snapshot(value: dict[str, Any]) -> dict[str, Any] | None
         if block_index > completed_index and isinstance(block, dict) and _content_block_type(block) == "thinking":
             content[block_index] = {}
     return {**value, "message": {**value["message"], "content": content}}
+
+
+def _thinking_delta_from_value(value: dict[str, Any]) -> str | None:
+    if _nested_string(value, "event.delta.type") == _THINKING_DELTA_EVENT_KIND:
+        return _nested_string(value, "event.delta.thinking")
+    if _nested_string(value, "assistantMessageEvent.type") == _THINKING_DELTA_EVENT_KIND:
+        return _nested_string(value, "assistantMessageEvent.delta")
+    return None
 
 
 def _events_from_content_blocks(value: dict[str, Any], *, fallback_message_id: str = "") -> list[dict[str, Any]]:
