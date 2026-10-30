@@ -439,7 +439,10 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
             with self.subTest(name=name):
                 result, events = await self._run_jsonl_agent(name, [value])
                 self.assertEqual(result, (True, "Done.", None))
-                self.assertEqual(events, [{"kind": "thinking", "detail": "Check the tests."}])
+                self.assertEqual(
+                    [event for event in events if event["kind"] != "thinking_delta"],
+                    [{"kind": "thinking", "detail": "Check the tests."}],
+                )
 
     def test_claude_preserves_identical_thoughts_with_distinct_envelope_ids(self) -> None:
         values = [
@@ -548,6 +551,7 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             events,
             [
+                {"kind": "thinking_delta", "text": "Check "},
                 {"kind": "thinking", "detail": "Check the tests."},
                 {"kind": "thinking", "detail": "Check the tests."},
                 {"kind": "text_delta", "text": "Let me"},
@@ -596,7 +600,14 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
 
                 _, events = await self._run_jsonl_agent("prime-agent", values)
 
-                self.assertEqual(events, [{"kind": "thinking", "detail": "Check the tests."}, expected_event])
+                self.assertEqual(
+                    events,
+                    [
+                        {"kind": "thinking_delta", "text": "Check the tests."},
+                        {"kind": "thinking", "detail": "Check the tests."},
+                        expected_event,
+                    ],
+                )
 
     async def test_prime_preserves_order_when_message_start_contains_final_snapshot(self) -> None:
         message = {
@@ -657,7 +668,14 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
 
                 _, events = await self._run_jsonl_agent("grok", values)
 
-                self.assertEqual(events[0], {"kind": "thinking", "detail": "Check the tests."})
+                self.assertEqual(
+                    events[:3],
+                    [
+                        {"kind": "thinking_delta", "text": "Check"},
+                        {"kind": "thinking_delta", "text": " the tests."},
+                        {"kind": "thinking", "detail": "Check the tests."},
+                    ],
+                )
                 self.assertEqual(events[-1], {"kind": "thinking", "detail": "Check the tests."})
                 self.assertEqual(sum(event["kind"] == "thinking" for event in events), 2)
 
@@ -673,7 +691,14 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
                     returncode=returncode,
                 )
                 self.assertEqual(result[0], returncode == 0)
-                self.assertEqual(events, [{"kind": "thinking", "detail": "Still thinking."}])
+                self.assertEqual(
+                    events,
+                    [
+                        {"kind": "thinking_delta", "text": "Still "},
+                        {"kind": "thinking_delta", "text": "thinking."},
+                        {"kind": "thinking", "detail": "Still thinking."},
+                    ],
+                )
 
     def test_events_from_value_extracts_claude_content_blocks(self) -> None:
         local_agent = agent._LOCAL_AGENTS["claude"]
@@ -1060,7 +1085,7 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
             values = next(chunks, None)
             if values is None:
                 return b""
-            self.assertEqual(emitted_events, [])
+            self.assertNotIn("thinking", [event["kind"] for event in emitted_events])
             return "".join(agent.json.dumps(value) + "\n" for value in values).encode()
 
         process = Mock(
@@ -1080,7 +1105,10 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             emitted_events,
             [
+                {"kind": "thinking_delta", "text": "Think"},
+                {"kind": "thinking_delta", "text": " carefully."},
                 {"kind": "thinking", "detail": "Think carefully."},
+                {"kind": "thinking_delta", "text": "Think carefully."},
                 {"kind": "thinking", "detail": "Think carefully."},
                 {"kind": "tool_call", "toolCallId": "call-1", "name": "Read", "args": {"path": "README.md"}},
                 {"kind": "text_delta", "text": "Done."},
@@ -1114,7 +1142,11 @@ class LocalAgentStreamingTests(unittest.IsolatedAsyncioTestCase):
 
                 self.assertEqual(success, returncode == 0)
                 events = [call.args[0] for call in emit_event.await_args_list]
-                expected_events = [{"kind": "thinking", "detail": "Still thinking."}]
+                expected_events = [
+                    {"kind": "thinking_delta", "text": "Still "},
+                    {"kind": "thinking_delta", "text": "thinking."},
+                    {"kind": "thinking", "detail": "Still thinking."},
+                ]
                 if returncode == 0:
                     expected_events.append({"kind": "text_delta", "text": "Done."})
                 self.assertEqual(events, expected_events)
