@@ -11,7 +11,7 @@ class AiModel(StrEnum):
     GEMINI_3_1_FLASH_LITE = "gemini-3.1-flash-lite"
     GEMINI_3_8_FLASH = "gemini-3.8-flash"
     GEMINI_4_ARGON = "gemini-4-argon"
-    GPT_6_1_SOL = "gpt-6.1-sol"
+    GPT_6_1_TERRA = "gpt-6.1-terra"
     GPT_6_ASTRA = "gpt-6-astra"
     GPT_6_LUNA = "gpt-6-luna"
     GROK_4_20 = "grok-4.20"
