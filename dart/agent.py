@@ -40,6 +40,7 @@ AGENT_INSTALL_POLICIES: tuple[AgentInstallPolicy, ...] = ("prompt", "auto", "nev
 _WEBSOCKET_PATH = "/ws/v0/local-agent"
 _AUTH_FAILURE_STATUS_CODES = (401, 403)
 _RUN_TIMEOUT_SECONDS = 1800
+_THINKING_DELTA_INTERVAL_SECONDS = 0.25
 _FAILURE_OUTPUT_MAX_LENGTH = 300
 _STREAM_READ_CHUNK_SIZE_BYTES = 65536
 _MAX_RECONNECT_DELAY_SECONDS = 15
@@ -81,6 +82,7 @@ _SEQUENCE_KEY = "sequence"
 _START_TYPE = "start"
 _STATE_TYPE = "state"
 _TEXT_DELTA_EVENT_KIND = "text_delta"
+_THINKING_DELTA_EVENT_KIND = "thinking_delta"
 _THINKING_EVENT_KIND = "thinking"
 _TOOL_CALL_EVENT_KIND = "tool_call"
 _TOOL_ERROR_EVENT_KIND = "tool_error"
@@ -93,6 +95,7 @@ _STREAM_EVENT_TYPE = "stream_event"
 _MESSAGE_START_EVENT_TYPE = "message_start"
 _CONTENT_BLOCK_DELTA_EVENT_TYPE = "content_block_delta"
 _TEXT_DELTA_DELTA_TYPE = "text_delta"
+_THINKING_DELTA_DELTA_TYPE = "thinking_delta"
 _FILE_ATTACHMENT_TYPE = "file"
 _TEXT_ATTACHMENT_TYPE = "text"
 _ATTACHMENT_DOWNLOAD_TIMEOUT_SECONDS = 120
@@ -643,8 +646,16 @@ class _LocalAgent:
         )
         stream_assembler = _StreamEventAssembler() if self.reassemble_stream_events else None
         thinking_parts: list[str] = []
+        thinking_delta_parts: list[str] = []
+
+        async def flush_thinking_delta() -> None:
+            if thinking_delta_parts:
+                text = "".join(thinking_delta_parts)
+                thinking_delta_parts.clear()
+                await emit_event({_KIND_KEY: _THINKING_DELTA_EVENT_KIND, "text": text})
 
         async def flush_thinking() -> None:
+            await flush_thinking_delta()
             if thinking_parts:
                 await emit_event({_KIND_KEY: _THINKING_EVENT_KIND, "detail": "".join(thinking_parts)})
                 thinking_parts.clear()
@@ -664,11 +675,13 @@ class _LocalAgent:
                     if value_type == "thought":
                         if text := _nested_string(value, "data"):
                             thinking_parts.append(text)
+                            thinking_delta_parts.append(text)
                         continue
                     if value_type == _THINKING_EVENT_KIND:
                         if value.get("subtype") == "delta":
                             if text := _nested_string(value, _TEXT_KEY):
                                 thinking_parts.append(text)
+                                thinking_delta_parts.append(text)
                             continue
                         if value.get("subtype") == "completed":
                             await flush_thinking()
@@ -681,11 +694,19 @@ class _LocalAgent:
                     if prepared_event is not None:
                         await flush_thinking()
                         await emit_event(prepared_event)
+                if text := _thinking_delta_from_value(value):
+                    thinking_delta_parts.append(text)
+
+        async def stream_thinking_deltas() -> None:
+            while not stdout_task.done():
+                await asyncio.wait({stdout_task}, timeout=_THINKING_DELTA_INTERVAL_SECONDS)
+                await flush_thinking_delta()
 
         stdout_task = asyncio.create_task(_read_stream(process.stdout, handle_stdout_line))
         stderr_task = asyncio.create_task(_read_stream(process.stderr))
         wait_task = asyncio.create_task(process.wait())
-        run_task = asyncio.gather(wait_task, stdout_task, stderr_task)
+        thinking_delta_task = asyncio.create_task(stream_thinking_deltas())
+        run_task = asyncio.gather(wait_task, stdout_task, stderr_task, thinking_delta_task)
         timed_out = False
         try:
             await asyncio.wait_for(asyncio.shield(run_task), _RUN_TIMEOUT_SECONDS)
@@ -693,18 +714,18 @@ class _LocalAgent:
             timed_out = True
             with contextlib.suppress(ProcessLookupError):
                 process.kill()
-            await asyncio.gather(wait_task, stdout_task, stderr_task, return_exceptions=True)
+            await asyncio.gather(wait_task, stdout_task, stderr_task, thinking_delta_task, return_exceptions=True)
         except asyncio.CancelledError:
             with contextlib.suppress(ProcessLookupError):
                 process.kill()
             with contextlib.suppress(Exception):
-                await asyncio.gather(wait_task, stdout_task, stderr_task, return_exceptions=True)
+                await asyncio.gather(wait_task, stdout_task, stderr_task, thinking_delta_task, return_exceptions=True)
             raise
         except Exception:
             with contextlib.suppress(ProcessLookupError):
                 process.kill()
             with contextlib.suppress(Exception):
-                await asyncio.gather(wait_task, stdout_task, stderr_task, return_exceptions=True)
+                await asyncio.gather(wait_task, stdout_task, stderr_task, thinking_delta_task, return_exceptions=True)
             raise
 
         stdout = stdout_task.result().strip()
@@ -1188,6 +1209,14 @@ def _completed_thinking_snapshot(value: dict[str, Any]) -> dict[str, Any] | None
         if block_index > completed_index and isinstance(block, dict) and _content_block_type(block) == "thinking":
             content[block_index] = {}
     return {**value, "message": {**value["message"], "content": content}}
+
+
+def _thinking_delta_from_value(value: dict[str, Any]) -> str | None:
+    if _nested_string(value, "event.delta.type") == _THINKING_DELTA_DELTA_TYPE:
+        return _nested_string(value, "event.delta.thinking")
+    if _nested_string(value, "assistantMessageEvent.type") == _THINKING_DELTA_DELTA_TYPE:
+        return _nested_string(value, "assistantMessageEvent.delta")
+    return None
 
 
 def _events_from_content_blocks(value: dict[str, Any], *, fallback_message_id: str = "") -> list[dict[str, Any]]:
