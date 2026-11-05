@@ -4,7 +4,6 @@
   - [Local setup](#local-setup)
   - [Test with a different Python version](#test-with-a-different-python-version)
   - [Sync API](#sync-api)
-  - [Deploy setup](#deploy-setup)
   - [Deploy](#deploy)
   - [Dependency updating](#dependency-updating)
 
@@ -25,17 +24,9 @@
 1. Run `uv sync` as needed
 2. Run `make api`
 
-## Deploy setup
-
-1. Get an existing PyPI token or [make a new one](https://pypi.org/manage/account/token/)
-2. Set the `UV_PUBLISH_TOKEN` environment variable, for example, by running `export UV_PUBLISH_TOKEN=<PyPI token>`
-
 ## Deploy
 
-1. Bump the version in `pyproject.toml`
-2. Run `uv sync`
-3. Commit and push all local changes to GitHub, then open a PR there
-4. After the PR merges run `make deploy`
+Run [the Create a release GitHub action](https://github.com/its-dart/dart-tools-py/actions/workflows/create_release.yml) on `main` and choose `major`, `minor`, or `patch`. It bumps and commits the version, tags the commit, publishes to PyPI, and creates a GitHub release.
 
 ## Dependency updating
 
