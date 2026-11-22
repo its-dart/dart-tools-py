@@ -19,15 +19,15 @@ class AgentInstructions:
     Attributes:
         markdown (str | Unset): The agent's instructions in markdown format.
         model (AiModel | Unset): * `auto` - AUTO
-            * `gpt-6-astra` - GPT_6_ASTRA
-            * `gpt-6.1-terra` - GPT_6_1_TERRA
+            * `gpt-6.2-astra` - GPT_6_2_ASTRA
+            * `gpt-6.2-sol` - GPT_6_2_SOL
             * `gpt-6-luna` - GPT_6_LUNA
             * `claude-fable-5-2` - CLAUDE_FABLE_5_2
             * `claude-opus-5-5` - CLAUDE_OPUS_5_5
             * `claude-sonnet-5-5` - CLAUDE_SONNET_5_5
-            * `gemini-4-argon` - GEMINI_4_ARGON
             * `gemini-4-carbon` - GEMINI_4_CARBON
             * `gemini-4-hydrogen` - GEMINI_4_HYDROGEN
+            * `gemini-4-neon` - GEMINI_4_NEON
             * `grok-4.7` - GROK_4_7
             * `grok-4.20` - GROK_4_20
             * `muse-wonder-1.0` - MUSE_WONDER_1_0
